@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# internal build-process docs (not part of the shipped app)
+CLAUDE.md
+AGENTS.md
+/phases/
+/.claude/
