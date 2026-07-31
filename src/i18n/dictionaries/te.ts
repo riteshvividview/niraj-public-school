@@ -105,6 +105,27 @@ const te: Dictionary = {
     books: "పుస్తకాలు",
     uniform: "యూనిఫారం & కిట్",
     stationery: "స్టేషనరీ",
+    hubTitle: "నా స్కూల్ అవసరమైనవి",
+    hubSubtitle: "మీ పిల్లల తరగతికి నిర్ణయించిన పుస్తకాలు, యూనిఫారం మరియు స్టేషనరీ సెట్.",
+    selectedCount: "{total}లో {selected} ఎంపిక చేయబడ్డాయి",
+    confirmedCount: "{total}లో {selected} సైజులు నిర్ధారించబడ్డాయి",
+    reviewAndPay: "సమీక్షించి చెల్లించండి",
+    itemsCount: "{n} వస్తువులు",
+    sizeGuideCta: "సైజు గైడ్",
+    sizeGuideTitle: "సైజు గైడ్",
+    sizeGuideAgeColumn: "వయస్సు (సుమారు)",
+    sizeGuideHeightColumn: "ఎత్తు (సెం.మీ.)",
+    chooseSizeLabel: "సైజు ఎంచుకోండి",
+    sizePlaceholder: "సైజు ఎంచుకోండి",
+    sizeConfirmed: "సైజు నిర్ధారించబడింది",
+    sizeNotConfirmed: "సైజు ఇంకా నిర్ధారించలేదు",
+    notNeeded: "అవసరం లేదు",
+    booksSubtitle: "మీ పిల్లల తరగతికి నిర్ణయించిన పుస్తకాల జాబితా — డిఫాల్ట్‌గా చేర్చబడింది.",
+    stationerySubtitle: "మీ పిల్లల తరగతికి నిర్ణయించిన స్టేషనరీ స్టార్టర్ కిట్.",
+  },
+
+  cart: {
+    title: "కార్ట్ & చెక్అవుట్",
   },
 
   profile: {

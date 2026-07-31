@@ -115,6 +115,30 @@ export interface Dictionary {
     books: string;
     uniform: string;
     stationery: string;
+    hubTitle: string;
+    hubSubtitle: string;
+    /** Template with "{selected}" and "{total}" placeholders. */
+    selectedCount: string;
+    /** Template with "{selected}" and "{total}" placeholders. */
+    confirmedCount: string;
+    reviewAndPay: string;
+    /** Template with "{n}" placeholder. */
+    itemsCount: string;
+    sizeGuideCta: string;
+    sizeGuideTitle: string;
+    sizeGuideAgeColumn: string;
+    sizeGuideHeightColumn: string;
+    chooseSizeLabel: string;
+    sizePlaceholder: string;
+    sizeConfirmed: string;
+    sizeNotConfirmed: string;
+    notNeeded: string;
+    booksSubtitle: string;
+    stationerySubtitle: string;
+  };
+
+  cart: {
+    title: string;
   };
 
   profile: {

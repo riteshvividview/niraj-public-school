@@ -105,6 +105,27 @@ const en: Dictionary = {
     books: "Books",
     uniform: "Uniform & Kit",
     stationery: "Stationery",
+    hubTitle: "My School Essentials",
+    hubSubtitle: "The fixed set of books, uniform and stationery for your child's class.",
+    selectedCount: "{selected} of {total} selected",
+    confirmedCount: "{selected} of {total} sizes confirmed",
+    reviewAndPay: "Review & Pay",
+    itemsCount: "{n} items",
+    sizeGuideCta: "Size guide",
+    sizeGuideTitle: "Size guide",
+    sizeGuideAgeColumn: "Age (approx.)",
+    sizeGuideHeightColumn: "Height (cm)",
+    chooseSizeLabel: "Choose size",
+    sizePlaceholder: "Select size",
+    sizeConfirmed: "Size confirmed",
+    sizeNotConfirmed: "Size not confirmed yet",
+    notNeeded: "Not needed",
+    booksSubtitle: "The fixed book list for your child's class — included by default.",
+    stationerySubtitle: "The fixed stationery starter kit for your child's class.",
+  },
+
+  cart: {
+    title: "Cart & Checkout",
   },
 
   profile: {

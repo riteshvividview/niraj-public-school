@@ -105,6 +105,27 @@ const hi: Dictionary = {
     books: "किताबें",
     uniform: "यूनिफ़ॉर्म और किट",
     stationery: "स्टेशनरी",
+    hubTitle: "मेरे स्कूल की आवश्यक सामग्री",
+    hubSubtitle: "आपके बच्चे की कक्षा के लिए तय किताबें, यूनिफ़ॉर्म और स्टेशनरी का सेट।",
+    selectedCount: "{total} में से {selected} चुनी गईं",
+    confirmedCount: "{total} में से {selected} साइज़ पुष्ट",
+    reviewAndPay: "समीक्षा करें और भुगतान करें",
+    itemsCount: "{n} वस्तुएं",
+    sizeGuideCta: "साइज़ गाइड",
+    sizeGuideTitle: "साइज़ गाइड",
+    sizeGuideAgeColumn: "आयु (लगभग)",
+    sizeGuideHeightColumn: "ऊंचाई (सेमी)",
+    chooseSizeLabel: "साइज़ चुनें",
+    sizePlaceholder: "साइज़ चुनें",
+    sizeConfirmed: "साइज़ पुष्ट",
+    sizeNotConfirmed: "साइज़ अभी पुष्ट नहीं है",
+    notNeeded: "ज़रूरत नहीं",
+    booksSubtitle: "आपके बच्चे की कक्षा के लिए तय किताबों की सूची — डिफ़ॉल्ट रूप से शामिल।",
+    stationerySubtitle: "आपके बच्चे की कक्षा के लिए तय स्टेशनरी स्टार्टर किट।",
+  },
+
+  cart: {
+    title: "कार्ट और चेकआउट",
   },
 
   profile: {
