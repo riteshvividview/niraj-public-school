@@ -47,5 +47,59 @@ export interface Dictionary {
     download: string;
     share: string;
     showAtCounter: string;
+    back: string;
+    change: string;
+  };
+
+  auth: {
+    language: {
+      title: string;
+      subtitle: string;
+    };
+    login: {
+      title: string;
+      subtitle: string;
+      mobileLabel: string;
+      mobilePlaceholder: string;
+      sendOtp: string;
+      notFound: string;
+      createAccountCta: string;
+      newHere: string;
+    };
+    register: {
+      title: string;
+      subtitle: string;
+      nameLabel: string;
+      namePlaceholder: string;
+      mobileLabel: string;
+      schoolLabel: string;
+      classLabel: string;
+      classPlaceholder: string;
+      alreadyRegistered: string;
+      loginInsteadCta: string;
+      sendOtp: string;
+      haveAccount: string;
+      loginCta: string;
+    };
+    otp: {
+      title: string;
+      subtitleFor: string;
+      demoLabel: string;
+      demoNote: string;
+      codeLabel: string;
+      codePlaceholder: string;
+      verify: string;
+      changeNumber: string;
+      resend: string;
+      /** Countdown label — contains a "{n}" placeholder for the seconds remaining. */
+      resendIn: string;
+    };
+    errors: {
+      invalidMobile: string;
+      incorrectOtp: string;
+      required: string;
+      selectSchool: string;
+      selectClass: string;
+    };
   };
 }

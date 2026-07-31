@@ -19,6 +19,8 @@ function isLanguageCode(value: string | null): value is LanguageCode {
 type Listener = () => void;
 const languageListeners = new Set<Listener>();
 let cachedLanguage: LanguageCode = DEFAULT_LANGUAGE;
+/** True once a language has been explicitly chosen/persisted (not just defaulted). */
+let cachedHasChosenLanguage = false;
 let hasReadStorage = false;
 
 function subscribeLanguage(listener: Listener) {
@@ -26,12 +28,16 @@ function subscribeLanguage(listener: Listener) {
   return () => languageListeners.delete(listener);
 }
 
+function readStorageOnce() {
+  if (hasReadStorage) return;
+  const stored = window.localStorage.getItem(STORAGE_KEY);
+  cachedHasChosenLanguage = isLanguageCode(stored);
+  cachedLanguage = isLanguageCode(stored) ? stored : DEFAULT_LANGUAGE;
+  hasReadStorage = true;
+}
+
 function getLanguageSnapshot(): LanguageCode {
-  if (!hasReadStorage) {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    cachedLanguage = isLanguageCode(stored) ? stored : DEFAULT_LANGUAGE;
-    hasReadStorage = true;
-  }
+  readStorageOnce();
   return cachedLanguage;
 }
 
@@ -39,8 +45,18 @@ function getLanguageServerSnapshot(): LanguageCode {
   return DEFAULT_LANGUAGE;
 }
 
+function getHasChosenLanguageSnapshot(): boolean {
+  readStorageOnce();
+  return cachedHasChosenLanguage;
+}
+
+function getHasChosenLanguageServerSnapshot(): boolean {
+  return false;
+}
+
 function persistLanguage(next: LanguageCode) {
   cachedLanguage = next;
+  cachedHasChosenLanguage = true;
   hasReadStorage = true;
   window.localStorage.setItem(STORAGE_KEY, next);
   languageListeners.forEach((listener) => listener());
@@ -61,6 +77,8 @@ interface LanguageContextValue {
   setLanguage: (language: LanguageCode) => void;
   /** True once hydrated on the client, i.e. the persisted language (if any) is loaded. */
   isReady: boolean;
+  /** True once the user has explicitly picked a language — false if still on the default. */
+  hasChosenLanguage: boolean;
   t: Dictionary;
 }
 
@@ -72,11 +90,16 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     getLanguageSnapshot,
     getLanguageServerSnapshot,
   );
+  const hasChosenLanguage = useSyncExternalStore(
+    subscribeLanguage,
+    getHasChosenLanguageSnapshot,
+    getHasChosenLanguageServerSnapshot,
+  );
   const isReady = useSyncExternalStore(subscribeMounted, getMountedSnapshot, getMountedServerSnapshot);
 
   const value = useMemo<LanguageContextValue>(
-    () => ({ language, setLanguage: persistLanguage, isReady, t: dictionaries[language] }),
-    [language, isReady],
+    () => ({ language, setLanguage: persistLanguage, isReady, hasChosenLanguage, t: dictionaries[language] }),
+    [language, hasChosenLanguage, isReady],
   );
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;

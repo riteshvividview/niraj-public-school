@@ -1,17 +1,29 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+"use client";
 
-export default function Home() {
-  return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
-      <h1 className="font-heading text-2xl font-bold text-ink">Niraj Public School</h1>
-      <p className="max-w-md text-sub">
-        The real language selector / login flow is built in Phase 3. For now, check the
-        design system foundation from Phase 1.
-      </p>
-      <Button asChild>
-        <Link href="/dev/kitchen-sink">View kitchen sink</Link>
-      </Button>
-    </main>
-  );
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useTranslation } from "@/i18n/context";
+import { useAuth } from "@/store/auth-store";
+
+/**
+ * Not a real screen — just routes to wherever the user actually belongs:
+ * first-run language selection, login, or straight into the app.
+ */
+export default function RootPage() {
+  const router = useRouter();
+  const { hasChosenLanguage, isReady: isLanguageReady } = useTranslation();
+  const { isAuthenticated, isReady: isAuthReady } = useAuth();
+
+  useEffect(() => {
+    if (!isLanguageReady || !isAuthReady) return;
+    if (!hasChosenLanguage) {
+      router.replace("/language");
+    } else if (isAuthenticated) {
+      router.replace("/home");
+    } else {
+      router.replace("/login");
+    }
+  }, [isLanguageReady, isAuthReady, hasChosenLanguage, isAuthenticated, router]);
+
+  return null;
 }
