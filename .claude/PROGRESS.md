@@ -7,7 +7,7 @@ Status legend: `Not started` · `In progress` · `Done` · `Blocked`
 | # | Phase | Status | Notes |
 |---|---|---|---|
 | 1 | Project Foundation & Design System | Done | Next.js 16 (App Router, Turbopack) + Tailwind v4 + shadcn/ui (radix-nova) on brand theme; see notes below |
-| 2 | Core UI Component Library | Not started | |
+| 2 | Core UI Component Library | Done | 11 shared components + /dev/component-gallery; i18n dictionary expanded (nav/status/common); see notes below |
 | 3 | Language Selector, Login & Registration (Auth) | Not started | |
 | 4 | App Shell — Home, Navigation, Profile, Help & Support | Not started | |
 | 5 | Essentials Store — Books, Uniform & Kit, Stationery | Not started | |
@@ -28,6 +28,48 @@ At the end of each phase, Claude Code should:
 ## Session log
 
 _(Newest entries at the top. One entry per phase completed, a few lines each.)_
+
+- **2026-07-31** — **Phase 2 done.** All 11 components built in `src/components/shared/`:
+  `AppHeader`, `BottomNav`, `LanguageSwitcher` (+ exported `LanguageOptionList` for
+  Phase 3's full-screen reuse), `SectionCard`, `ItemCard`, `ProgramCard`,
+  `PriceSummary`, `ReceiptCard`, `EmptyState`, `StatusBadge`, and
+  `ItemCardSkeleton`/`ProgramCardSkeleton`/`ReceiptCardSkeleton` in
+  `loading-skeletons.tsx`. Barrel export at `src/components/shared/index.ts`.
+  Notes for later phases:
+  - **i18n dictionary grew significantly** beyond Phase 1's 4 seed keys — added
+    `nav.*` (5 tab labels), `status.*` (12 keys, one per value across
+    `ProgramStatus`/`OrderStatus`/`RedemptionStatus`), and `common.*` (viewDetails,
+    remove, total, noItemsYet, seatsLeft, download, share, showAtCounter). All three
+    languages (en/hi/te) filled in together — keep doing this per-phase rather than
+    batching translations at the end.
+  - **`StatusBadge` takes camelCase keys** (`BadgeStatus = keyof Dictionary["status"]`),
+    but domain status values are kebab-case (e.g. `"filling-fast"`, `"checked-in"`).
+    Use the exported `toBadgeStatus()` helper from
+    `src/components/shared/status-badge.tsx` to convert — don't hand-map these:
+    `<StatusBadge status={toBadgeStatus(program.status)} />`.
+  - **RSC boundaries**: only components that actually need hooks/interactivity are
+    `"use client"` (`BottomNav`, `LanguageSwitcher`, `StatusBadge`, `ItemCard`,
+    `ProgramCard`, `PriceSummary`, `ReceiptCard`, `EmptyState`). `AppHeader`,
+    `SectionCard`, and `loading-skeletons.tsx` have no directive and can be rendered
+    from Server Components directly.
+  - `ItemCard` exposes a `trailing?: ReactNode` slot (for Phase 5's uniform size
+    picker) rather than baking size selection in now — keeps Phase 2 scope contained.
+  - `ReceiptCard` takes optional `onDownload`/`onShare` callbacks (hidden if omitted)
+    — Phase 6 wires real behavior; Phase 7 is expected to add a ticket-styled variant
+    on top of this same component per `phases/phase7.md`, not a new component.
+  - QR codes use `qrcode.react`'s `QRCodeSVG` (added as a new dependency — not in the
+    original stack table, but it's the standard React QR library and needed nothing
+    else).
+  - Added shadcn `checkbox` component (used by `ItemCard`'s selection toggle).
+  - `/dev/component-gallery` (linked from `/dev/kitchen-sink`) renders every
+    component; `ItemCard`/`ProgramCard` sections pull live data through
+    `src/lib/data-source` (Grade 6 books, all seed programs) via `useEffect`, so
+    their loading-skeleton state is what actually renders during SSR (verified via
+    curl — 39 skeleton elements present in the initial HTML) before client-side fetch
+    resolves.
+  - Verified: `tsc --noEmit` clean, `eslint` clean, dev server serves both dev pages
+    at 200 with no console/server errors.
+  - Not yet committed as of this log entry.
 
 - **2026-07-31** — **Phase 1 done.** Scaffolded with `create-next-app` (had to bootstrap
   into a temp dir under a lowercase package name — npm rejects the capitalized

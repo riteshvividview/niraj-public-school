@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,6 +43,9 @@ export default function KitchenSinkPage() {
           multilingual layer are wired up correctly before any real screens are
           built. Safe to delete once Phase 2 onward has real UI to check against.
         </p>
+        <Button asChild variant="outline" size="sm">
+          <Link href="/dev/component-gallery">View component gallery (Phase 2) →</Link>
+        </Button>
       </header>
 
       <section className="space-y-4">
