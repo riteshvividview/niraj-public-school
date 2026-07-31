@@ -92,6 +92,72 @@ const en: Dictionary = {
       selectClass: "Please select a class.",
     },
   },
+
+  home: {
+    upcomingProgramsTitle: "Upcoming Programs & Events",
+    viewAll: "View all",
+    hasReceiptsMessage: "You have receipts ready to show at school.",
+    noReceiptsTitle: "No receipts yet",
+    noReceiptsDescription: "Complete a purchase or program enrollment to get your first receipt.",
+  },
+
+  essentials: {
+    books: "Books",
+    uniform: "Uniform & Kit",
+    stationery: "Stationery",
+  },
+
+  profile: {
+    mobileLabel: "Mobile number",
+    schoolLabel: "School",
+    classLabel: "Class",
+    languageLabel: "Language",
+    logout: "Log out",
+  },
+
+  help: {
+    title: "Help & Support",
+    subtitle: "Answers to common questions about payments, receipts and collection.",
+    faqTitle: "Frequently asked questions",
+    contactTitle: "Contact the school",
+    contactPhoneLabel: "Phone",
+    contactEmailLabel: "Email",
+    contactHoursLabel: "Hours",
+    contactHoursValue: "Mon–Sat, 9 AM – 5 PM",
+    chatTitle: "Chat with us",
+    chatComingSoon: "Live chat is coming soon. For now, please call or email using the details above.",
+    faqs: [
+      {
+        question: "How do I collect my books, uniform or stationery?",
+        answer:
+          "Show the QR code from your receipt at the school counter. Staff will scan it and hand over your items.",
+      },
+      {
+        question: "I paid but didn't get a receipt — what do I do?",
+        answer:
+          "Check My Receipts in the app first. If it's still missing, contact the school using the details below.",
+      },
+      {
+        question: "Can I change my child's class or school?",
+        answer:
+          "Class and school are set during registration. To change either, please contact the school directly — this can't be edited from the app yet.",
+      },
+      {
+        question: "What payment methods are accepted?",
+        answer: "UPI, debit/credit cards, and net banking are all supported at checkout.",
+      },
+      {
+        question: "Is there a delivery or admission fee?",
+        answer:
+          "No — you pay only for the items or program listed. Everything is collected in person at school.",
+      },
+    ],
+  },
+
+  stub: {
+    comingSoonTitle: "Coming soon",
+    comingSoonDescription: "This section is being built in a later phase.",
+  },
 };
 
 export default en;

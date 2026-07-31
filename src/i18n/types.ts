@@ -102,4 +102,45 @@ export interface Dictionary {
       selectClass: string;
     };
   };
+
+  home: {
+    upcomingProgramsTitle: string;
+    viewAll: string;
+    hasReceiptsMessage: string;
+    noReceiptsTitle: string;
+    noReceiptsDescription: string;
+  };
+
+  essentials: {
+    books: string;
+    uniform: string;
+    stationery: string;
+  };
+
+  profile: {
+    mobileLabel: string;
+    schoolLabel: string;
+    classLabel: string;
+    languageLabel: string;
+    logout: string;
+  };
+
+  help: {
+    title: string;
+    subtitle: string;
+    faqTitle: string;
+    contactTitle: string;
+    contactPhoneLabel: string;
+    contactEmailLabel: string;
+    contactHoursLabel: string;
+    contactHoursValue: string;
+    chatTitle: string;
+    chatComingSoon: string;
+    faqs: { question: string; answer: string }[];
+  };
+
+  stub: {
+    comingSoonTitle: string;
+    comingSoonDescription: string;
+  };
 }
