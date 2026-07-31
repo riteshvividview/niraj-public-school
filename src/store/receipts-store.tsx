@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useMemo, useSyncExternalStore, type ReactNode } from "react";
-import type { CartItem, Order, PaymentMethod, Receipt } from "@/types";
+import type { CartItem, Order, PaymentMethod, Receipt, RedemptionStatus } from "@/types";
 
 const STORAGE_KEY = "nps-receipts";
 
@@ -157,6 +157,31 @@ function createOrder(input: {
   return record;
 }
 
+/**
+ * Console — Receipt / QR Scanner. Returns null if the receipt doesn't exist
+ * or isn't in "ready" state (already redeemed) — callers decide how to
+ * present that (invalid vs. already-redeemed) rather than this function
+ * throwing, since both are normal, expected scan outcomes.
+ */
+function markRedeemed(receiptId: string, status: RedemptionStatus): ReceiptRecord | null {
+  const current = getSnapshot();
+  const existing = current.records.find((record) => record.receipt.id === receiptId);
+  if (!existing || existing.receipt.redemptionStatus !== "ready") return null;
+
+  const now = new Date().toISOString();
+  const updatedReceipt: Receipt = {
+    ...existing.receipt,
+    redemptionStatus: status,
+    redeemedAt: now,
+    updatedAt: now,
+  };
+  const updatedRecord: ReceiptRecord = { order: existing.order, receipt: updatedReceipt };
+  persist({
+    records: current.records.map((record) => (record.receipt.id === receiptId ? updatedRecord : record)),
+  });
+  return updatedRecord;
+}
+
 function subscribeMounted() {
   return () => {};
 }
@@ -171,8 +196,10 @@ interface ReceiptsContextValue {
   records: ReceiptRecord[];
   isReady: boolean;
   getForUser: (userId: string) => ReceiptRecord[];
+  getBySchool: (schoolId: string) => ReceiptRecord[];
   getById: (receiptId: string) => ReceiptRecord | undefined;
   createOrder: typeof createOrder;
+  markRedeemed: typeof markRedeemed;
 }
 
 const ReceiptsContext = createContext<ReceiptsContextValue | null>(null);
@@ -189,8 +216,13 @@ export function ReceiptsProvider({ children }: { children: ReactNode }) {
         state.records
           .filter((record) => record.order.userId === userId)
           .sort((a, b) => b.receipt.issuedAt.localeCompare(a.receipt.issuedAt)),
+      getBySchool: (schoolId) =>
+        state.records
+          .filter((record) => record.order.schoolId === schoolId)
+          .sort((a, b) => b.receipt.issuedAt.localeCompare(a.receipt.issuedAt)),
       getById: (receiptId) => state.records.find((record) => record.receipt.id === receiptId),
       createOrder,
+      markRedeemed,
     }),
     [state, isReady],
   );

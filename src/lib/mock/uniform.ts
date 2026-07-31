@@ -4,7 +4,8 @@ import { MOCK_SCHOOL } from "./school";
 const SEED_TIMESTAMP = "2026-06-01T00:00:00.000Z";
 const schoolId = MOCK_SCHOOL.id;
 
-function sizesFor(classLevelId: string, basePrice: number) {
+/** Exported for the console's Catalogue Manager (Phase 8), which only collects a base price. */
+export function sizesFor(classLevelId: string, basePrice: number) {
   const smallClasses = ["class-1", "class-3"];
   const sizes = smallClasses.includes(classLevelId)
     ? ["18", "20", "22", "24", "26"]

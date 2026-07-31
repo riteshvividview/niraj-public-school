@@ -1,0 +1,84 @@
+"use client";
+
+import { BookMarked, CalendarClock, LayoutDashboard, LogOut, ScanLine } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { useConsoleAuth } from "@/store/console-auth-store";
+
+const NAV_ITEMS = [
+  { href: "/console/catalogue", label: "Catalogue Manager", icon: BookMarked },
+  { href: "/console/programs", label: "Program Manager", icon: CalendarClock },
+  { href: "/console/scan", label: "Receipt / QR Scanner", icon: ScanLine },
+  { href: "/console/reports", label: "Reports Dashboard", icon: LayoutDashboard },
+];
+
+function NavLinks({ direction = "vertical" }: { direction?: "vertical" | "horizontal" }) {
+  const pathname = usePathname();
+  return (
+    <nav className={cn("flex gap-1", direction === "vertical" ? "flex-col" : "flex-row")}>
+      {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+        const isActive = pathname === href || pathname.startsWith(`${href}/`);
+        return (
+          <Link
+            key={href}
+            href={href}
+            className={cn(
+              "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors",
+              isActive ? "bg-section-console text-white" : "text-sub hover:bg-muted hover:text-ink",
+            )}
+          >
+            <Icon className="size-4 shrink-0" />
+            {label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+export function ConsoleSidebar() {
+  const { staff, logout } = useConsoleAuth();
+  return (
+    <aside className="hidden w-64 shrink-0 flex-col border-r border-line bg-card md:flex">
+      <div className="border-b border-line p-5">
+        <p className="font-heading text-sm font-bold text-ink">Niraj Public School</p>
+        <p className="text-xs text-sub">School Console</p>
+      </div>
+      <div className="flex-1 p-4">
+        <NavLinks />
+      </div>
+      <div className="border-t border-line p-4">
+        <p className="truncate text-xs text-sub">{staff?.name}</p>
+        <p className="truncate text-xs text-sub">{staff?.email}</p>
+        <button
+          type="button"
+          onClick={logout}
+          className="mt-2 flex items-center gap-2 text-sm font-medium text-section-pay"
+        >
+          <LogOut className="size-4" />
+          Log out
+        </button>
+      </div>
+    </aside>
+  );
+}
+
+export function ConsoleMobileNav() {
+  const { logout } = useConsoleAuth();
+  return (
+    <div className="border-b border-line bg-card md:hidden">
+      <div className="flex items-center justify-between px-4 py-3">
+        <div>
+          <p className="font-heading text-sm font-bold text-ink">Niraj Public School — Console</p>
+        </div>
+        <button type="button" onClick={logout} className="text-sm font-medium text-section-pay">
+          Log out
+        </button>
+      </div>
+      <div className="overflow-x-auto px-3 pb-3">
+        <NavLinks direction="horizontal" />
+      </div>
+    </div>
+  );
+}
