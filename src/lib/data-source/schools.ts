@@ -1,26 +1,78 @@
 import type { ClassLevel, School } from "@/types";
-import { MOCK_CLASS_LEVELS, MOCK_SCHOOL } from "@/lib/mock/school";
-import { withDelay } from "./_internal";
+import { payloadFind, payloadFindById } from "./payload-rest";
+
+interface PayloadSchoolDoc {
+  id: string;
+  name: string;
+  slug: string;
+  city: string;
+  state: string;
+  logoUrl?: string | null;
+  contactPhone: string;
+  contactEmail: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface PayloadClassLevelDoc {
+  id: string;
+  school: string;
+  label: string;
+  board: string;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function toSchool(doc: PayloadSchoolDoc): School {
+  return {
+    id: doc.id,
+    name: doc.name,
+    slug: doc.slug,
+    city: doc.city,
+    state: doc.state,
+    logoUrl: doc.logoUrl ?? null,
+    contactPhone: doc.contactPhone,
+    contactEmail: doc.contactEmail,
+    createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt,
+  };
+}
+
+function toClassLevel(doc: PayloadClassLevelDoc): ClassLevel {
+  return {
+    id: doc.id,
+    schoolId: doc.school,
+    label: doc.label,
+    board: doc.board,
+    order: doc.order,
+    createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt,
+  };
+}
 
 /** Only one seed school today — registration's school picker is still a real list/select so adding more is a data change, not a UI rewrite. */
 export async function getSchools(): Promise<School[]> {
-  return withDelay([MOCK_SCHOOL]);
+  const docs = await payloadFind<PayloadSchoolDoc>("schools");
+  return docs.map(toSchool);
 }
 
 export async function getSchoolBySlug(slug: string): Promise<School | null> {
-  return withDelay(MOCK_SCHOOL.slug === slug ? MOCK_SCHOOL : null);
+  const docs = await payloadFind<PayloadSchoolDoc>("schools", { slug });
+  return docs[0] ? toSchool(docs[0]) : null;
 }
 
 export async function getSchoolById(id: string): Promise<School | null> {
-  return withDelay(MOCK_SCHOOL.id === id ? MOCK_SCHOOL : null);
+  const doc = await payloadFindById<PayloadSchoolDoc>("schools", id);
+  return doc ? toSchool(doc) : null;
 }
 
 export async function getClassLevelsBySchool(schoolId: string): Promise<ClassLevel[]> {
-  return withDelay(
-    MOCK_CLASS_LEVELS.filter((level) => level.schoolId === schoolId).sort((a, b) => a.order - b.order),
-  );
+  const docs = await payloadFind<PayloadClassLevelDoc>("class-levels", { school: schoolId });
+  return docs.map(toClassLevel).sort((a, b) => a.order - b.order);
 }
 
 export async function getClassLevelById(id: string): Promise<ClassLevel | null> {
-  return withDelay(MOCK_CLASS_LEVELS.find((level) => level.id === id) ?? null);
+  const doc = await payloadFindById<PayloadClassLevelDoc>("class-levels", id);
+  return doc ? toClassLevel(doc) : null;
 }

@@ -36,6 +36,7 @@ import {
   deleteUniformItem,
   getBooksByClass,
   getClassLevelsBySchool,
+  getSchools,
   getStationeryItemsByClass,
   getUniformItemsByClass,
   updateBook,
@@ -44,15 +45,15 @@ import {
 } from "@/lib/data-source";
 import type { Book, ClassLevel, StationeryItem, UniformItem } from "@/types";
 
-const SCHOOL_ID = "school-niraj";
-
 // --- Books --------------------------------------------------------------
 
 function BookForm({
+  schoolId,
   classLevelId,
   editing,
   onDone,
 }: {
+  schoolId: string;
   classLevelId: string;
   editing: Book | null;
   onDone: () => void;
@@ -69,7 +70,7 @@ function BookForm({
       await updateBook(editing.id, { title: title.trim(), subject: subject.trim(), price: priceNum });
     } else {
       await createBook({
-        schoolId: SCHOOL_ID,
+        schoolId,
         classLevelId,
         title: title.trim(),
         subject: subject.trim(),
@@ -110,12 +111,14 @@ function BookForm({
 function BookDialog({
   open,
   onOpenChange,
+  schoolId,
   classLevelId,
   editing,
   onSaved,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  schoolId: string;
   classLevelId: string;
   editing: Book | null;
   onSaved: () => void;
@@ -129,6 +132,7 @@ function BookDialog({
         {open ? (
           <BookForm
             key={editing?.id ?? "new"}
+            schoolId={schoolId}
             classLevelId={classLevelId}
             editing={editing}
             onDone={() => {
@@ -142,14 +146,14 @@ function BookDialog({
   );
 }
 
-function BooksManager({ classLevelId }: { classLevelId: string }) {
+function BooksManager({ schoolId, classLevelId }: { schoolId: string; classLevelId: string }) {
   const [books, setBooks] = useState<Book[] | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Book | null>(null);
 
   const refresh = useCallback(() => {
-    getBooksByClass(SCHOOL_ID, classLevelId).then(setBooks);
-  }, [classLevelId]);
+    getBooksByClass(schoolId, classLevelId).then(setBooks);
+  }, [schoolId, classLevelId]);
 
   useEffect(() => {
     refresh();
@@ -221,6 +225,7 @@ function BooksManager({ classLevelId }: { classLevelId: string }) {
       <BookDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
+        schoolId={schoolId}
         classLevelId={classLevelId}
         editing={editing}
         onSaved={refresh}
@@ -232,10 +237,12 @@ function BooksManager({ classLevelId }: { classLevelId: string }) {
 // --- Stationery -----------------------------------------------------------
 
 function StationeryForm({
+  schoolId,
   classLevelId,
   editing,
   onDone,
 }: {
+  schoolId: string;
   classLevelId: string;
   editing: StationeryItem | null;
   onDone: () => void;
@@ -256,7 +263,7 @@ function StationeryForm({
       });
     } else {
       await createStationeryItem({
-        schoolId: SCHOOL_ID,
+        schoolId,
         classLevelId,
         name: name.trim(),
         quantityLabel: quantityLabel.trim(),
@@ -303,12 +310,14 @@ function StationeryForm({
 function StationeryDialog({
   open,
   onOpenChange,
+  schoolId,
   classLevelId,
   editing,
   onSaved,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  schoolId: string;
   classLevelId: string;
   editing: StationeryItem | null;
   onSaved: () => void;
@@ -322,6 +331,7 @@ function StationeryDialog({
         {open ? (
           <StationeryForm
             key={editing?.id ?? "new"}
+            schoolId={schoolId}
             classLevelId={classLevelId}
             editing={editing}
             onDone={() => {
@@ -335,14 +345,14 @@ function StationeryDialog({
   );
 }
 
-function StationeryManager({ classLevelId }: { classLevelId: string }) {
+function StationeryManager({ schoolId, classLevelId }: { schoolId: string; classLevelId: string }) {
   const [items, setItems] = useState<StationeryItem[] | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<StationeryItem | null>(null);
 
   const refresh = useCallback(() => {
-    getStationeryItemsByClass(SCHOOL_ID, classLevelId).then(setItems);
-  }, [classLevelId]);
+    getStationeryItemsByClass(schoolId, classLevelId).then(setItems);
+  }, [schoolId, classLevelId]);
 
   useEffect(() => {
     refresh();
@@ -414,6 +424,7 @@ function StationeryManager({ classLevelId }: { classLevelId: string }) {
       <StationeryDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
+        schoolId={schoolId}
         classLevelId={classLevelId}
         editing={editing}
         onSaved={refresh}
@@ -425,10 +436,12 @@ function StationeryManager({ classLevelId }: { classLevelId: string }) {
 // --- Uniform & Kit ----------------------------------------------------------
 
 function UniformForm({
+  schoolId,
   classLevelId,
   editing,
   onDone,
 }: {
+  schoolId: string;
   classLevelId: string;
   editing: UniformItem | null;
   onDone: () => void;
@@ -451,7 +464,7 @@ function UniformForm({
       });
     } else {
       await createUniformItem({
-        schoolId: SCHOOL_ID,
+        schoolId,
         classLevelId,
         name: name.trim(),
         category,
@@ -508,12 +521,14 @@ function UniformForm({
 function UniformDialog({
   open,
   onOpenChange,
+  schoolId,
   classLevelId,
   editing,
   onSaved,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  schoolId: string;
   classLevelId: string;
   editing: UniformItem | null;
   onSaved: () => void;
@@ -527,6 +542,7 @@ function UniformDialog({
         {open ? (
           <UniformForm
             key={editing?.id ?? "new"}
+            schoolId={schoolId}
             classLevelId={classLevelId}
             editing={editing}
             onDone={() => {
@@ -540,14 +556,14 @@ function UniformDialog({
   );
 }
 
-function UniformManager({ classLevelId }: { classLevelId: string }) {
+function UniformManager({ schoolId, classLevelId }: { schoolId: string; classLevelId: string }) {
   const [items, setItems] = useState<UniformItem[] | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<UniformItem | null>(null);
 
   const refresh = useCallback(() => {
-    getUniformItemsByClass(SCHOOL_ID, classLevelId).then(setItems);
-  }, [classLevelId]);
+    getUniformItemsByClass(schoolId, classLevelId).then(setItems);
+  }, [schoolId, classLevelId]);
 
   useEffect(() => {
     refresh();
@@ -623,6 +639,7 @@ function UniformManager({ classLevelId }: { classLevelId: string }) {
       <UniformDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
+        schoolId={schoolId}
         classLevelId={classLevelId}
         editing={editing}
         onSaved={refresh}
@@ -634,15 +651,23 @@ function UniformManager({ classLevelId }: { classLevelId: string }) {
 // --- Page ---------------------------------------------------------------
 
 export default function CatalogueManagerPage() {
+  const [schoolId, setSchoolId] = useState<string>("");
   const [classLevels, setClassLevels] = useState<ClassLevel[]>([]);
   const [classLevelId, setClassLevelId] = useState<string>("");
 
   useEffect(() => {
-    getClassLevelsBySchool(SCHOOL_ID).then((result) => {
+    getSchools().then((schools) => {
+      if (schools.length > 0) setSchoolId(schools[0].id);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!schoolId) return;
+    getClassLevelsBySchool(schoolId).then((result) => {
       setClassLevels(result);
       if (result.length > 0) setClassLevelId(result[0].id);
     });
-  }, []);
+  }, [schoolId]);
 
   return (
     <div className="space-y-6">
@@ -671,11 +696,11 @@ export default function CatalogueManagerPage() {
         </Select>
       </div>
 
-      {classLevelId ? (
+      {schoolId && classLevelId ? (
         <div className="space-y-6">
-          <BooksManager classLevelId={classLevelId} />
-          <UniformManager classLevelId={classLevelId} />
-          <StationeryManager classLevelId={classLevelId} />
+          <BooksManager schoolId={schoolId} classLevelId={classLevelId} />
+          <UniformManager schoolId={schoolId} classLevelId={classLevelId} />
+          <StationeryManager schoolId={schoolId} classLevelId={classLevelId} />
         </div>
       ) : null}
     </div>

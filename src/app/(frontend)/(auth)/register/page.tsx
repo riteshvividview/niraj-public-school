@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { OtpStep } from "../_components/otp-step";
 import { useTranslation } from "@/i18n/context";
-import { findUserByMobile, getClassLevelsBySchool, getSchools } from "@/lib/data-source";
+import { createUserProfile, findUserByMobile, getClassLevelsBySchool, getSchools } from "@/lib/data-source";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/store/auth-store";
 import type { ClassLevel, School } from "@/types";
@@ -75,19 +75,34 @@ function RegisterForm() {
     setStep("otp");
   }
 
-  function handleVerified() {
-    const now = new Date().toISOString();
-    login({
-      id: `user-${Date.now()}`,
-      name: name.trim(),
-      mobileNumber: `+91${mobile}`,
-      role: "parent",
-      schoolId,
-      classLevelId,
-      preferredLanguage: language,
-      createdAt: now,
-      updatedAt: now,
-    });
+  async function handleVerified() {
+    const fullMobile = `+91${mobile}`;
+    try {
+      const profile = await createUserProfile({
+        name: name.trim(),
+        mobileNumber: fullMobile,
+        role: "parent",
+        schoolId,
+        classLevelId,
+        preferredLanguage: language,
+      });
+      login(profile);
+    } catch {
+      // Backend unreachable — degrade to a locally-generated profile so the
+      // demo flow still completes; the record just won't exist in Payload.
+      const now = new Date().toISOString();
+      login({
+        id: `user-${Date.now()}`,
+        name: name.trim(),
+        mobileNumber: fullMobile,
+        role: "parent",
+        schoolId,
+        classLevelId,
+        preferredLanguage: language,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
     router.push("/home");
   }
 

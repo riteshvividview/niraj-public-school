@@ -1,20 +1,49 @@
-import type { UniformItem } from "@/types";
-import { MOCK_UNIFORM_ITEMS, sizesFor } from "@/lib/mock/uniform";
-import { createRuntimeCollection, withDelay } from "./_internal";
+import { sizesFor } from "@/lib/mock/uniform";
+import type { UniformItem, UniformSizeOption } from "@/types";
+import { payloadCreate, payloadDelete, payloadFind, payloadFindById, payloadUpdate } from "./payload-rest";
 
-const store = createRuntimeCollection<UniformItem>("nps-runtime-uniform", MOCK_UNIFORM_ITEMS);
+interface PayloadUniformDoc {
+  id: string;
+  school: string;
+  classLevel: string;
+  name: string;
+  category: "uniform" | "kit";
+  description?: string | null;
+  imageUrl?: string | null;
+  sizeOptions: UniformSizeOption[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+function toUniformItem(doc: PayloadUniformDoc): UniformItem {
+  return {
+    id: doc.id,
+    schoolId: doc.school,
+    classLevelId: doc.classLevel,
+    name: doc.name,
+    category: doc.category,
+    description: doc.description ?? undefined,
+    imageUrl: doc.imageUrl ?? null,
+    sizeOptions: doc.sizeOptions,
+    createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt,
+  };
+}
 
 export async function getUniformItemsByClass(
   schoolId: string,
   classLevelId: string,
 ): Promise<UniformItem[]> {
-  return withDelay(
-    store.all().filter((item) => item.schoolId === schoolId && item.classLevelId === classLevelId),
-  );
+  const docs = await payloadFind<PayloadUniformDoc>("uniform-items", {
+    school: schoolId,
+    classLevel: classLevelId,
+  });
+  return docs.map(toUniformItem);
 }
 
 export async function getUniformItemById(id: string): Promise<UniformItem | null> {
-  return withDelay(store.find(id) ?? null);
+  const doc = await payloadFindById<PayloadUniformDoc>("uniform-items", id);
+  return doc ? toUniformItem(doc) : null;
 }
 
 export interface UniformItemInput {
@@ -27,20 +56,17 @@ export interface UniformItemInput {
   basePrice: number;
 }
 
-/** Console — Catalogue Manager. In Phase 9 this becomes a write to the Payload `uniform-items` collection. */
+/** Console — Catalogue Manager. */
 export async function createUniformItem(input: UniformItemInput): Promise<UniformItem> {
-  const now = new Date().toISOString();
-  const { basePrice, ...rest } = input;
-  const item: UniformItem = {
-    id: `uniform-${Date.now()}`,
-    imageUrl: null,
-    createdAt: now,
-    updatedAt: now,
-    sizeOptions: sizesFor(input.classLevelId, basePrice),
-    ...rest,
-  };
-  store.add(item);
-  return withDelay(item);
+  const doc = await payloadCreate<PayloadUniformDoc>("uniform-items", {
+    school: input.schoolId,
+    classLevel: input.classLevelId,
+    name: input.name,
+    category: input.category,
+    description: input.description,
+    sizeOptions: sizesFor(input.classLevelId, input.basePrice),
+  });
+  return toUniformItem(doc);
 }
 
 export async function updateUniformItem(
@@ -48,18 +74,20 @@ export async function updateUniformItem(
   patch: Partial<Omit<UniformItemInput, "schoolId" | "classLevelId">>,
 ): Promise<UniformItem | null> {
   const { basePrice, ...rest } = patch;
-  const existing = store.find(id);
-  const sizeOptions = basePrice !== undefined && existing ? sizesFor(existing.classLevelId, basePrice) : undefined;
-  return withDelay(
-    store.update(id, {
-      ...rest,
-      ...(sizeOptions ? { sizeOptions } : {}),
-      updatedAt: new Date().toISOString(),
-    }),
-  );
+  let sizeOptions: UniformSizeOption[] | undefined;
+  if (basePrice !== undefined) {
+    const existing = await getUniformItemById(id);
+    if (existing) sizeOptions = sizesFor(existing.classLevelId, basePrice);
+  }
+  const doc = await payloadUpdate<PayloadUniformDoc>("uniform-items", id, {
+    ...(rest.name !== undefined ? { name: rest.name } : {}),
+    ...(rest.category !== undefined ? { category: rest.category } : {}),
+    ...(rest.description !== undefined ? { description: rest.description } : {}),
+    ...(sizeOptions ? { sizeOptions } : {}),
+  });
+  return doc ? toUniformItem(doc) : null;
 }
 
 export async function deleteUniformItem(id: string): Promise<void> {
-  store.remove(id);
-  return withDelay(undefined);
+  await payloadDelete("uniform-items", id);
 }

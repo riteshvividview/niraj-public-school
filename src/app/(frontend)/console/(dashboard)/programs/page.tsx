@@ -33,12 +33,11 @@ import {
   createProgram,
   deleteProgram,
   getPrograms,
+  getSchools,
   setProgramStatus,
   updateProgram,
 } from "@/lib/data-source";
 import type { Program, ProgramCategory } from "@/types";
-
-const SCHOOL_ID = "school-niraj";
 
 const CATEGORIES: ProgramCategory[] = [
   "workshop",
@@ -50,9 +49,11 @@ const CATEGORIES: ProgramCategory[] = [
 ];
 
 function ProgramForm({
+  schoolId,
   editing,
   onDone,
 }: {
+  schoolId: string;
   editing: Program | null;
   onDone: () => void;
 }) {
@@ -82,7 +83,7 @@ function ProgramForm({
       });
     } else {
       await createProgram({
-        schoolId: SCHOOL_ID,
+        schoolId,
         title: title.trim(),
         category,
         description: description.trim(),
@@ -187,11 +188,13 @@ function ProgramForm({
 function ProgramDialog({
   open,
   onOpenChange,
+  schoolId,
   editing,
   onSaved,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  schoolId: string;
   editing: Program | null;
   onSaved: () => void;
 }) {
@@ -204,6 +207,7 @@ function ProgramDialog({
         {open ? (
           <ProgramForm
             key={editing?.id ?? "new"}
+            schoolId={schoolId}
             editing={editing}
             onDone={() => {
               onOpenChange(false);
@@ -217,17 +221,21 @@ function ProgramDialog({
 }
 
 export default function ProgramManagerPage() {
+  const [schoolId, setSchoolId] = useState<string>("");
   const [programs, setPrograms] = useState<Program[] | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Program | null>(null);
 
-  const refresh = useCallback(() => {
-    getPrograms({ schoolId: SCHOOL_ID }).then(setPrograms);
+  useEffect(() => {
+    getSchools().then((schools) => {
+      if (schools.length > 0) setSchoolId(schools[0].id);
+    });
   }, []);
 
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
+  const refresh = useCallback(() => {
+    if (!schoolId) return;
+    getPrograms({ schoolId }).then(setPrograms);
+  }, [schoolId]);
 
   async function handleDelete(id: string) {
     if (!window.confirm("Delete this program? This can't be undone in this demo.")) return;
@@ -248,6 +256,7 @@ export default function ProgramManagerPage() {
           <p className="text-sm text-sub">Create and publish programs & events for this school.</p>
         </div>
         <Button
+          disabled={!schoolId}
           onClick={() => {
             setEditing(null);
             setDialogOpen(true);
@@ -319,7 +328,13 @@ export default function ProgramManagerPage() {
         </CardContent>
       </Card>
 
-      <ProgramDialog open={dialogOpen} onOpenChange={setDialogOpen} editing={editing} onSaved={refresh} />
+      <ProgramDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        schoolId={schoolId}
+        editing={editing}
+        onSaved={refresh}
+      />
     </div>
   );
 }
