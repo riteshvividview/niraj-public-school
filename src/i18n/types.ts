@@ -139,6 +139,33 @@ export interface Dictionary {
 
   cart: {
     title: string;
+    orderSummary: string;
+    noFeeNote: string;
+    emptyTitle: string;
+    emptyDescription: string;
+    proceedToPayment: string;
+    changeSize: string;
+  };
+
+  payment: {
+    title: string;
+    methodLabel: string;
+    upi: string;
+    card: string;
+    netbanking: string;
+    payNow: string;
+    processing: string;
+    failureTitle: string;
+    failureDescription: string;
+    tryAgain: string;
+    devFailureToggle: string;
+  };
+
+  receiptsPage: {
+    title: string;
+    detailTitle: string;
+    emptyTitle: string;
+    emptyDescription: string;
   };
 
   profile: {

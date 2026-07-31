@@ -126,6 +126,33 @@ const en: Dictionary = {
 
   cart: {
     title: "Cart & Checkout",
+    orderSummary: "Order Summary",
+    noFeeNote: "No admission fee or delivery charge — you pay only for the items and programs listed above.",
+    emptyTitle: "Your cart is empty",
+    emptyDescription: "Head back to Essentials to select books, uniform or stationery.",
+    proceedToPayment: "Proceed to Payment",
+    changeSize: "Change size",
+  },
+
+  payment: {
+    title: "Payment",
+    methodLabel: "Payment method",
+    upi: "UPI",
+    card: "Debit / Credit Card",
+    netbanking: "Net Banking",
+    payNow: "Pay Now",
+    processing: "Processing your payment…",
+    failureTitle: "Payment failed",
+    failureDescription: "Something went wrong while processing your payment. Please try again.",
+    tryAgain: "Try Again",
+    devFailureToggle: "Simulate a failed payment (demo only)",
+  },
+
+  receiptsPage: {
+    title: "My Receipts",
+    detailTitle: "Receipt",
+    emptyTitle: "No receipts yet",
+    emptyDescription: "Your receipts will show up here after you complete a purchase or enroll in a program.",
   },
 
   profile: {

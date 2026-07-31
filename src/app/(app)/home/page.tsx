@@ -11,6 +11,7 @@ import { SectionCard } from "@/components/shared/section-card";
 import { useTranslation } from "@/i18n/context";
 import { getClassLevelById, getPrograms, getSchoolById } from "@/lib/data-source";
 import { useAuth } from "@/store/auth-store";
+import { useReceipts } from "@/store/receipts-store";
 import type { ClassLevel, Program, School } from "@/types";
 
 const UPCOMING_PROGRAMS_LIMIT = 2;
@@ -18,6 +19,7 @@ const UPCOMING_PROGRAMS_LIMIT = 2;
 export default function HomePage() {
   const { t } = useTranslation();
   const { profile } = useAuth();
+  const receipts = useReceipts();
 
   const [school, setSchool] = useState<School | null>(null);
   const [classLevel, setClassLevel] = useState<ClassLevel | null>(null);
@@ -34,9 +36,7 @@ export default function HomePage() {
 
   if (!profile) return null;
 
-  // Phase 6 introduces real Order/Receipt mock data; until then this is a
-  // stand-in so the empty vs. has-receipts states can both be demonstrated.
-  const hasReceipts = profile.id === "user-ritesh";
+  const hasReceipts = receipts.getForUser(profile.id).length > 0;
 
   return (
     <>

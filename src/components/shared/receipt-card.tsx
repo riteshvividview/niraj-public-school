@@ -72,7 +72,7 @@ export function ReceiptCard({
       </div>
 
       {(onDownload || onShare) && (
-        <div className="flex gap-2 border-t border-line p-4">
+        <div className="flex gap-2 border-t border-line p-4" data-html2canvas-ignore="true">
           {onDownload ? (
             <Button variant="outline" className="flex-1" onClick={onDownload}>
               {t.common.download}
