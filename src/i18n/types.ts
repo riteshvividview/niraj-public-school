@@ -47,6 +47,8 @@ export interface Dictionary {
     download: string;
     share: string;
     showAtCounter: string;
+    showAtEntry: string;
+    ticketLabel: string;
     back: string;
     change: string;
   };
@@ -164,8 +166,45 @@ export interface Dictionary {
   receiptsPage: {
     title: string;
     detailTitle: string;
+    ticketTitle: string;
     emptyTitle: string;
     emptyDescription: string;
+  };
+
+  programsPage: {
+    filterSchoolLabel: string;
+    filterAllSchools: string;
+    filterCategoryLabel: string;
+    filterAllCategories: string;
+    filterDateFromLabel: string;
+    filterMaxFeeLabel: string;
+    filterAnyFee: string;
+    filterSortLabel: string;
+    sortDate: string;
+    sortFeeAsc: string;
+    sortFeeDesc: string;
+    clearFilters: string;
+    noResultsTitle: string;
+    noResultsDescription: string;
+    categories: {
+      workshop: string;
+      sports: string;
+      camp: string;
+      annualDay: string;
+      exhibition: string;
+      extraClass: string;
+    };
+    venueLabel: string;
+    dateLabel: string;
+    feeLabel: string;
+    seatsLabel: string;
+    organizedBy: string;
+    contactLabel: string;
+    enrollAndPay: string;
+    fullTitle: string;
+    fullDescription: string;
+    alreadyInCart: string;
+    viewCart: string;
   };
 
   profile: {

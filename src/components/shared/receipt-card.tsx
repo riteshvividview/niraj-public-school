@@ -16,6 +16,14 @@ export interface ReceiptCardProps {
   /** Encoded into the QR code — the receipt id is enough for this mock phase. */
   qrValue: string;
   status: BadgeStatus;
+  /**
+   * "ticket" is for program/event orders — shows venue prominently, labels
+   * itself "Ticket", and swaps the QR helper text to an entry/check-in
+   * phrasing instead of "collect at the counter". Defaults to "receipt".
+   */
+  variant?: "receipt" | "ticket";
+  /** Only meaningful for the "ticket" variant. */
+  venue?: string;
   /** Wired to real behaviour in Phase 6 — omit to hide the action. */
   onDownload?: () => void;
   onShare?: () => void;
@@ -29,11 +37,14 @@ export function ReceiptCard({
   date,
   qrValue,
   status,
+  variant = "receipt",
+  venue,
   onDownload,
   onShare,
   className,
 }: ReceiptCardProps) {
   const { language, t } = useTranslation();
+  const isTicket = variant === "ticket";
 
   return (
     <div
@@ -46,15 +57,25 @@ export function ReceiptCard({
         <div>
           <p className="font-heading text-base font-semibold text-ink">{schoolName}</p>
           <p className="text-sm text-sub">{formatDate(date, language)}</p>
+          {isTicket && venue ? <p className="text-sm font-medium text-ink">{venue}</p> : null}
         </div>
-        <StatusBadge status={status} />
+        <div className="flex flex-col items-end gap-1.5">
+          {isTicket ? (
+            <span className="rounded-full bg-brand px-2.5 py-0.5 text-xs font-semibold text-white">
+              {t.common.ticketLabel}
+            </span>
+          ) : null}
+          <StatusBadge status={status} />
+        </div>
       </div>
 
       <div className="flex flex-col items-center gap-4 border-b border-dashed border-line p-6">
         <div className="rounded-xl border border-line bg-white p-3">
           <QRCodeSVG value={qrValue} size={144} />
         </div>
-        <p className="text-center text-xs text-sub">{t.common.showAtCounter}</p>
+        <p className="text-center text-xs text-sub">
+          {isTicket ? t.common.showAtEntry : t.common.showAtCounter}
+        </p>
       </div>
 
       <div className="space-y-2 p-5">

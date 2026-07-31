@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/i18n/context";
 import type { Dictionary } from "@/i18n/types";
-import { cn } from "@/lib/utils";
+import { cn, kebabToCamel } from "@/lib/utils";
 
 export type BadgeStatus = keyof Dictionary["status"];
 
@@ -29,7 +29,7 @@ const STATUS_STYLES: Record<BadgeStatus, string> = {
  * (all three languages) — no change needed here.
  */
 export function toBadgeStatus(domainStatus: string): BadgeStatus {
-  return domainStatus.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase()) as BadgeStatus;
+  return kebabToCamel(domainStatus) as BadgeStatus;
 }
 
 export function StatusBadge({

@@ -104,7 +104,7 @@ export default function HomePage() {
                     fee={program.fee}
                     seatsAvailable={program.seatsAvailable}
                     status={program.status}
-                    href="/programs"
+                    href={`/programs/${program.id}`}
                   />
                 ))}
           </div>

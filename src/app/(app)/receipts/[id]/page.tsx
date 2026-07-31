@@ -6,8 +6,8 @@ import { AppHeader } from "@/components/shared/app-header";
 import { ReceiptCard } from "@/components/shared/receipt-card";
 import { toBadgeStatus } from "@/components/shared/status-badge";
 import { useTranslation } from "@/i18n/context";
-import { summarizeOrderItems } from "@/lib/cart-items";
-import { getSchoolById } from "@/lib/data-source";
+import { groupItemsByKind, summarizeOrderItems } from "@/lib/cart-items";
+import { getProgramById, getSchoolById } from "@/lib/data-source";
 import { useReceipts } from "@/store/receipts-store";
 import type { School } from "@/types";
 
@@ -17,14 +17,22 @@ export default function ReceiptDetailPage() {
   const { t } = useTranslation();
   const receipts = useReceipts();
   const [school, setSchool] = useState<School | null>(null);
+  const [venue, setVenue] = useState<string | undefined>(undefined);
   const cardRef = useRef<HTMLDivElement>(null);
 
   const record = receipts.getById(params.id);
+  const grouped = record ? groupItemsByKind(record.order.items) : null;
+  const isTicket = Boolean(grouped && grouped.programs.length === record!.order.items.length && grouped.programs.length > 0);
 
   useEffect(() => {
     if (!record) return;
     getSchoolById(record.order.schoolId).then(setSchool);
   }, [record]);
+
+  useEffect(() => {
+    if (!isTicket || !grouped || grouped.programs.length !== 1) return;
+    getProgramById(grouped.programs[0].refId).then((program) => setVenue(program?.venue));
+  }, [isTicket, grouped]);
 
   useEffect(() => {
     if (receipts.isReady && !record) {
@@ -49,10 +57,12 @@ export default function ReceiptDetailPage() {
     link.click();
   }
 
+  const pageTitle = isTicket ? t.receiptsPage.ticketTitle : t.receiptsPage.detailTitle;
+
   async function handleShare() {
     const shareData = {
-      title: t.receiptsPage.detailTitle,
-      text: `${school?.name ?? ""} — ${t.receiptsPage.detailTitle} ${record!.receipt.id}`,
+      title: pageTitle,
+      text: `${school?.name ?? ""} — ${pageTitle} ${record!.receipt.id}`,
       url: window.location.href,
     };
     if (navigator.share) {
@@ -68,7 +78,7 @@ export default function ReceiptDetailPage() {
 
   return (
     <>
-      <AppHeader title={t.receiptsPage.detailTitle} backHref="/receipts" />
+      <AppHeader title={pageTitle} backHref="/receipts" />
       <div className="space-y-4 p-4 pb-8">
         <div ref={cardRef}>
           <ReceiptCard
@@ -78,6 +88,8 @@ export default function ReceiptDetailPage() {
             date={record.receipt.issuedAt}
             qrValue={record.receipt.qrPayload}
             status={toBadgeStatus(record.receipt.redemptionStatus)}
+            variant={isTicket ? "ticket" : "receipt"}
+            venue={venue}
             onDownload={handleDownload}
             onShare={handleShare}
           />
