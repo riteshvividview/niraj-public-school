@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Niraj Public School — Feature Presentation by VividView</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1a2130;
+    --sub:#5c6472;
+    --bg:#eef1f6;
+    --card:#ffffff;
+    --line:#e4e8f0;
+    --brand:#2f6fed;
+    --brand-2:#0d9488;
+    --accent:#e08e00;
+    --radius:18px;
+    --font-head:'Poppins',-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    --font-body:'Inter',-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family:var(--font-body);
+    background:var(--bg);
+    color:var(--ink);
+    line-height:1.6;
+    font-size:15.5px;
+  }
+  h1,h2,h3,h4{font-family:var(--font-head);}
+  .wrap{max-width:1520px;margin:0 auto;padding:0 44px;}
+  svg.icon{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;display:block;}
+
+  nav.topnav{
+    position:sticky;top:0;z-index:50;
+    background:rgba(255,255,255,.85);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+    box-shadow:0 1px 0 rgba(20,25,40,.02), 0 8px 24px -18px rgba(20,25,40,.25);
+  }
+  nav.topnav::after{
+    content:"";display:block;height:3px;width:100%;
+    background:linear-gradient(90deg,var(--brand),var(--brand-2));
+  }
+  nav.topnav .wrap{display:flex;align-items:center;justify-content:space-between;padding:15px 44px;gap:24px;}
+  .brandmark{display:flex;align-items:center;gap:13px;font-family:var(--font-head);font-weight:700;font-size:16.5px;color:var(--ink);white-space:nowrap;}
+  .brandmark .sub{display:flex;align-items:center;gap:6px;font-family:var(--font-body);font-weight:500;font-size:11.5px;color:var(--sub);margin-top:1px;}
+  .brandmark .sub .dot{width:3px;height:3px;border-radius:50%;background:var(--sub);flex:none;}
+  .brandmark .sub .agency{color:var(--brand);font-weight:700;}
+  .brandmark .mark{
+    width:38px;height:38px;border-radius:11px;
+    background:linear-gradient(145deg,var(--brand),var(--brand-2));
+    box-shadow:0 6px 14px -6px rgba(47,111,237,.55), inset 0 1px 0 rgba(255,255,255,.25);
+    display:flex;align-items:center;justify-content:center;color:#fff;flex:none;
+  }
+  .navlinks{display:flex;flex-wrap:wrap;gap:2px;justify-content:flex-end;}
+  .navlinks a{
+    position:relative;font-size:13px;font-weight:600;color:var(--sub);text-decoration:none;
+    padding:9px 15px;border-radius:9px;white-space:nowrap;transition:color .15s ease,background .15s ease;
+  }
+  .navlinks a::after{
+    content:"";position:absolute;left:15px;right:15px;bottom:5px;height:2px;border-radius:2px;
+    background:var(--brand);transform:scaleX(0);transition:transform .15s ease;transform-origin:left;
+  }
+  .navlinks a:hover{background:#eef4ff;color:var(--brand);}
+  .navlinks a:hover::after{transform:scaleX(1);}
+
+  main{padding:40px 24px 90px;}
+
+  .page{
+    max-width:1520px;margin:0 auto 30px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:26px;
+    box-shadow:0 1px 2px rgba(20,25,40,.04), 0 16px 40px -20px rgba(20,25,40,.16);
+    padding:52px 60px 60px;
+    scroll-margin-top:96px;
+  }
+  .page-eyebrow{display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:700;color:var(--brand);text-transform:uppercase;letter-spacing:.09em;margin-bottom:14px;}
+  .page-eyebrow .pageno{background:#eef0ff;color:var(--brand);padding:3px 10px;border-radius:6px;font-family:var(--font-head);}
+  h2.page-title{font-size:33px;margin:0 0 12px;font-weight:700;letter-spacing:-.01em;}
+  p.page-lead{color:var(--sub);font-size:16.5px;max-width:900px;margin:0 0 38px;}
+
+  /* FEATURE GROUPS */
+  .fgroup{margin-bottom:44px;padding-bottom:44px;border-bottom:1px solid var(--line);}
+  .fgroup:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none;}
+  .fgroup-head{display:flex;align-items:center;gap:14px;margin-bottom:22px;}
+  .fgroup-head .gi{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex:none;}
+  .fgroup-head h3{margin:0;font-size:20px;}
+  .fgroup-head p{margin:3px 0 0;font-size:13.5px;color:var(--sub);}
+  .g-workspace .gi{background:#eef0ff;color:var(--brand);}
+  .g-essentials .gi{background:#e3f6f2;color:var(--brand-2);}
+  .g-programs .gi{background:#fff4e0;color:#a8620b;}
+  .g-pay .gi{background:#fdecea;color:#c2453d;}
+  .g-console .gi{background:#eef2f5;color:#37474f;}
+  .g-platform .gi{background:#f3e8fd;color:#7b3fbf;}
+
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;}
+  .card{
+    background:#fbfbfd;border:1px solid var(--line);border-radius:16px;padding:24px;
+    transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  }
+  .card:hover{transform:translateY(-2px);box-shadow:0 10px 24px -12px rgba(20,25,40,.18);border-color:#d8dcea;}
+  .card .icon{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;}
+  .card h4{margin:0 0 9px;font-size:15.8px;}
+  .card ul{margin:0;padding-left:0;list-style:none;color:var(--sub);font-size:13.4px;}
+  .card li{margin-bottom:7px;padding-left:16px;position:relative;}
+  .card li::before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;border-radius:50%;background:var(--line);}
+
+  /* PAGES LIST */
+  .flowlabel{display:flex;align-items:center;gap:12px;margin:38px 0 18px;}
+  .flowlabel:first-of-type{margin-top:0;}
+  .flowlabel .fl-badge{
+    font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+    padding:5px 13px;border-radius:999px;background:#eef0ff;color:var(--brand);
+  }
+  .flowlabel .fl-line{flex:1;height:1px;background:var(--line);}
+
+  .screens{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;}
+  .screen{background:#fbfbfd;border:1px solid var(--line);border-radius:14px;padding:18px;transition:box-shadow .15s ease, border-color .15s ease;}
+  .screen:hover{box-shadow:0 10px 22px -14px rgba(20,25,40,.2);border-color:#d8dcea;}
+  .screen .top-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .screen .num{
+    font-size:11px;font-weight:700;color:#fff;background:var(--brand);
+    width:21px;height:21px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:var(--font-head);
+  }
+  .screen .ic{color:var(--sub);}
+  .screen h4{margin:0 0 6px;font-size:14.5px;}
+  .screen p{margin:0;font-size:12.5px;color:var(--sub);}
+
+  /* SUGGESTED ADDITIONS TAG */
+  .suggest-tag{
+    display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.05em;padding:3px 9px;border-radius:999px;background:#fff4e0;color:#a8620b;margin-bottom:12px;
+  }
+
+  /* TECH STACK */
+  .stack-diagram{
+    display:flex;align-items:stretch;gap:0;margin-bottom:36px;flex-wrap:wrap;
+  }
+  .stack-block{
+    flex:1;min-width:220px;background:#fbfbfd;border:1px solid var(--line);border-radius:16px;
+    padding:22px 22px;position:relative;
+  }
+  .stack-block .sb-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--brand);margin-bottom:8px;}
+  .stack-block h4{margin:0 0 8px;font-size:17px;}
+  .stack-block p{margin:0;font-size:13px;color:var(--sub);}
+  .stack-arrow{
+    display:flex;align-items:center;justify-content:center;padding:0 14px;color:var(--sub);flex:none;
+  }
+  .cms-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+  .cms-chips span{background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:12.5px;font-weight:600;}
+
+  .benefits-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+  .benefit{background:#fbfbfd;border:1px solid var(--line);border-radius:14px;padding:18px;}
+  .benefit .bnum{
+    width:26px;height:26px;border-radius:7px;background:#eef0ff;color:var(--brand);
+    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;margin-bottom:10px;font-family:var(--font-head);
+  }
+  .benefit h4{margin:0 0 5px;font-size:14px;}
+  .benefit p{margin:0;font-size:12.5px;color:var(--sub);}
+
+  .stack-table{width:100%;border-collapse:collapse;margin-top:8px;}
+  .stack-table th{
+    text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--sub);
+    padding:0 14px 10px;font-weight:700;border-bottom:1px solid var(--line);
+  }
+  .stack-table td{padding:14px;border-bottom:1px solid var(--line);font-size:13.8px;vertical-align:top;}
+  .stack-table tr:last-child td{border-bottom:none;}
+  .stack-table td.layer{font-weight:700;color:var(--ink);white-space:nowrap;}
+  .stack-table td.sub{color:var(--sub);}
+
+  /* TIMELINE */
+  .timeline-total{
+    display:flex;align-items:center;gap:14px;background:linear-gradient(120deg,#eef0ff,#e3f6f2);
+    border:1px solid var(--line);border-radius:16px;padding:18px 24px;margin-bottom:30px;
+  }
+  .timeline-total .tt-icon{
+    width:40px;height:40px;border-radius:11px;background:#fff;color:var(--brand);
+    display:flex;align-items:center;justify-content:center;flex:none;
+  }
+  .timeline-total h4{margin:0 0 2px;font-size:15.5px;}
+  .timeline-total p{margin:0;font-size:13px;color:var(--sub);}
+
+  .tl-track{display:flex;flex-direction:column;gap:0;}
+  .tl-phase{display:flex;gap:22px;position:relative;padding-bottom:30px;}
+  .tl-phase:last-child{padding-bottom:0;}
+  .tl-rail{display:flex;flex-direction:column;align-items:center;flex:none;}
+  .tl-dot{
+    width:38px;height:38px;border-radius:10px;background:var(--brand);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;font-family:var(--font-head);flex:none;
+  }
+  .tl-line{flex:1;width:2px;background:var(--line);margin:6px 0;}
+  .tl-phase:last-child .tl-line{display:none;}
+  .tl-body{flex:1;background:#fbfbfd;border:1px solid var(--line);border-radius:14px;padding:18px 22px;}
+  .tl-body .tl-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;}
+  .tl-body h4{margin:0;font-size:16px;}
+  .tl-duration{
+    font-size:11.5px;font-weight:700;color:var(--brand-2);background:#e3f6f2;padding:4px 11px;border-radius:999px;white-space:nowrap;
+  }
+  .tl-body p{margin:0 0 10px;font-size:13.5px;color:var(--sub);}
+  .tl-deliverables{display:flex;flex-wrap:wrap;gap:8px;}
+  .tl-deliverables span{background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:600;color:var(--ink);}
+
+  footer.pagefoot{text-align:center;color:var(--sub);font-size:13px;padding:10px 0 50px;}
+
+  @media (max-width:1300px){
+    .grid{grid-template-columns:repeat(3,1fr);}
+    .screens{grid-template-columns:repeat(3,1fr);}
+    .benefits-row{grid-template-columns:repeat(2,1fr);}
+  }
+  @media (max-width:900px){
+    .grid{grid-template-columns:repeat(2,1fr);}
+    .screens{grid-template-columns:repeat(2,1fr);}
+    .page{padding:38px 26px 44px;}
+    .navlinks{display:none;}
+    .stack-diagram{flex-direction:column;}
+    .stack-arrow{transform:rotate(90deg);padding:6px 0;}
+  }
+  @media (max-width:560px){
+    .grid{grid-template-columns:1fr;}
+    .screens{grid-template-columns:1fr;}
+    .benefits-row{grid-template-columns:1fr;}
+    .tl-phase{gap:14px;}
+    .tl-dot{width:32px;height:32px;font-size:12px;}
+  }
+  @media print{
+    nav.topnav{display:none;}
+    body{background:#fff;}
+    .page{box-shadow:none;border:none;page-break-after:always;margin-bottom:0;}
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="wrap">
+    <div class="brandmark">
+      <span class="mark"><svg class="icon" viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#fff;"><circle cx="12" cy="12" r="2.6"/><circle cx="12" cy="4" r="2"/><circle cx="5" cy="17" r="2"/><circle cx="19" cy="17" r="2"/><path d="M12 6.6v3M10 13.3l-3.8 2.2M14 13.3l3.8 2.2"/></svg></span>
+      <span>Niraj Public School<span class="sub"><span class="agency">VividView</span><span class="dot"></span>Feature Presentation</span></span>
+    </div>
+    <div class="navlinks">
+      <a href="#page-1">Features</a>
+      <a href="#page-2">Pages</a>
+      <a href="#page-3">What Else</a>
+      <a href="#page-4">Tech Stack</a>
+      <a href="#page-5">Timeline</a>
+    </div>
+  </div>
+</nav>
+
+<main>
+
+  <!-- PAGE 1 — FEATURES -->
+  <section class="page" id="page-1">
+    <div class="page-eyebrow"><span class="pageno">Page 01</span> Feature catalogue</div>
+    <h2 class="page-title">What the platform includes</h2>
+    <p class="page-lead">Each school runs on its own dedicated workspace, listing exactly what a student receives —
+    books, uniform, kit and stationery — plus programs and events. Payment happens online; a digital receipt is
+    generated and shown at the school to collect items or attend the program. Nothing is delivered.</p>
+
+    <div class="fgroup g-workspace">
+      <div class="fgroup-head">
+        <span class="gi"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M8 4v5"/></svg></span>
+        <div><h3>Accounts &amp; School Workspace</h3><p>Every school has its own dedicated workspace — a parent or student account is linked directly to their assigned school, with no cross-school browsing.</p></div>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <div class="icon" style="background:#eef0ff;color:var(--brand);"><svg class="icon" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></div>
+          <h4>Login &amp; Logout</h4>
+          <ul>
+            <li>Mobile number / OTP based account login</li>
+            <li>Secure logout and session handling</li>
+            <li>Password-free, simple for non-technical users</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="icon" style="background:#eef0ff;color:var(--brand);"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></div>
+          <h4>Single Parent/Student Profile</h4>
+          <ul>
+            <li>One straightforward profile per user — no family or multi-child switching</li>
+            <li>Shows their own purchases, programs and receipts</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="icon" style="background:#eef0ff;color:var(--brand);"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M8 4v5"/></svg></div>
+          <h4>Dedicated School Workspace</h4>
+          <ul>
+            <li>Each school is assigned its own workspace on the platform</li>
+            <li>A user's account is tied to their one assigned school</li>
+            <li>No search or discovery of other schools' essentials</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="icon" style="background:#eef0ff;color:var(--brand);"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c3 3 3 15 0 18"/><path d="M12 3c-3 3-3 15 0 18"/></svg></div>
+          <h4>Multilingual Interface</h4>
+          <ul>
+            <li>Full app available in major Indian languages</li>
+            <li>Language preference saved per profile</li>
+            <li>Consistent translation across every screen</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="fgroup g-essentials">
+      <div class="fgroup-head">
+        <span class="gi"><svg class="icon" viewBox="0 0 24 24"><path d="M4 5c2-1 5-1 8 0v14c-3-1-6-1-8 0z"/><path d="M20 5c-2-1-5-1-8 0v14c3-1 6-1 8 0z"/></svg></span>
+        <div><h3>Essentials Store</h3><p>Books, uniform &amp; kit, and stationery — exactly what the school has listed for that student. Nothing is picked à la carte; everything is paid for and collected in person.</p></div>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <div class="icon" style="background:#e3f6f2;color:var(--brand-2);"><svg class="icon" viewBox="0 0 24 24"><path d="M4 5c2-1 5-1 8 0v14c-3-1-6-1-8 0z"/><path d="M20 5c-2-1-5-1-8 0v14c3-1 6-1 8 0z"/></svg></div>
+          <h4>Book List</h4>
+          <ul>
+            <li>Class and board-wise list published by the school</li>
+            <li>Student sees exactly which books they get — not a choice, a fixed list</li>
+            <li>Pay online for the full set, then show the receipt to collect it at school</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="icon" style="background:#e3f6f2;color:var(--brand-2);"><svg class="icon" viewBox="0 0 24 24"><path d="M8 4l4 2 4-2 4 4-3 3v11H7V11L4 8z"/></svg></div>
+          <h4>Uniform &amp; Kit Store</h4>
+          <ul>
+            <li>Uniform sets, PT kit and house-colour items listed by size</li>
+            <li>Size guide to help confirm the correct fit before paying</li>
+            <li>Pay online, then collect the confirmed kit at school</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="icon" style="background:#e3f6f2;color:var(--brand-2);"><svg class="icon" viewBox="0 0 24 24"><rect x="6" y="7" width="12" height="14" rx="3"/><path d="M9 7V5a3 3 0 016 0v2"/><path d="M9 12h6"/></svg></div>
+          <h4>Stationery &amp; Essentials</h4>
+          <ul>
+            <li>Bags, notebooks, geometry box and other essentials the school lists</li>
+            <li>Shown as the fixed starter-kit set for that class</li>
+            <li>Added to the same cart as books and uniform</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="fgroup g-programs">
+      <div class="fgroup-head">
+        <span class="gi"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg></span>
+        <div><h3>Programs &amp; Events</h3><p>The one part of the platform that works across every school — a single global tab where any school can post a program, and any user can find and pay for it, regardless of their assigned school.</p></div>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <div class="icon" style="background:#fff4e0;color:#a8620b;"><svg class="icon" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-4 4V5z"/><path d="M8 9h8"/><path d="M8 12.5h5"/></svg></div>
+          <h4>Global Programs Feed</h4>
+          <ul>
+            <li>Workshops, sports day, annual day, camps, extra classes</li>
+            <li>Posted by any school, visible across the whole platform</li>
+            <li>Filter by school, category, date or fee</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="icon" style="background:#fff4e0;color:#a8620b;"><svg class="icon" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 3v3M16 3v3M4 10h16"/></svg></div>
+          <h4>Program Details &amp; Seats</h4>
+          <ul>
+            <li>Date, venue, description and fee for each program</li>
+            <li>Seat availability shown before payment</li>
+            <li>Organising school's contact info displayed</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="icon" style="background:#fff4e0;color:#a8620b;"><svg class="icon" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 8h8v8H8z"/></svg></div>
+          <h4>Pay &amp; Get Ticket</h4>
+          <ul>
+            <li>Pay the program fee online in the same cart flow</li>
+            <li>Digital ticket/receipt with QR code generated instantly</li>
+            <li>Shown at entry for the school to verify and admit</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="fgroup g-pay">
+      <div class="fgroup-head">
+        <span class="gi"><svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M3 4h2l2.4 12.2a2 2 0 002 1.8h8.2a2 2 0 002-1.7L21 8H6"/></svg></span>
+        <div><h3>Payments &amp; Receipts</h3><p>The core mechanic of the platform — pay online, get a receipt, redeem it in person.</p></div>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <div class="icon" style="background:#fdecea;color:#c2453d;"><svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M3 4h2l2.4 12.2a2 2 0 002 1.8h8.2a2 2 0 002-1.7L21 8H6"/></svg></div>
+          <h4>Unified Cart &amp; Checkout</h4>
+          <ul>
+            <li>Books, uniform, stationery and program fees in one cart</li>
+            <li>UPI, cards and net banking supported</li>
+            <li>No admission fee or delivery charge involved</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="icon" style="background:#fdecea;color:#c2453d;"><svg class="icon" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 8h8v8H8z"/></svg></div>
+          <h4>Digital Receipt with QR Code</h4>
+          <ul>
+            <li>Generated instantly after successful payment</li>
+            <li>Shown to the school to collect items or enter a program</li>
+            <li>Downloadable and shareable as PDF or image</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="icon" style="background:#fdecea;color:#c2453d;"><svg class="icon" viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6z"/><path d="M14 3v4h4"/><path d="M9 12h6"/><path d="M9 16h6"/></svg></div>
+          <h4>Receipt History</h4>
+          <ul>
+            <li>Every past payment and receipt kept in one place</li>
+            <li>Organised by date and by school</li>
+            <li>Useful as proof if a receipt needs to be reprinted</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="fgroup g-console">
+      <div class="fgroup-head">
+        <span class="gi"><svg class="icon" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M8 7h2M8 11h2M8 15h2M14 7h2M14 11h2M14 15h2"/><path d="M10 21v-4h4v4"/></svg></span>
+        <div><h3>School Console</h3><p>What a school needs to publish its own workspace listings and verify payments on the ground.</p></div>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <div class="icon" style="background:#eef2f5;color:#37474f;"><svg class="icon" viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6z"/><path d="M14 3v4h4"/><path d="M9 12h6"/><path d="M9 16h6"/></svg></div>
+          <h4>Catalogue Manager</h4>
+          <ul>
+            <li>Publish the fixed book, uniform and stationery list per class</li>
+            <li>Update prices, sizes and availability anytime</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="icon" style="background:#eef2f5;color:#37474f;"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg></div>
+          <h4>Program Manager</h4>
+          <ul>
+            <li>Create and publish events with date, fee and seat count</li>
+            <li>Close registration once seats are filled</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="icon" style="background:#eef2f5;color:#37474f;"><svg class="icon" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 8h8v8H8z"/></svg></div>
+          <h4>Receipt / QR Verification</h4>
+          <ul>
+            <li>Scan a user's QR receipt at the counter or event gate</li>
+            <li>Marks the item collected or the attendee checked in</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="icon" style="background:#eef2f5;color:#37474f;"><svg class="icon" viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></div>
+          <h4>Payment &amp; Redemption Reports</h4>
+          <ul>
+            <li>See who has paid versus who has actually collected/attended</li>
+            <li>Export summaries for accounting</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="fgroup g-platform">
+      <div class="fgroup-head">
+        <span class="gi"><svg class="icon" viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></span>
+        <div><h3>Platform Foundation</h3><p>The backend that makes accounts, payments and receipts reliable.</p></div>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <div class="icon" style="background:#f3e8fd;color:#7b3fbf;"><svg class="icon" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg></div>
+          <h4>Central Database</h4>
+          <ul>
+            <li>Stores schools, catalogues, programs, accounts and receipts</li>
+            <li>One source of truth across every school workspace</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="icon" style="background:#f3e8fd;color:#7b3fbf;"><svg class="icon" viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
+          <h4>Secure Login System</h4>
+          <ul>
+            <li>OTP-based authentication and session management</li>
+            <li>Role-based access for parents, schools and platform admins</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="icon" style="background:#f3e8fd;color:#7b3fbf;"><svg class="icon" viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg></div>
+          <h4>Notifications</h4>
+          <ul>
+            <li>Payment success and receipt-ready alerts</li>
+            <li>Reminders for upcoming programs/events</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="icon" style="background:#f3e8fd;color:#7b3fbf;"><svg class="icon" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-4 4V5z"/><path d="M8 9h8"/><path d="M8 12.5h5"/></svg></div>
+          <h4>Help &amp; Support</h4>
+          <ul>
+            <li>Multilingual chat/help for payment or receipt issues</li>
+            <li>FAQ for common checkout and collection questions</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- PAGE 2 — PAGES -->
+  <section class="page" id="page-2">
+    <div class="page-eyebrow"><span class="pageno">Page 02</span> App structure</div>
+    <h2 class="page-title">Pages to include in the visual</h2>
+    <p class="page-lead">Split into the parent/student-facing app and the school console, in the order a user would move through them.</p>
+
+    <div class="flowlabel"><span class="fl-badge">Parent / Student App</span><span class="fl-line"></span></div>
+    <div class="screens">
+      <div class="screen"><div class="top-row"><span class="num">1</span><span class="ic"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c3 3 3 15 0 18"/><path d="M12 3c-3 3-3 15 0 18"/></svg></span></div><h4>Language Selector</h4><p>First screen — choose the app's display language.</p></div>
+      <div class="screen"><div class="top-row"><span class="num">2</span><span class="ic"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></span></div><h4>Login / OTP</h4><p>Mobile-number based login, no passwords.</p></div>
+      <div class="screen"><div class="top-row"><span class="num">3</span><span class="ic"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span></div><h4>Home</h4><p>The user's assigned school essentials, plus a tab for the global Programs &amp; Events feed.</p></div>
+      <div class="screen"><div class="top-row"><span class="num">4</span><span class="ic"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span></div><h4>My School Essentials</h4><p>The assigned school's own books, uniform and stationery listings.</p></div>
+      <div class="screen"><div class="top-row"><span class="num">5</span><span class="ic"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M4 5c2-1 5-1 8 0v14c-3-1-6-1-8 0z"/><path d="M20 5c-2-1-5-1-8 0v14c3-1 6-1 8 0z"/></svg></span></div><h4>Book List</h4><p>Fixed class-wise list showing exactly what the student will receive.</p></div>
+      <div class="screen"><div class="top-row"><span class="num">6</span><span class="ic"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M8 4l4 2 4-2 4 4-3 3v11H7V11L4 8z"/></svg></span></div><h4>Uniform &amp; Kit</h4><p>Size guide and confirmation for the listed uniform and kit.</p></div>
+      <div class="screen"><div class="top-row"><span class="num">7</span><span class="ic"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><rect x="6" y="7" width="12" height="14" rx="3"/><path d="M9 7V5a3 3 0 016 0v2"/><path d="M9 12h6"/></svg></span></div><h4>Stationery</h4><p>The fixed starter-kit set of essential items for the class.</p></div>
+      <div class="screen"><div class="top-row"><span class="num">8</span><span class="ic"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg></span></div><h4>Programs &amp; Events Feed</h4><p>Global list of programs across all schools, with filters.</p></div>
+      <div class="screen"><div class="top-row"><span class="num">9</span><span class="ic"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 3v3M16 3v3M4 10h16"/></svg></span></div><h4>Program Details</h4><p>Date, venue, fee and seat availability for one program.</p></div>
+      <div class="screen"><div class="top-row"><span class="num">10</span><span class="ic"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M3 4h2l2.4 12.2a2 2 0 002 1.8h8.2a2 2 0 002-1.7L21 8H6"/></svg></span></div><h4>Cart &amp; Checkout</h4><p>Everything selected across essentials and programs, one payment.</p></div>
+      <div class="screen"><div class="top-row"><span class="num">11</span><span class="ic"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 8h8v8H8z"/></svg></span></div><h4>Payment Confirmation / Receipt</h4><p>Success screen showing the digital receipt and QR code.</p></div>
+      <div class="screen"><div class="top-row"><span class="num">12</span><span class="ic"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M6 3h9l3 3v15H6z"/><path d="M14 3v4h4"/><path d="M9 12h6"/><path d="M9 16h6"/></svg></span></div><h4>My Receipts</h4><p>History of every past payment and receipt.</p></div>
+      <div class="screen"><div class="top-row"><span class="num">13</span><span class="ic"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></span></div><h4>My Profile</h4><p>Single profile screen — language preference, account details, logout.</p></div>
+      <div class="screen"><div class="top-row"><span class="num">14</span><span class="ic"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M4 5h16v11H9l-4 4V5z"/><path d="M8 9h8"/><path d="M8 12.5h5"/></svg></span></div><h4>Help &amp; Support</h4><p>Multilingual chat and FAQ for payment or receipt issues.</p></div>
+    </div>
+
+    <div class="flowlabel"><span class="fl-badge">School Console</span><span class="fl-line"></span></div>
+    <div class="screens">
+      <div class="screen"><div class="top-row"><span class="num">15</span><span class="ic"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></span></div><h4>School Login</h4><p>Separate secure login for school staff accounts.</p></div>
+      <div class="screen"><div class="top-row"><span class="num">16</span><span class="ic"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M6 3h9l3 3v15H6z"/><path d="M14 3v4h4"/><path d="M9 12h6"/><path d="M9 16h6"/></svg></span></div><h4>Catalogue Manager</h4><p>Add/edit the fixed book, uniform and stationery listings by class.</p></div>
+      <div class="screen"><div class="top-row"><span class="num">17</span><span class="ic"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg></span></div><h4>Program Manager</h4><p>Create and publish a new program or event with fee and seats.</p></div>
+      <div class="screen"><div class="top-row"><span class="num">18</span><span class="ic"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 8h8v8H8z"/></svg></span></div><h4>Receipt / QR Scanner</h4><p>Scan a user's receipt to confirm collection or entry.</p></div>
+      <div class="screen"><div class="top-row"><span class="num">19</span><span class="ic"><svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></span></div><h4>Reports Dashboard</h4><p>Payments received versus items collected / attendees checked in.</p></div>
+    </div>
+  </section>
+
+  <!-- PAGE 3 — WHAT ELSE COULD BE ADDED -->
+  <section class="page" id="page-3">
+    <div class="page-eyebrow"><span class="pageno">Page 03</span> Research-backed additions</div>
+    <h2 class="page-title">What else could be added</h2>
+    <p class="page-lead">Based on how established school-payment platforms and Indian EdTech/data-privacy practice
+    handle this exact model, here is what's worth adding once the core platform above is validated. These are
+    proposed additions, not committed scope.</p>
+
+    <div class="fgroup g-pay">
+      <div class="fgroup-head">
+        <span class="gi"><svg class="icon" viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg></span>
+        <div><h3>Engagement &amp; Payments</h3><p>What keeps users coming back and reduces missed payments — seen across mainstream school-payment platforms.</p></div>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <span class="suggest-tag">Suggested</span>
+          <div class="icon" style="background:#fdecea;color:#c2453d;"><svg class="icon" viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg></div>
+          <h4>Automated Payment Reminders</h4>
+          <ul>
+            <li>SMS / WhatsApp / push reminders before a program's registration closes</li>
+            <li>Cuts missed payments and manual follow-up by school staff</li>
+          </ul>
+        </div>
+        <div class="card">
+          <span class="suggest-tag">Suggested</span>
+          <div class="icon" style="background:#fdecea;color:#c2453d;"><svg class="icon" viewBox="0 0 24 24"><path d="M3 10h18M7 15h4"/><rect x="3" y="6" width="18" height="13" rx="2"/></svg></div>
+          <h4>Cancellations &amp; Refunds</h4>
+          <ul>
+            <li>Structured refund flow if a program is cancelled or a seat can't be honoured</li>
+            <li>Refund status visible in the receipt history</li>
+          </ul>
+        </div>
+        <div class="card">
+          <span class="suggest-tag">Suggested</span>
+          <div class="icon" style="background:#fdecea;color:#c2453d;"><svg class="icon" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h1v6H9zM14 9h1v6h-1z"/></svg></div>
+          <h4>Waitlist for Full Programs</h4>
+          <ul>
+            <li>Join a waitlist once seats run out, auto-notified if a spot opens</li>
+            <li>Prevents lost interest when a popular event fills up fast</li>
+          </ul>
+        </div>
+        <div class="card">
+          <span class="suggest-tag">Suggested</span>
+          <div class="icon" style="background:#fdecea;color:#c2453d;"><svg class="icon" viewBox="0 0 24 24"><path d="M12 17.3l-5.4 3 1-6-4.4-4.3 6-.9L12 3l2.8 5.1 6 .9-4.4 4.3 1 6z"/></svg></div>
+          <h4>Ratings &amp; Feedback on Programs</h4>
+          <ul>
+            <li>Quick rating after a program to help schools improve future ones</li>
+            <li>Builds trust in the global programs feed over time</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="fgroup g-console">
+      <div class="fgroup-head">
+        <span class="gi"><svg class="icon" viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></span>
+        <div><h3>Trust, Privacy &amp; Compliance</h3><p>India's DPDP Act treats a minor's data strictly — these are close to non-negotiable once real students are on the platform.</p></div>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <span class="suggest-tag">Recommended</span>
+          <div class="icon" style="background:#eef2f5;color:#37474f;"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></div>
+          <h4>Verifiable Parental Consent</h4>
+          <ul>
+            <li>DPDP-compliant consent flow before storing any student data</li>
+            <li>Required since accounts belong to minors, not just adults</li>
+          </ul>
+        </div>
+        <div class="card">
+          <span class="suggest-tag">Recommended</span>
+          <div class="icon" style="background:#eef2f5;color:#37474f;"><svg class="icon" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 8h8v8H8z"/></svg></div>
+          <h4>Data Rights Portal</h4>
+          <ul>
+            <li>Self-service screen to view, correct, or request deletion of data</li>
+            <li>Matches the "data principal rights" requirement under DPDP</li>
+          </ul>
+        </div>
+        <div class="card">
+          <span class="suggest-tag">Recommended</span>
+          <div class="icon" style="background:#eef2f5;color:#37474f;"><svg class="icon" viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
+          <h4>Role-Based Access &amp; Audit Log</h4>
+          <ul>
+            <li>School staff only see data relevant to their role</li>
+            <li>Every access to student data is logged for accountability</li>
+          </ul>
+        </div>
+        <div class="card">
+          <span class="suggest-tag">Recommended</span>
+          <div class="icon" style="background:#eef2f5;color:#37474f;"><svg class="icon" viewBox="0 0 24 24"><path d="M12 4l9 15H3z"/><path d="M12 10v4"/><path d="M12 17h.01"/></svg></div>
+          <h4>Fraud &amp; Anomaly Detection</h4>
+          <ul>
+            <li>Flags duplicate payments or unusual receipt-redemption patterns</li>
+            <li>Protects both the school and the paying parent</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="fgroup g-platform">
+      <div class="fgroup-head">
+        <span class="gi"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M8 4v5"/></svg></span>
+        <div><h3>Platform-Level Additions</h3><p>Needed once the platform runs many schools at once, not just one pilot.</p></div>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <span class="suggest-tag">Later phase</span>
+          <div class="icon" style="background:#f3e8fd;color:#7b3fbf;"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
+          <h4>Super Admin Panel</h4>
+          <ul>
+            <li>Platform team onboards new schools and manages their workspaces</li>
+            <li>Cross-school analytics without exposing schools to each other</li>
+          </ul>
+        </div>
+        <div class="card">
+          <span class="suggest-tag">Later phase</span>
+          <div class="icon" style="background:#f3e8fd;color:#7b3fbf;"><svg class="icon" viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></div>
+          <h4>Sales &amp; Demand Analytics</h4>
+          <ul>
+            <li>Helps a school forecast how many books/kits to stock next term</li>
+            <li>Shows platform team growth across schools and regions</li>
+          </ul>
+        </div>
+        <div class="card">
+          <span class="suggest-tag">Later phase</span>
+          <div class="icon" style="background:#f3e8fd;color:#7b3fbf;"><svg class="icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M2 11h20"/></svg></div>
+          <h4>Offline-Friendly / Low-Data Mode</h4>
+          <ul>
+            <li>Lightweight PWA mode for patchy rural connectivity</li>
+            <li>Receipt still viewable offline once downloaded once</li>
+          </ul>
+        </div>
+        <div class="card">
+          <span class="suggest-tag">Later phase</span>
+          <div class="icon" style="background:#f3e8fd;color:#7b3fbf;"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></div>
+          <h4>Verified-School Badge</h4>
+          <ul>
+            <li>Visible trust marker once a school is verified by the platform team</li>
+            <li>Reassures parents paying an unfamiliar school for the first time</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE 4 — TECH STACK -->
+  <section class="page" id="page-4">
+    <div class="page-eyebrow"><span class="pageno">Page 04</span> Technical approach</div>
+    <h2 class="page-title">Tech stack</h2>
+    <p class="page-lead">A modern, decoupled architecture: a fast Next.js frontend that talks to a Headless CMS
+    through an API layer. This is the approach most production apps of this size use today, rather than picking one
+    monolithic framework.</p>
+
+    <div class="stack-diagram">
+      <div class="stack-block">
+        <div class="sb-label">Frontend</div>
+        <h4>Next.js</h4>
+        <p>Renders every screen — parent app and school console. Server-side rendering keeps it fast on low-end phones and weak networks.</p>
+      </div>
+      <div class="stack-arrow"><svg class="icon" viewBox="0 0 24 24" style="width:26px;height:26px;"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+      <div class="stack-block">
+        <div class="sb-label">API layer</div>
+        <h4>REST API / GraphQL</h4>
+        <p>The contract between the frontend and the content layer — handles catalogues, programs, orders and receipts.</p>
+      </div>
+      <div class="stack-arrow"><svg class="icon" viewBox="0 0 24 24" style="width:26px;height:26px;"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+      <div class="stack-block">
+        <div class="sb-label">Content layer</div>
+        <h4>Headless CMS</h4>
+        <p>Where schools' catalogues and programs actually live — editable without touching code.</p>
+        <div class="cms-chips">
+          <span>Strapi</span><span>Sanity</span><span>Contentful</span><span>Directus</span><span>Payload CMS</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="fgroup" style="border-bottom:none;padding-bottom:0;">
+      <div class="fgroup-head">
+        <span class="gi" style="background:#eef0ff;color:var(--brand);"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9"/></svg></span>
+        <div><h3>Why this combination</h3><p>Not choosing one or the other — using both together, the way most modern apps are built.</p></div>
+      </div>
+      <div class="benefits-row">
+        <div class="benefit"><div class="bnum">1</div><h4>Fast frontend</h4><p>Next.js gives quick page loads and a smooth mobile experience for parents.</p></div>
+        <div class="benefit"><div class="bnum">2</div><h4>Easy content editing</h4><p>School staff update book lists and programs through the CMS — no developer needed.</p></div>
+        <div class="benefit"><div class="bnum">3</div><h4>Separation of concerns</h4><p>Design and logic stay independent from content, so either can change without breaking the other.</p></div>
+        <div class="benefit"><div class="bnum">4</div><h4>Easier scaling</h4><p>Onboarding a new school's workspace is a content change, not a code change.</p></div>
+      </div>
+    </div>
+
+    <div class="fgroup" style="border-top:1px solid var(--line);padding-top:36px;margin-top:36px;">
+      <div class="fgroup-head">
+        <span class="gi" style="background:#e3f6f2;color:var(--brand-2);"><svg class="icon" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg></span>
+        <div><h3>Supporting services</h3><p>The rest of the stack needed to make payments, receipts, and notifications work end to end.</p></div>
+      </div>
+      <table class="stack-table">
+        <tr><th>Layer</th><th>Choice</th><th>Purpose</th></tr>
+        <tr><td class="layer">Database</td><td>PostgreSQL</td><td class="sub">Accounts, orders, receipts, and QR redemption records</td></tr>
+        <tr><td class="layer">Authentication</td><td>OTP / mobile-based auth service</td><td class="sub">Password-free login and logout for parents and school staff</td></tr>
+        <tr><td class="layer">Payments</td><td>Razorpay / Stripe (India-ready gateway)</td><td class="sub">UPI, card and net-banking checkout, refund handling</td></tr>
+        <tr><td class="layer">Receipts &amp; QR</td><td>Server-side PDF + QR generation</td><td class="sub">Instant digital receipt after payment, scanned at school</td></tr>
+        <tr><td class="layer">Notifications</td><td>SMS / WhatsApp Business API</td><td class="sub">Payment confirmations and program reminders</td></tr>
+        <tr><td class="layer">Hosting</td><td>Vercel (frontend) + managed cloud (API/DB)</td><td class="sub">Auto-scaling, low-maintenance deployment</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- PAGE 5 — TIMELINE -->
+  <section class="page" id="page-5">
+    <div class="page-eyebrow"><span class="pageno">Page 05</span> Delivery plan</div>
+    <h2 class="page-title">Project timeline</h2>
+    <p class="page-lead">A week-by-week plan to take this from kickoff to a live pilot in two months,
+    with enough time for a proper build, QA and a real pilot — not just a rushed cut.</p>
+
+    <div class="timeline-total">
+      <span class="tt-icon"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span>
+      <div><h4>Estimated total: 8 weeks (2 months)</h4><p>From kickoff to a live pilot running with one onboarded school.</p></div>
+    </div>
+
+    <div class="tl-track">
+      <div class="tl-phase">
+        <div class="tl-rail"><div class="tl-dot">1</div><div class="tl-line"></div></div>
+        <div class="tl-body">
+          <div class="tl-top"><h4>Discovery &amp; Design</h4><span class="tl-duration">Days 1–7 · Week 1</span></div>
+          <p>Finalise scope, map each school's catalogue/program data model, wireframe every screen, lock the visual language.</p>
+          <div class="tl-deliverables"><span>Requirements sign-off</span><span>Wireframes</span><span>CMS schema plan</span></div>
+        </div>
+      </div>
+      <div class="tl-phase">
+        <div class="tl-rail"><div class="tl-dot">2</div><div class="tl-line"></div></div>
+        <div class="tl-body">
+          <div class="tl-top"><h4>Core Platform Build</h4><span class="tl-duration">Days 8–18 · Week 2–3</span></div>
+          <p>Next.js app shell, CMS setup, OTP login/logout, and the per-school workspace model, built in parallel with design handoff.</p>
+          <div class="tl-deliverables"><span>Login &amp; logout</span><span>School workspace</span><span>CMS wired to frontend</span></div>
+        </div>
+      </div>
+      <div class="tl-phase">
+        <div class="tl-rail"><div class="tl-dot">3</div><div class="tl-line"></div></div>
+        <div class="tl-body">
+          <div class="tl-top"><h4>Essentials Store &amp; Payments</h4><span class="tl-duration">Days 19–30 · Week 3–5</span></div>
+          <p>Book/uniform/stationery catalogue display, unified cart, payment gateway integration, receipt and QR generation.</p>
+          <div class="tl-deliverables"><span>Catalogue manager</span><span>Checkout</span><span>Digital receipts</span></div>
+        </div>
+      </div>
+      <div class="tl-phase">
+        <div class="tl-rail"><div class="tl-dot">4</div><div class="tl-line"></div></div>
+        <div class="tl-body">
+          <div class="tl-top"><h4>Programs &amp; Events + School Console</h4><span class="tl-duration">Days 31–42 · Week 5–6</span></div>
+          <p>Global programs feed, program manager for schools, QR scanner for collection/entry, and reports dashboard.</p>
+          <div class="tl-deliverables"><span>Programs feed</span><span>QR scanner</span><span>Reports dashboard</span></div>
+        </div>
+      </div>
+      <div class="tl-phase">
+        <div class="tl-rail"><div class="tl-dot">5</div><div class="tl-line"></div></div>
+        <div class="tl-body">
+          <div class="tl-top"><h4>QA, Multilingual &amp; Security Pass</h4><span class="tl-duration">Days 43–50 · Week 7</span></div>
+          <p>Translation review across every screen, DPDP-aligned consent flow, security and payment testing, bug fixing.</p>
+          <div class="tl-deliverables"><span>Multilingual QA</span><span>Consent flow</span><span>Security testing</span></div>
+        </div>
+      </div>
+      <div class="tl-phase">
+        <div class="tl-rail"><div class="tl-dot">6</div></div>
+        <div class="tl-body">
+          <div class="tl-top"><h4>Pilot Launch</h4><span class="tl-duration">Days 51–56 · Week 8</span></div>
+          <p>Go live with one onboarded school, gather real usage feedback, fix critical issues before wider rollout.</p>
+          <div class="tl-deliverables"><span>Live pilot school</span><span>Feedback loop</span><span>Go/no-go for rollout</span></div>
+        </div>
+      </div>
+    </div>
+
+    <p style="margin-top:26px;font-size:12.5px;color:var(--sub);">Note: a 2-month timeline gives room for a
+    dedicated team to build, test and pilot properly — the "What Else Could Be Added" items on Page 03 are
+    treated as a Phase 2, after this initial pilot.</p>
+  </section>
+
+</main>
+
+<footer class="pagefoot">Feature presentation · prepared for internal review · 5 pages</footer>
+
+</body>
+</html>
