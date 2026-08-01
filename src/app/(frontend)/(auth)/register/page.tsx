@@ -89,19 +89,20 @@ function RegisterForm() {
 
   return (
     <AuthShell
-      imageSrc="https://commons.wikimedia.org/wiki/Special:FilePath/School_children_in_a_classroom_in_Tel_Aviv_(FL61797978).jpg?width=1200"
-      imageAlt="School children sitting together in a classroom"
+      imageSrc="https://commons.wikimedia.org/wiki/Special:FilePath/School_children_at_Nandikotkur_village_Andhra_Pradesh_India.jpg?width=1200"
+      imageAlt="A large group of school children"
       eyebrow="Join Niraj Public School"
       title={t.auth.register.title}
       subtitle={t.auth.register.subtitle}
     >
-      <form className="space-y-4" onSubmit={handleSubmit}>
+      <form className="space-y-5" onSubmit={handleSubmit}>
         <div className="space-y-2">
           <Label htmlFor="name">{t.auth.register.nameLabel}</Label>
           <div className="relative">
-            <User className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-sub" />
+            <User className="pointer-events-none absolute top-1/2 left-3.5 size-[18px] -translate-y-1/2 text-sub" />
             <Input
               id="name"
+              autoFocus
               placeholder={t.auth.register.namePlaceholder}
               value={name}
               onChange={(event) => {
@@ -109,7 +110,7 @@ function RegisterForm() {
                 setErrors((prev) => ({ ...prev, name: undefined }));
               }}
               aria-invalid={errors.name ? true : undefined}
-              className={cn("pl-9", errors.name && "border-destructive")}
+              className={cn("h-12 pl-10 text-base", errors.name && "border-destructive")}
             />
           </div>
           {errors.name ? <p className="text-sm text-destructive">{errors.name}</p> : null}
@@ -118,7 +119,7 @@ function RegisterForm() {
         <div className="space-y-2">
           <Label htmlFor="email">{t.auth.register.emailLabel}</Label>
           <div className="relative">
-            <Mail className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-sub" />
+            <Mail className="pointer-events-none absolute top-1/2 left-3.5 size-[18px] -translate-y-1/2 text-sub" />
             <Input
               id="email"
               type="email"
@@ -131,17 +132,17 @@ function RegisterForm() {
                 setAlreadyRegistered(false);
               }}
               aria-invalid={errors.email ? true : undefined}
-              className={cn("pl-9", errors.email && "border-destructive")}
+              className={cn("h-12 pl-10 text-base", errors.email && "border-destructive")}
             />
           </div>
           {errors.email ? <p className="text-sm text-destructive">{errors.email}</p> : null}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="password">{t.auth.register.passwordLabel}</Label>
             <div className="relative">
-              <Lock className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-sub" />
+              <Lock className="pointer-events-none absolute top-1/2 left-3.5 size-[18px] -translate-y-1/2 text-sub" />
               <Input
                 id="password"
                 type="password"
@@ -153,7 +154,7 @@ function RegisterForm() {
                   setErrors((prev) => ({ ...prev, password: undefined }));
                 }}
                 aria-invalid={errors.password ? true : undefined}
-                className={cn("pl-9", errors.password && "border-destructive")}
+                className={cn("h-12 pl-10 text-base", errors.password && "border-destructive")}
               />
             </div>
             {errors.password ? <p className="text-sm text-destructive">{errors.password}</p> : null}
@@ -162,7 +163,7 @@ function RegisterForm() {
           <div className="space-y-2">
             <Label htmlFor="confirm-password">{t.auth.register.confirmPasswordLabel}</Label>
             <div className="relative">
-              <Lock className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-sub" />
+              <Lock className="pointer-events-none absolute top-1/2 left-3.5 size-[18px] -translate-y-1/2 text-sub" />
               <Input
                 id="confirm-password"
                 type="password"
@@ -173,7 +174,7 @@ function RegisterForm() {
                   setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
                 }}
                 aria-invalid={errors.confirmPassword ? true : undefined}
-                className={cn("pl-9", errors.confirmPassword && "border-destructive")}
+                className={cn("h-12 pl-10 text-base", errors.confirmPassword && "border-destructive")}
               />
             </div>
             {errors.confirmPassword ? (
@@ -192,7 +193,7 @@ function RegisterForm() {
               setErrors((prev) => ({ ...prev, school: undefined }));
             }}
           >
-            <SelectTrigger className={cn("w-full", errors.school && "border-destructive")}>
+            <SelectTrigger className={cn("h-12 w-full text-base", errors.school && "border-destructive")}>
               <SelectValue placeholder={schools === null ? "…" : t.auth.register.schoolLabel} />
             </SelectTrigger>
             <SelectContent>
@@ -216,7 +217,7 @@ function RegisterForm() {
             }}
             disabled={!schoolId || classLevels.length === 0}
           >
-            <SelectTrigger className={cn("w-full", errors.classLevel && "border-destructive")}>
+            <SelectTrigger className={cn("h-12 w-full text-base", errors.classLevel && "border-destructive")}>
               <SelectValue placeholder={t.auth.register.classPlaceholder} />
             </SelectTrigger>
             <SelectContent>
@@ -241,7 +242,7 @@ function RegisterForm() {
           </div>
         ) : null}
 
-        <Button type="submit" size="lg" className="w-full gap-2" disabled={isSubmitting}>
+        <Button type="submit" size="lg" className="h-12 w-full gap-2 text-base" disabled={isSubmitting}>
           {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
           {t.auth.register.submit}
         </Button>

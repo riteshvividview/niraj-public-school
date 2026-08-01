@@ -40,21 +40,22 @@ function LoginForm() {
 
   return (
     <AuthShell
-      imageSrc="https://commons.wikimedia.org/wiki/Special:FilePath/Classroom_in_East_Sikkim%2C_India_(3848315549).jpg?width=1200"
-      imageAlt="Children in a primary school classroom"
+      imageSrc="https://commons.wikimedia.org/wiki/Special:FilePath/Students_reading_in_leisure_time.jpg?width=1200"
+      imageAlt="School children reading books together"
       eyebrow="Welcome back"
       title={t.auth.login.title}
       subtitle={t.auth.login.subtitle}
     >
-      <form className="space-y-4" onSubmit={handleSubmit}>
+      <form className="space-y-5" onSubmit={handleSubmit}>
         <div className="space-y-2">
           <Label htmlFor="email">{t.auth.login.emailLabel}</Label>
           <div className="relative">
-            <Mail className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-sub" />
+            <Mail className="pointer-events-none absolute top-1/2 left-3.5 size-[18px] -translate-y-1/2 text-sub" />
             <Input
               id="email"
               type="email"
               autoComplete="email"
+              autoFocus
               placeholder={t.auth.login.emailPlaceholder}
               value={email}
               onChange={(event) => {
@@ -62,7 +63,7 @@ function LoginForm() {
                 setError(null);
               }}
               aria-invalid={error ? true : undefined}
-              className={cn("pl-9", error && "border-destructive")}
+              className={cn("h-12 pl-10 text-base", error && "border-destructive")}
               required
             />
           </div>
@@ -71,7 +72,7 @@ function LoginForm() {
         <div className="space-y-2">
           <Label htmlFor="password">{t.auth.login.passwordLabel}</Label>
           <div className="relative">
-            <Lock className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-sub" />
+            <Lock className="pointer-events-none absolute top-1/2 left-3.5 size-[18px] -translate-y-1/2 text-sub" />
             <Input
               id="password"
               type="password"
@@ -83,7 +84,7 @@ function LoginForm() {
                 setError(null);
               }}
               aria-invalid={error ? true : undefined}
-              className={cn("pl-9", error && "border-destructive")}
+              className={cn("h-12 pl-10 text-base", error && "border-destructive")}
               required
             />
           </div>
@@ -91,7 +92,7 @@ function LoginForm() {
 
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
-        <Button type="submit" size="lg" className="w-full gap-2" disabled={isSubmitting}>
+        <Button type="submit" size="lg" className="h-12 w-full gap-2 text-base" disabled={isSubmitting}>
           {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
           {t.auth.login.submit}
         </Button>

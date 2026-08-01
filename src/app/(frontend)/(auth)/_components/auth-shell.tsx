@@ -36,9 +36,9 @@ export function AuthShell({ imageSrc, imageAlt, eyebrow, title, subtitle, childr
         <img
           src={imageSrc}
           alt={imageAlt}
-          className="absolute inset-0 size-full object-cover animate-in fade-in duration-700"
+          className="absolute inset-0 size-full object-cover brightness-110 contrast-105 animate-in fade-in duration-700"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/10 to-transparent md:bg-gradient-to-br md:from-ink/60 md:via-brand/25 md:to-brand-2/35" />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/55 via-transparent to-transparent md:bg-gradient-to-t md:from-ink/50 md:via-transparent md:to-transparent" />
         <span className="absolute bottom-4 left-4 w-fit rounded-full bg-white/15 px-3 py-1 text-xs font-semibold tracking-wide text-white uppercase backdrop-blur-sm md:bottom-8 md:left-8">
           {eyebrow}
         </span>
