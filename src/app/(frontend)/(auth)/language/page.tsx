@@ -21,8 +21,8 @@ export default function LanguageSelectPage() {
 
   return (
     <AuthShell
-      imageSrc="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=1200&q=80&auto=format&fit=crop"
-      imageAlt="An open book resting on a wooden desk"
+      imageSrc="https://commons.wikimedia.org/wiki/Special:FilePath/Tamil_Nadu_school_kids.jpg?width=1200"
+      imageAlt="School children in their classroom"
       eyebrow="Niraj Public School"
       title={t.auth.language.title}
       subtitle={t.auth.language.subtitle}

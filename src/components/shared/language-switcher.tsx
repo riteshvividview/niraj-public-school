@@ -23,7 +23,7 @@ export function LanguageOptionList({
   const { language, setLanguage } = useTranslation();
 
   return (
-    <div className={cn("flex flex-col gap-2", className)}>
+    <div className={cn("flex flex-col gap-3", className)}>
       {SUPPORTED_LANGUAGES.map((option) => {
         const isActive = option.code === language;
         return (
@@ -35,17 +35,19 @@ export function LanguageOptionList({
               onSelect?.(option.code);
             }}
             className={cn(
-              "flex items-center justify-between rounded-2xl border px-4 py-3 text-left transition-colors",
-              isActive ? "border-brand bg-section-workspace-bg" : "border-line hover:bg-muted",
+              "flex items-center justify-between rounded-2xl border px-5 py-4 text-left transition-all",
+              isActive
+                ? "border-brand bg-section-workspace-bg shadow-sm"
+                : "border-line hover:border-brand/40 hover:bg-muted",
             )}
           >
             <span>
-              <span className="block font-heading text-base font-semibold text-ink">
+              <span className="block font-heading text-lg font-semibold text-ink">
                 {option.nativeName}
               </span>
               <span className="block text-sm text-sub">{option.englishName}</span>
             </span>
-            {isActive ? <span className="size-2.5 shrink-0 rounded-full bg-brand" /> : null}
+            {isActive ? <span className="size-3 shrink-0 rounded-full bg-brand" /> : null}
           </button>
         );
       })}
