@@ -15,7 +15,7 @@ export function BottomNav({ tabs }: { tabs: BottomNavTab[] }) {
   const pathname = usePathname();
 
   return (
-    <nav className="sticky bottom-0 z-40 border-t border-line bg-card/95 backdrop-blur">
+    <nav className="sticky bottom-0 z-40 border-t border-line bg-card/95 backdrop-blur md:hidden">
       <ul className="mx-auto grid max-w-lg grid-cols-5">
         {tabs.map((tab) => {
           const isActive = pathname === tab.href || pathname.startsWith(`${tab.href}/`);
