@@ -47,6 +47,14 @@ export default buildConfig({
     // (and relationship fields, which store the related doc's id) without
     // needing String(id) coercion throughout the data-source layer.
     idType: "uuid",
+    // Disabled deliberately: by default Payload auto-alters the connected
+    // database's schema to match the collection config on every dev-server
+    // connect. Against a real Supabase project that's an unreviewed schema
+    // mutation on every `npm run dev` — instead, schema changes are
+    // generated as SQL migrations (`npm run payload:migrate:create`, see
+    // supabase/schema/) and applied deliberately, by hand, in the Supabase
+    // SQL editor.
+    push: false,
     pool: {
       connectionString: process.env.DATABASE_URI ?? "",
     },
