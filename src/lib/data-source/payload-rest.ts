@@ -95,6 +95,16 @@ export async function payloadUpdate<T>(
   return json.doc;
 }
 
+/** Multipart upload for `upload: true` collections (e.g. Media) — Payload's create endpoint accepts a `file` form field. */
+export async function payloadUploadFile<T>(collection: string, file: File): Promise<T> {
+  const form = new FormData();
+  form.set("file", file);
+  const res = await fetch(`${API_BASE}/${collection}?depth=0`, { method: "POST", body: form });
+  await throwOnError(res, `Upload ${collection}`);
+  const json = (await res.json()) as PayloadMutationResponse<T>;
+  return json.doc;
+}
+
 export async function payloadDelete(collection: string, id: string): Promise<void> {
   const res = await fetch(`${API_BASE}/${collection}/${id}`, { method: "DELETE" });
   await throwOnError(res, `Delete ${collection}`);

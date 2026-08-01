@@ -53,10 +53,10 @@ export default function HomePage() {
         }
       />
 
-      <div className="space-y-8 p-4 pb-8">
-        <section className="rounded-2xl border border-line bg-card p-5">
+      <div className="mx-auto w-full max-w-4xl space-y-6 p-4 pb-8 sm:space-y-8 sm:p-6 lg:p-8">
+        <section className="rounded-2xl border border-line bg-card p-5 sm:p-6">
           <p className="text-sm text-sub">{t.welcome},</p>
-          <p className="font-heading text-xl font-bold text-ink">{profile.name}</p>
+          <p className="font-heading text-xl font-bold text-ink sm:text-2xl">{profile.name}</p>
           {school ? (
             <p className="mt-2 text-sm text-sub">
               {school.name}
@@ -67,7 +67,7 @@ export default function HomePage() {
 
         <section className="space-y-3">
           <h2 className="font-heading text-base font-semibold text-ink">{t.nav.essentials}</h2>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
             <Link href="/essentials">
               <SectionCard icon={BookOpen} title={t.essentials.books} accent="essentials" />
             </Link>

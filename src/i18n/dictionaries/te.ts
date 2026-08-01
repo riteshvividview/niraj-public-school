@@ -197,6 +197,8 @@ const te: Dictionary = {
     classLabel: "తరగతి",
     languageLabel: "భాష",
     logout: "లాగ్ అవుట్ చేయండి",
+    changePhoto: "ఫోటోను మార్చండి",
+    avatarUploadError: "ఆ ఫోటోను అప్‌లోడ్ చేయలేకపోయాము. దయచేసి మళ్లీ ప్రయత్నించండి.",
   },
 
   help: {

@@ -27,7 +27,7 @@ export default function HelpPage() {
   return (
     <>
       <AppHeader title={t.help.title} backHref="/profile" />
-      <div className="space-y-8 p-4 pb-8">
+      <div className="mx-auto w-full max-w-2xl space-y-8 p-4 pb-8 sm:p-6 lg:p-8">
         <p className="text-sm text-sub">{t.help.subtitle}</p>
 
         <section className="space-y-3">

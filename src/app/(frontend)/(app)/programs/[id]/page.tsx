@@ -42,7 +42,7 @@ export default function ProgramDetailPage() {
     return (
       <>
         <AppHeader title={t.nav.programs} backHref="/programs" />
-        <div className="space-y-4 p-4">
+        <div className="mx-auto w-full max-w-2xl space-y-4 p-4 sm:p-6 lg:p-8">
           <Skeleton className="h-40 w-full rounded-2xl" />
           <Skeleton className="h-24 w-full rounded-2xl" />
         </div>
@@ -76,7 +76,7 @@ export default function ProgramDetailPage() {
   return (
     <>
       <AppHeader title={program.title} backHref="/programs" />
-      <div className="space-y-5 p-4 pb-8">
+      <div className="mx-auto w-full max-w-2xl space-y-5 p-4 pb-8 sm:p-6 lg:p-8">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-sm text-sub">{school?.name ?? ""}</p>

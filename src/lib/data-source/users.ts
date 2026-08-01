@@ -1,10 +1,19 @@
 import type { LanguageCode, UserProfile, UserRole } from "@/types";
-import { payloadCreate, payloadFindById, payloadLogin, payloadLogout, payloadMe } from "./payload-rest";
+import {
+  payloadCreate,
+  payloadFindById,
+  payloadLogin,
+  payloadLogout,
+  payloadMe,
+  payloadUpdate,
+  payloadUploadFile,
+} from "./payload-rest";
 
 interface PayloadUserDoc {
   id: string;
   name: string;
   email: string;
+  avatar?: string | null;
   mobileNumber?: string | null;
   role: UserRole;
   school: string;
@@ -14,11 +23,24 @@ interface PayloadUserDoc {
   updatedAt: string;
 }
 
-function toUserProfile(doc: PayloadUserDoc): UserProfile {
+interface PayloadMediaDoc {
+  id: string;
+  url: string;
+}
+
+/**
+ * `avatar` comes back as a plain media-doc id (depth=0, same as every other
+ * relationship field — see payload-rest.ts). A second lookup resolves it to
+ * an actual URL; this is why toUserProfile is async, unlike the other
+ * data-source mappers in this folder.
+ */
+async function toUserProfile(doc: PayloadUserDoc): Promise<UserProfile> {
+  const avatarUrl = doc.avatar ? await payloadFindById<PayloadMediaDoc>("media", doc.avatar) : null;
   return {
     id: doc.id,
     name: doc.name,
     email: doc.email,
+    avatarUrl: avatarUrl?.url ?? undefined,
     mobileNumber: doc.mobileNumber ?? undefined,
     role: doc.role,
     schoolId: doc.school,
@@ -73,4 +95,11 @@ export async function loginUser(email: string, password: string): Promise<UserPr
 
 export async function logoutUser(): Promise<void> {
   await payloadLogout("users");
+}
+
+/** Uploads the file to Media, points the user's avatar at it, and returns the refreshed profile. */
+export async function updateUserAvatar(userId: string, file: File): Promise<UserProfile> {
+  const media = await payloadUploadFile<PayloadMediaDoc>("media", file);
+  const doc = await payloadUpdate<PayloadUserDoc>("users", userId, { avatar: media.id });
+  return toUserProfile(doc);
 }

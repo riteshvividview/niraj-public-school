@@ -37,6 +37,11 @@ yarn-error.log*
 # vercel
 .vercel
 
+# user-uploaded files (Payload's Media collection, local disk storage — see
+# src/collections/Media.ts's header comment on swapping to cloud storage
+# before a real deploy)
+/media/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

@@ -33,11 +33,16 @@ export interface SectionCardProps {
  */
 export function SectionCard({ icon: Icon, title, description, items, accent, className }: SectionCardProps) {
   return (
-    <div className={cn("rounded-2xl border border-line bg-card p-6", className)}>
-      <div className={cn("mb-4 flex size-11 items-center justify-center rounded-xl", ACCENT_CLASSES[accent])}>
-        <Icon className="size-5" />
+    <div className={cn("rounded-2xl border border-line bg-card p-3.5 sm:p-6", className)}>
+      <div
+        className={cn(
+          "mb-2.5 flex size-9 items-center justify-center rounded-xl sm:mb-4 sm:size-11",
+          ACCENT_CLASSES[accent],
+        )}
+      >
+        <Icon className="size-4 sm:size-5" />
       </div>
-      <h4 className="mb-1.5 font-heading text-base font-semibold text-ink">{title}</h4>
+      <h4 className="mb-1.5 font-heading text-sm leading-snug font-semibold text-ink sm:text-base">{title}</h4>
       {description ? <p className="text-sm text-sub">{description}</p> : null}
       {items && items.length > 0 ? (
         <ul className="mt-3 space-y-1.5">

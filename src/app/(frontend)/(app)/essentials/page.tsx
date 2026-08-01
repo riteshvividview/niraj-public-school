@@ -22,8 +22,11 @@ interface HubRowProps {
 
 function HubRow({ href, icon: Icon, title, statusLabel, isComplete }: HubRowProps) {
   return (
-    <Link href={href} className="flex items-center gap-3 rounded-2xl border border-line bg-card p-4">
-      <div className="flex size-11 items-center justify-center rounded-xl bg-section-essentials-bg text-section-essentials">
+    <Link
+      href={href}
+      className="flex items-center gap-3 rounded-2xl border border-line bg-card p-4 transition-colors hover:border-brand/30 hover:bg-muted sm:p-5"
+    >
+      <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-section-essentials-bg text-section-essentials sm:size-12">
         <Icon className="size-5" />
       </div>
       <div className="min-w-0 flex-1">
@@ -70,7 +73,7 @@ export default function EssentialsHubPage() {
   return (
     <>
       <AppHeader title={t.essentials.hubTitle} />
-      <div className="space-y-4 p-4 pb-8">
+      <div className="mx-auto w-full max-w-2xl space-y-4 p-4 pb-8 sm:space-y-5 sm:p-6 lg:p-8">
         <p className="text-sm text-sub">{t.essentials.hubSubtitle}</p>
 
         <div className="space-y-3">

@@ -18,6 +18,7 @@ export const Users: CollectionConfig = {
   access: { read: () => true, create: () => true, update: authenticated, delete: authenticated },
   fields: [
     { name: "name", type: "text", required: true },
+    { name: "avatar", type: "upload", relationTo: "media" },
     { name: "mobileNumber", type: "text" },
     {
       name: "role",

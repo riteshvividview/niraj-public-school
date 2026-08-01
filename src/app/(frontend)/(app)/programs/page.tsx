@@ -97,8 +97,8 @@ export default function ProgramsFeedPage() {
   return (
     <>
       <AppHeader title={t.nav.programs} />
-      <div className="space-y-4 p-4 pb-8">
-        <div className="grid grid-cols-2 gap-3 rounded-2xl border border-line bg-card p-4">
+      <div className="mx-auto w-full max-w-5xl space-y-4 p-4 pb-8 sm:space-y-5 sm:p-6 lg:p-8">
+        <div className="grid grid-cols-2 gap-3 rounded-2xl border border-line bg-card p-4 sm:grid-cols-4">
           <div className="space-y-1">
             <label className="text-xs text-sub">{t.programsPage.filterSchoolLabel}</label>
             <Select value={schoolFilter} onValueChange={setSchoolFilter}>
@@ -163,7 +163,7 @@ export default function ProgramsFeedPage() {
             </Select>
           </div>
 
-          <div className="col-span-2 flex items-end justify-between gap-3">
+          <div className="col-span-2 flex items-end justify-between gap-3 sm:col-span-4">
             <div className="flex-1 space-y-1">
               <label className="text-xs text-sub">{t.programsPage.filterSortLabel}</label>
               <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
@@ -186,7 +186,7 @@ export default function ProgramsFeedPage() {
         </div>
 
         {sortedPrograms === null ? (
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: 4 }).map((_, i) => (
               <ProgramCardSkeleton key={i} />
             ))}
@@ -198,7 +198,7 @@ export default function ProgramsFeedPage() {
             description={t.programsPage.noResultsDescription}
           />
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {sortedPrograms.map((program) => (
               <ProgramCard
                 key={program.id}

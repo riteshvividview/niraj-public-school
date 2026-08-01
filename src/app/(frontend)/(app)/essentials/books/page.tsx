@@ -41,11 +41,11 @@ export default function BooksPage() {
   return (
     <>
       <AppHeader title={t.essentials.books} backHref="/essentials" />
-      <div className="space-y-4 p-4 pb-28">
+      <div className="mx-auto w-full max-w-3xl space-y-4 p-4 pb-28 sm:space-y-5 sm:p-6 lg:p-8">
         <p className="text-sm text-sub">{t.essentials.booksSubtitle}</p>
 
         {books === null ? (
-          <div className="space-y-3">
+          <div className="space-y-3 sm:grid sm:grid-cols-2 sm:gap-3 sm:space-y-0">
             {Array.from({ length: 4 }).map((_, i) => (
               <ItemCardSkeleton key={i} />
             ))}
@@ -60,7 +60,7 @@ export default function BooksPage() {
                 {formatCurrencyINR(subtotal, language)}
               </span>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-3 sm:grid sm:grid-cols-2 sm:gap-3 sm:space-y-0">
               {books.map((book) => {
                 const id = lineId("book", book.id);
                 return (

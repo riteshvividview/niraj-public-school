@@ -11,6 +11,7 @@ export interface UserProfile {
   id: string;
   name: string;
   email: string;
+  avatarUrl?: string;
   mobileNumber?: string;
   role: UserRole;
   schoolId: string;

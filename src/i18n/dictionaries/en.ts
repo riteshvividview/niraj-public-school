@@ -197,6 +197,8 @@ const en: Dictionary = {
     classLabel: "Class",
     languageLabel: "Language",
     logout: "Log out",
+    changePhoto: "Change photo",
+    avatarUploadError: "Couldn't upload that photo. Please try again.",
   },
 
   help: {

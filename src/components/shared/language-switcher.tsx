@@ -3,9 +3,11 @@
 import { Globe } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useTranslation } from "@/i18n/context";
 import { SUPPORTED_LANGUAGES } from "@/i18n/languages";
+import { useIsDesktop } from "@/lib/use-media-query";
 import type { LanguageCode } from "@/types/language";
 import { cn } from "@/lib/utils";
 
@@ -55,20 +57,43 @@ export function LanguageOptionList({
   );
 }
 
-/** Compact trigger + sheet, for use inside the app (e.g. AppHeader, Profile). */
+/**
+ * Compact trigger, for use inside the app (e.g. AppHeader, Profile). Opens
+ * as a bottom sheet on mobile (standard mobile pattern) but a centered
+ * dialog on desktop (md+) — a full-width drawer sliding up from the bottom
+ * of a wide desktop viewport reads as a mobile-only pattern out of place
+ * there.
+ */
 export function LanguageSwitcher() {
   const { language, t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const isDesktop = useIsDesktop();
   const current = SUPPORTED_LANGUAGES.find((option) => option.code === language);
+
+  const trigger = (
+    <Button variant="outline" size="sm" className="gap-1.5">
+      <Globe className="size-4" />
+      {current?.nativeName ?? language}
+    </Button>
+  );
+
+  if (isDesktop) {
+    return (
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t.language}</DialogTitle>
+          </DialogHeader>
+          <LanguageOptionList onSelect={() => setOpen(false)} />
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5">
-          <Globe className="size-4" />
-          {current?.nativeName ?? language}
-        </Button>
-      </SheetTrigger>
+      <SheetTrigger asChild>{trigger}</SheetTrigger>
       <SheetContent side="bottom">
         <SheetHeader>
           <SheetTitle>{t.language}</SheetTitle>

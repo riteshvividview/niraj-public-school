@@ -197,6 +197,8 @@ const hi: Dictionary = {
     classLabel: "कक्षा",
     languageLabel: "भाषा",
     logout: "लॉग आउट करें",
+    changePhoto: "फ़ोटो बदलें",
+    avatarUploadError: "यह फ़ोटो अपलोड नहीं हो सकी। कृपया फिर से प्रयास करें।",
   },
 
   help: {

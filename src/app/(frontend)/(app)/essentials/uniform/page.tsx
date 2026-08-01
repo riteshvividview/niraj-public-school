@@ -114,7 +114,7 @@ export default function UniformPage() {
           />
         }
       />
-      <div className="space-y-4 p-4 pb-28">
+      <div className="mx-auto w-full max-w-3xl space-y-4 p-4 pb-28 sm:space-y-5 sm:p-6 lg:p-8">
         {items === null ? (
           <div className="space-y-3">
             {Array.from({ length: 4 }).map((_, i) => (

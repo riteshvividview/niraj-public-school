@@ -76,7 +76,7 @@ export default function PaymentPage() {
   return (
     <>
       <AppHeader title={t.payment.title} backHref="/cart" />
-      <div className="space-y-6 p-4 pb-8">
+      <div className="mx-auto w-full max-w-2xl space-y-6 p-4 pb-8 sm:p-6 lg:p-8">
         <div className="flex items-center justify-between rounded-2xl border border-line bg-card p-4">
           <span className="text-sm text-sub">{t.common.total}</span>
           <span className="font-heading text-xl font-bold text-ink">

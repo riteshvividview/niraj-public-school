@@ -209,6 +209,8 @@ export interface Dictionary {
     classLabel: string;
     languageLabel: string;
     logout: string;
+    changePhoto: string;
+    avatarUploadError: string;
   };
 
   help: {

@@ -79,7 +79,7 @@ export default function ReceiptDetailPage() {
   return (
     <>
       <AppHeader title={pageTitle} backHref="/receipts" />
-      <div className="space-y-4 p-4 pb-8">
+      <div className="mx-auto w-full max-w-md space-y-4 p-4 pb-8 sm:p-6 lg:p-8">
         <div ref={cardRef}>
           <ReceiptCard
             schoolName={school?.name ?? ""}

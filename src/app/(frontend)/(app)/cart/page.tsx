@@ -67,7 +67,7 @@ export default function CartPage() {
   return (
     <>
       <AppHeader title={t.cart.title} backHref="/essentials" />
-      <div className="space-y-4 p-4 pb-8">
+      <div className="mx-auto w-full max-w-2xl space-y-4 p-4 pb-8 sm:space-y-5 sm:p-6 lg:p-8">
         {cart.count === 0 ? (
           <EmptyState
             icon={ShoppingCart}

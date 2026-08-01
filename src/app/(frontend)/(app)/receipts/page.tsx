@@ -53,7 +53,7 @@ export default function ReceiptsListPage() {
   return (
     <>
       <AppHeader title={t.receiptsPage.title} />
-      <div className="space-y-3 p-4 pb-8">
+      <div className="mx-auto w-full max-w-2xl space-y-3 p-4 pb-8 sm:p-6 lg:p-8">
         {records.length === 0 ? (
           <EmptyState
             icon={ReceiptIcon}

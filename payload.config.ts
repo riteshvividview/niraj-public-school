@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 
 import { Books } from "./src/collections/Books";
 import { ClassLevels } from "./src/collections/ClassLevels";
+import { Media } from "./src/collections/Media";
 import { Orders } from "./src/collections/Orders";
 import { PayloadAdmins } from "./src/collections/PayloadAdmins";
 import { Programs } from "./src/collections/Programs";
@@ -35,6 +36,7 @@ export default buildConfig({
     Users,
     Orders,
     Receipts,
+    Media,
   ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET ?? "",
