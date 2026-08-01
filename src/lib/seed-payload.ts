@@ -4,7 +4,7 @@ import { MOCK_PROGRAMS } from "@/lib/mock/programs";
 import { MOCK_CLASS_LEVELS, MOCK_SCHOOL } from "@/lib/mock/school";
 import { MOCK_STATIONERY_ITEMS } from "@/lib/mock/stationery";
 import { MOCK_UNIFORM_ITEMS } from "@/lib/mock/uniform";
-import { MOCK_USERS } from "@/lib/mock/users";
+import { MOCK_USER_PASSWORD, MOCK_USERS } from "@/lib/mock/users";
 
 /**
  * The actual seeding logic, shared by scripts/seed.ts (standalone — see that
@@ -101,6 +101,8 @@ export async function seedPayload(payload: Payload): Promise<{ schoolId: string 
       collection: "users",
       data: {
         name: user.name,
+        email: user.email,
+        password: MOCK_USER_PASSWORD,
         mobileNumber: user.mobileNumber,
         role: user.role,
         school: school.id,

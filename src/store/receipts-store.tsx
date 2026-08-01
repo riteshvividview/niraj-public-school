@@ -107,8 +107,10 @@ function getSnapshot(): ReceiptsState {
   return cachedState;
 }
 
+const EMPTY_SERVER_STATE: ReceiptsState = { records: [] };
+
 function getServerSnapshot(): ReceiptsState {
-  return { records: [] };
+  return EMPTY_SERVER_STATE;
 }
 
 function persist(next: ReceiptsState) {

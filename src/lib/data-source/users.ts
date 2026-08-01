@@ -1,10 +1,11 @@
 import type { LanguageCode, UserProfile, UserRole } from "@/types";
-import { payloadCreate, payloadFind, payloadFindById } from "./payload-rest";
+import { payloadCreate, payloadFindById, payloadLogin, payloadLogout, payloadMe } from "./payload-rest";
 
 interface PayloadUserDoc {
   id: string;
   name: string;
-  mobileNumber: string;
+  email: string;
+  mobileNumber?: string | null;
   role: UserRole;
   school: string;
   classLevel: string;
@@ -17,7 +18,8 @@ function toUserProfile(doc: PayloadUserDoc): UserProfile {
   return {
     id: doc.id,
     name: doc.name,
-    mobileNumber: doc.mobileNumber,
+    email: doc.email,
+    mobileNumber: doc.mobileNumber ?? undefined,
     role: doc.role,
     schoolId: doc.school,
     classLevelId: doc.classLevel,
@@ -32,29 +34,43 @@ export async function getUserProfileById(id: string): Promise<UserProfile | null
   return doc ? toUserProfile(doc) : null;
 }
 
-export async function findUserByMobile(mobileNumber: string): Promise<UserProfile | null> {
-  const docs = await payloadFind<PayloadUserDoc>("users", { mobileNumber });
-  return docs[0] ? toUserProfile(docs[0]) : null;
+/** Reads the current session from the browser's auth cookie — null if not logged in. */
+export async function getCurrentUser(): Promise<UserProfile | null> {
+  const doc = await payloadMe<PayloadUserDoc>("users");
+  return doc ? toUserProfile(doc) : null;
 }
 
-export interface CreateUserProfileInput {
+export interface RegisterUserInput {
   name: string;
-  mobileNumber: string;
+  email: string;
+  password: string;
+  mobileNumber?: string;
   role: UserRole;
   schoolId: string;
   classLevelId: string;
   preferredLanguage: LanguageCode;
 }
 
-/** Registration (Phase 3) — the mock OTP session itself is unchanged; this just persists the profile record. */
-export async function createUserProfile(input: CreateUserProfileInput): Promise<UserProfile> {
-  const doc = await payloadCreate<PayloadUserDoc>("users", {
+/** Creates the account, then logs in immediately (Payload's create endpoint doesn't set a session on its own). */
+export async function registerUser(input: RegisterUserInput): Promise<UserProfile> {
+  await payloadCreate<PayloadUserDoc>("users", {
     name: input.name,
+    email: input.email,
+    password: input.password,
     mobileNumber: input.mobileNumber,
     role: input.role,
     school: input.schoolId,
     classLevel: input.classLevelId,
     preferredLanguage: input.preferredLanguage,
   });
+  return loginUser(input.email, input.password);
+}
+
+export async function loginUser(email: string, password: string): Promise<UserProfile> {
+  const doc = await payloadLogin<PayloadUserDoc>("users", { email, password });
   return toUserProfile(doc);
+}
+
+export async function logoutUser(): Promise<void> {
+  await payloadLogout("users");
 }

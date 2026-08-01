@@ -8,7 +8,6 @@ import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/i18n/context";
 import { getClassLevelById, getSchoolById } from "@/lib/data-source";
-import { maskMobile } from "@/lib/format";
 import { useAuth } from "@/store/auth-store";
 import type { ClassLevel, School } from "@/types";
 
@@ -47,7 +46,10 @@ export default function ProfilePage() {
         </section>
 
         <section className="rounded-2xl border border-line bg-card px-4">
-          <ProfileRow label={t.profile.mobileLabel} value={maskMobile(profile.mobileNumber)} />
+          <ProfileRow label={t.profile.emailLabel} value={profile.email} />
+          {profile.mobileNumber ? (
+            <ProfileRow label={t.profile.mobileLabel} value={profile.mobileNumber} />
+          ) : null}
           <ProfileRow label={t.profile.schoolLabel} value={school?.name ?? "…"} />
           <ProfileRow label={t.profile.classLabel} value={classLevel?.label ?? "…"} />
           <div className="flex items-center justify-between py-3">

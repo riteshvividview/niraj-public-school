@@ -3,18 +3,22 @@ import { authenticated } from "../access/authenticated";
 
 /**
  * Mirrors src/types/user-profile.ts UserProfile — parent/student profile
- * records. Deliberately NOT a Payload `auth` collection: Phase 3's mock OTP
- * login (client-side session in src/store/auth-store.tsx) stays as-is; see
- * .claude/DECISIONS.md "Phase 9 auth-model decision" for the full reasoning.
- * This collection just stores the profile data that flow reads/writes.
+ * records. A real Payload `auth` collection (email/password) — see
+ * .claude/DECISIONS.md's "Real email/password auth" entry for why this
+ * replaced Phase 3's mock OTP flow. `create` stays public so parents can
+ * self-register; Payload injects `email`/`password`/hashing fields
+ * automatically because of `auth: true`.
  */
 export const Users: CollectionConfig = {
   slug: "users",
-  admin: { useAsTitle: "name" },
+  auth: {
+    tokenExpiration: 60 * 60 * 24 * 7, // 7 days — a parent shouldn't need to re-login often
+  },
+  admin: { useAsTitle: "email" },
   access: { read: () => true, create: () => true, update: authenticated, delete: authenticated },
   fields: [
     { name: "name", type: "text", required: true },
-    { name: "mobileNumber", type: "text", required: true, unique: true },
+    { name: "mobileNumber", type: "text" },
     {
       name: "role",
       type: "select",

@@ -11,9 +11,11 @@
  * The seed script (scripts/seed.ts) runs as a Node script, so it uses the
  * Local API directly instead of this module.
  *
- * `depth: 0` on every call keeps relationship fields (e.g. a Book's
- * `school`) as plain id strings rather than populated objects, matching
- * this app's domain types (`schoolId: string`, not a nested School object).
+ * `depth=0` on every call (finds, creates, updates, and auth endpoints
+ * alike) keeps relationship fields (e.g. a Book's `school`) as plain id
+ * strings rather than populated objects, matching this app's domain types
+ * (`schoolId: string`, not a nested School object) — every toXxx() mapper in
+ * this folder relies on that.
  */
 
 const API_BASE = "/api";
@@ -68,7 +70,7 @@ async function throwOnError(res: Response, action: string): Promise<void> {
 }
 
 export async function payloadCreate<T>(collection: string, data: Record<string, unknown>): Promise<T> {
-  const res = await fetch(`${API_BASE}/${collection}`, {
+  const res = await fetch(`${API_BASE}/${collection}?depth=0`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -83,7 +85,7 @@ export async function payloadUpdate<T>(
   id: string,
   data: Record<string, unknown>,
 ): Promise<T> {
-  const res = await fetch(`${API_BASE}/${collection}/${id}`, {
+  const res = await fetch(`${API_BASE}/${collection}/${id}?depth=0`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -96,4 +98,35 @@ export async function payloadUpdate<T>(
 export async function payloadDelete(collection: string, id: string): Promise<void> {
   const res = await fetch(`${API_BASE}/${collection}/${id}`, { method: "DELETE" });
   await throwOnError(res, `Delete ${collection}`);
+}
+
+interface PayloadAuthResponse<T> {
+  user: T;
+}
+
+/** Logs into an `auth: true` collection — Payload sets the session as an HTTP-only cookie on success. */
+export async function payloadLogin<T>(
+  collection: string,
+  credentials: { email: string; password: string },
+): Promise<T> {
+  const res = await fetch(`${API_BASE}/${collection}/login?depth=0`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(credentials),
+  });
+  await throwOnError(res, "Login");
+  const json = (await res.json()) as PayloadAuthResponse<T>;
+  return json.user;
+}
+
+export async function payloadLogout(collection: string): Promise<void> {
+  await fetch(`${API_BASE}/${collection}/logout`, { method: "POST" });
+}
+
+/** Reads the current session (if any) from the request's auth cookie. Never throws — no session just resolves null. */
+export async function payloadMe<T>(collection: string): Promise<T | null> {
+  const res = await fetch(`${API_BASE}/${collection}/me?depth=0`, { cache: "no-store" });
+  if (!res.ok) return null;
+  const json = (await res.json()) as { user: T | null };
+  return json.user ?? null;
 }

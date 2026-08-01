@@ -55,8 +55,10 @@ function getSnapshot(): CartState {
   return cachedState;
 }
 
+const EMPTY_SERVER_STATE: CartState = { items: [], excludedIds: [] };
+
 function getServerSnapshot(): CartState {
-  return { items: [], excludedIds: [] };
+  return EMPTY_SERVER_STATE;
 }
 
 function persist(next: CartState) {

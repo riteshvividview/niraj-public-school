@@ -57,14 +57,17 @@ export interface Dictionary {
     language: {
       title: string;
       subtitle: string;
+      next: string;
     };
     login: {
       title: string;
       subtitle: string;
-      mobileLabel: string;
-      mobilePlaceholder: string;
-      sendOtp: string;
-      notFound: string;
+      emailLabel: string;
+      emailPlaceholder: string;
+      passwordLabel: string;
+      passwordPlaceholder: string;
+      submit: string;
+      invalidCredentials: string;
       createAccountCta: string;
       newHere: string;
     };
@@ -73,32 +76,24 @@ export interface Dictionary {
       subtitle: string;
       nameLabel: string;
       namePlaceholder: string;
-      mobileLabel: string;
+      emailLabel: string;
+      emailPlaceholder: string;
+      passwordLabel: string;
+      passwordPlaceholder: string;
+      confirmPasswordLabel: string;
       schoolLabel: string;
       classLabel: string;
       classPlaceholder: string;
       alreadyRegistered: string;
       loginInsteadCta: string;
-      sendOtp: string;
+      submit: string;
       haveAccount: string;
       loginCta: string;
     };
-    otp: {
-      title: string;
-      subtitleFor: string;
-      demoLabel: string;
-      demoNote: string;
-      codeLabel: string;
-      codePlaceholder: string;
-      verify: string;
-      changeNumber: string;
-      resend: string;
-      /** Countdown label — contains a "{n}" placeholder for the seconds remaining. */
-      resendIn: string;
-    };
     errors: {
-      invalidMobile: string;
-      incorrectOtp: string;
+      invalidEmail: string;
+      passwordTooShort: string;
+      passwordMismatch: string;
       required: string;
       selectSchool: string;
       selectClass: string;
@@ -208,6 +203,7 @@ export interface Dictionary {
   };
 
   profile: {
+    emailLabel: string;
     mobileLabel: string;
     schoolLabel: string;
     classLabel: string;

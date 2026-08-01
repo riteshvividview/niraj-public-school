@@ -1,81 +1,28 @@
 "use client";
 
-import { createContext, useContext, useMemo, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { getCurrentUser, logoutUser } from "@/lib/data-source";
 import type { UserProfile } from "@/types";
 
-const STORAGE_KEY = "nps-session";
-
 /**
- * Mock auth for the parent/student app — no server, no real tokens. The
- * "session" is the logged-in user's full profile, persisted wholesale in
- * localStorage. Phase 9 replaces this with real server sessions; keep this
- * store's public shape (isAuthenticated / login / logout) stable so that
- * swap doesn't require touching call sites.
+ * Real auth for the parent/student app — a Payload `auth: true` collection
+ * (`users`, email/password), session held as an HTTP-only cookie Payload
+ * sets on login/register. This store doesn't talk to Payload directly for
+ * login/register (src/lib/data-source/users.ts does, per the data-access-
+ * layer rule) — it just holds the resulting profile and, on mount, checks
+ * for an existing cookie session via getCurrentUser() (GET /api/users/me).
  *
- * Phase 8's school console must use a *separate* mock auth store/namespace
- * (different storage key, different context) — school staff and parent
- * accounts are not the same session per plan.html.
+ * Public shape (profile / isAuthenticated / isReady / login / logout) is
+ * unchanged from the old mock-OTP version on purpose — RequireAuth and every
+ * call site keep working without changes.
+ *
+ * Phase 8's school console uses a *separate* mock auth store/namespace —
+ * school staff and parent accounts are not the same session per plan.html.
  */
-type Listener = () => void;
-const listeners = new Set<Listener>();
-let cachedProfile: UserProfile | null = null;
-let hasReadStorage = false;
-
-function readStoredProfile(): UserProfile | null {
-  const raw = window.localStorage.getItem(STORAGE_KEY);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as UserProfile;
-  } catch {
-    return null;
-  }
-}
-
-function subscribeSession(listener: Listener) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
-
-function getSessionSnapshot(): UserProfile | null {
-  if (!hasReadStorage) {
-    cachedProfile = readStoredProfile();
-    hasReadStorage = true;
-  }
-  return cachedProfile;
-}
-
-function getSessionServerSnapshot(): UserProfile | null {
-  return null;
-}
-
-function persistLogin(profile: UserProfile) {
-  cachedProfile = profile;
-  hasReadStorage = true;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
-  listeners.forEach((listener) => listener());
-}
-
-function persistLogout() {
-  cachedProfile = null;
-  hasReadStorage = true;
-  window.localStorage.removeItem(STORAGE_KEY);
-  listeners.forEach((listener) => listener());
-}
-
-function subscribeMounted() {
-  return () => {};
-}
-function getMountedSnapshot() {
-  return true;
-}
-function getMountedServerSnapshot() {
-  return false;
-}
-
 interface AuthContextValue {
   profile: UserProfile | null;
   isAuthenticated: boolean;
-  /** True once hydrated on the client, i.e. the persisted session (if any) is loaded. */
+  /** True once the initial session check (cookie -> /api/users/me) has resolved. */
   isReady: boolean;
   login: (profile: UserProfile) => void;
   logout: () => void;
@@ -84,16 +31,35 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const profile = useSyncExternalStore(subscribeSession, getSessionSnapshot, getSessionServerSnapshot);
-  const isReady = useSyncExternalStore(subscribeMounted, getMountedSnapshot, getMountedServerSnapshot);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    getCurrentUser()
+      .then((user) => {
+        if (cancelled) return;
+        setProfile(user);
+        setIsReady(true);
+      })
+      .catch(() => {
+        if (!cancelled) setIsReady(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       profile,
       isAuthenticated: profile !== null,
       isReady,
-      login: persistLogin,
-      logout: persistLogout,
+      login: setProfile,
+      logout: () => {
+        setProfile(null);
+        void logoutUser();
+      },
     }),
     [profile, isReady],
   );

@@ -7,10 +7,14 @@ const SEED_TIMESTAMP = "2026-06-01T00:00:00.000Z";
  * For design/demo purposes only — Phase 3 builds the real (mocked) auth flow
  * on top of this. Not a real account store.
  */
+/** Demo-only password for every seeded account — never used outside seeding. */
+export const MOCK_USER_PASSWORD = "Demo@12345";
+
 export const MOCK_USERS: UserProfile[] = [
   {
     id: "user-ritesh",
     name: "Ritesh Kumar",
+    email: "ritesh.kumar@example.com",
     mobileNumber: "+919876500001",
     role: "parent",
     schoolId: MOCK_SCHOOL.id,
@@ -22,6 +26,7 @@ export const MOCK_USERS: UserProfile[] = [
   {
     id: "user-ananya",
     name: "Ananya Sharma",
+    email: "ananya.sharma@example.com",
     mobileNumber: "+919876500002",
     role: "parent",
     schoolId: MOCK_SCHOOL.id,

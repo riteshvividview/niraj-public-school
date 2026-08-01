@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2, Lock, Mail, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -7,20 +8,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { OtpStep } from "../_components/otp-step";
 import { useTranslation } from "@/i18n/context";
-import { createUserProfile, findUserByMobile, getClassLevelsBySchool, getSchools } from "@/lib/data-source";
+import { getClassLevelsBySchool, getSchools, registerUser } from "@/lib/data-source";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/store/auth-store";
 import type { ClassLevel, School } from "@/types";
-
-const MOBILE_REGEX = /^[6-9]\d{9}$/;
-
-type Step = "form" | "otp";
+import { AuthShell } from "../_components/auth-shell";
 
 interface FormErrors {
   name?: string;
-  mobile?: string;
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
   school?: string;
   classLevel?: string;
 }
@@ -31,12 +30,13 @@ function RegisterForm() {
   const { t, language } = useTranslation();
   const { login } = useAuth();
 
-  const [step, setStep] = useState<Step>("form");
   const [schools, setSchools] = useState<School[] | null>(null);
   const [classLevels, setClassLevels] = useState<ClassLevel[]>([]);
 
   const [name, setName] = useState("");
-  const [mobile, setMobile] = useState(searchParams.get("mobile") ?? "");
+  const [email, setEmail] = useState(searchParams.get("email") ?? "");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [schoolId, setSchoolId] = useState("");
   const [classLevelId, setClassLevelId] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
@@ -55,113 +55,131 @@ function RegisterForm() {
     getClassLevelsBySchool(schoolId).then(setClassLevels);
   }, [schoolId]);
 
-  async function handleSendOtp() {
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
     setAlreadyRegistered(false);
     const nextErrors: FormErrors = {};
     if (!name.trim()) nextErrors.name = t.auth.errors.required;
-    if (!MOBILE_REGEX.test(mobile)) nextErrors.mobile = t.auth.errors.invalidMobile;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) nextErrors.email = t.auth.errors.invalidEmail;
+    if (password.length < 8) nextErrors.password = t.auth.errors.passwordTooShort;
+    if (password !== confirmPassword) nextErrors.confirmPassword = t.auth.errors.passwordMismatch;
     if (!schoolId) nextErrors.school = t.auth.errors.selectSchool;
     if (!classLevelId) nextErrors.classLevel = t.auth.errors.selectClass;
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
     setIsSubmitting(true);
-    const existing = await findUserByMobile(`+91${mobile}`);
-    setIsSubmitting(false);
-    if (existing) {
-      setAlreadyRegistered(true);
-      return;
-    }
-    setStep("otp");
-  }
-
-  async function handleVerified() {
-    const fullMobile = `+91${mobile}`;
     try {
-      const profile = await createUserProfile({
+      const profile = await registerUser({
         name: name.trim(),
-        mobileNumber: fullMobile,
+        email: email.trim(),
+        password,
         role: "parent",
         schoolId,
         classLevelId,
         preferredLanguage: language,
       });
       login(profile);
+      router.push("/home");
     } catch {
-      // Backend unreachable — degrade to a locally-generated profile so the
-      // demo flow still completes; the record just won't exist in Payload.
-      const now = new Date().toISOString();
-      login({
-        id: `user-${Date.now()}`,
-        name: name.trim(),
-        mobileNumber: fullMobile,
-        role: "parent",
-        schoolId,
-        classLevelId,
-        preferredLanguage: language,
-        createdAt: now,
-        updatedAt: now,
-      });
+      setAlreadyRegistered(true);
+      setIsSubmitting(false);
     }
-    router.push("/home");
-  }
-
-  if (step === "otp") {
-    return (
-      <OtpStep
-        mobileDisplay={`+91 ${mobile}`}
-        onVerified={handleVerified}
-        onChangeNumber={() => setStep("form")}
-      />
-    );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-1 text-center">
-        <h1 className="font-heading text-2xl font-bold text-ink">{t.auth.register.title}</h1>
-        <p className="text-sm text-sub">{t.auth.register.subtitle}</p>
-      </div>
-
-      <div className="space-y-4">
+    <AuthShell
+      imageSrc="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&q=80&auto=format&fit=crop"
+      imageAlt="A student writing in a notebook"
+      eyebrow="Join Niraj Public School"
+      title={t.auth.register.title}
+      subtitle={t.auth.register.subtitle}
+    >
+      <form className="space-y-4" onSubmit={handleSubmit}>
         <div className="space-y-2">
           <Label htmlFor="name">{t.auth.register.nameLabel}</Label>
-          <Input
-            id="name"
-            placeholder={t.auth.register.namePlaceholder}
-            value={name}
-            onChange={(event) => {
-              setName(event.target.value);
-              setErrors((prev) => ({ ...prev, name: undefined }));
-            }}
-            aria-invalid={errors.name ? true : undefined}
-            className={cn(errors.name && "border-destructive")}
-          />
+          <div className="relative">
+            <User className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-sub" />
+            <Input
+              id="name"
+              placeholder={t.auth.register.namePlaceholder}
+              value={name}
+              onChange={(event) => {
+                setName(event.target.value);
+                setErrors((prev) => ({ ...prev, name: undefined }));
+              }}
+              aria-invalid={errors.name ? true : undefined}
+              className={cn("pl-9", errors.name && "border-destructive")}
+            />
+          </div>
           {errors.name ? <p className="text-sm text-destructive">{errors.name}</p> : null}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="mobile">{t.auth.register.mobileLabel}</Label>
-          <div className="flex items-center gap-2">
-            <span className="flex h-9 items-center rounded-lg border border-line bg-muted px-3 text-sm text-sub">
-              +91
-            </span>
+          <Label htmlFor="email">{t.auth.register.emailLabel}</Label>
+          <div className="relative">
+            <Mail className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-sub" />
             <Input
-              id="mobile"
-              inputMode="numeric"
-              maxLength={10}
-              placeholder={t.auth.login.mobilePlaceholder}
-              value={mobile}
+              id="email"
+              type="email"
+              autoComplete="email"
+              placeholder={t.auth.register.emailPlaceholder}
+              value={email}
               onChange={(event) => {
-                setMobile(event.target.value.replace(/\D/g, "").slice(0, 10));
-                setErrors((prev) => ({ ...prev, mobile: undefined }));
+                setEmail(event.target.value);
+                setErrors((prev) => ({ ...prev, email: undefined }));
                 setAlreadyRegistered(false);
               }}
-              aria-invalid={errors.mobile ? true : undefined}
-              className={cn(errors.mobile && "border-destructive")}
+              aria-invalid={errors.email ? true : undefined}
+              className={cn("pl-9", errors.email && "border-destructive")}
             />
           </div>
-          {errors.mobile ? <p className="text-sm text-destructive">{errors.mobile}</p> : null}
+          {errors.email ? <p className="text-sm text-destructive">{errors.email}</p> : null}
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label htmlFor="password">{t.auth.register.passwordLabel}</Label>
+            <div className="relative">
+              <Lock className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-sub" />
+              <Input
+                id="password"
+                type="password"
+                autoComplete="new-password"
+                placeholder={t.auth.register.passwordPlaceholder}
+                value={password}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  setErrors((prev) => ({ ...prev, password: undefined }));
+                }}
+                aria-invalid={errors.password ? true : undefined}
+                className={cn("pl-9", errors.password && "border-destructive")}
+              />
+            </div>
+            {errors.password ? <p className="text-sm text-destructive">{errors.password}</p> : null}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="confirm-password">{t.auth.register.confirmPasswordLabel}</Label>
+            <div className="relative">
+              <Lock className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-sub" />
+              <Input
+                id="confirm-password"
+                type="password"
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(event) => {
+                  setConfirmPassword(event.target.value);
+                  setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
+                }}
+                aria-invalid={errors.confirmPassword ? true : undefined}
+                className={cn("pl-9", errors.confirmPassword && "border-destructive")}
+              />
+            </div>
+            {errors.confirmPassword ? (
+              <p className="text-sm text-destructive">{errors.confirmPassword}</p>
+            ) : null}
+          </div>
         </div>
 
         <div className="space-y-2">
@@ -211,28 +229,31 @@ function RegisterForm() {
           </Select>
           {errors.classLevel ? <p className="text-sm text-destructive">{errors.classLevel}</p> : null}
         </div>
-      </div>
 
-      {alreadyRegistered ? (
-        <div className="rounded-2xl border border-line bg-muted p-4 text-sm">
-          <p className="text-ink">{t.auth.register.alreadyRegistered}</p>
-          <Button asChild variant="outline" size="sm" className="mt-3">
-            <Link href={`/login?mobile=${mobile}`}>{t.auth.register.loginInsteadCta}</Link>
-          </Button>
-        </div>
-      ) : null}
+        {alreadyRegistered ? (
+          <div className="rounded-2xl border border-line bg-muted p-4 text-sm">
+            <p className="text-ink">{t.auth.register.alreadyRegistered}</p>
+            <Button asChild variant="outline" size="sm" className="mt-3">
+              <Link href={`/login?email=${encodeURIComponent(email)}`}>
+                {t.auth.register.loginInsteadCta}
+              </Link>
+            </Button>
+          </div>
+        ) : null}
 
-      <Button className="w-full" onClick={handleSendOtp} disabled={isSubmitting}>
-        {t.auth.register.sendOtp}
-      </Button>
+        <Button type="submit" size="lg" className="w-full gap-2" disabled={isSubmitting}>
+          {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
+          {t.auth.register.submit}
+        </Button>
 
-      <p className="text-center text-sm text-sub">
-        {t.auth.register.haveAccount}{" "}
-        <Link href="/login" className="font-medium text-brand hover:underline">
-          {t.auth.register.loginCta}
-        </Link>
-      </p>
-    </div>
+        <p className="text-center text-sm text-sub">
+          {t.auth.register.haveAccount}{" "}
+          <Link href="/login" className="font-medium text-brand hover:underline">
+            {t.auth.register.loginCta}
+          </Link>
+        </p>
+      </form>
+    </AuthShell>
   );
 }
 

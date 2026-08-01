@@ -21,10 +21,3 @@ export function formatDate(isoDate: string, language: LanguageCode = "en"): stri
     year: "numeric",
   }).format(new Date(isoDate));
 }
-
-/** "+919876543210" -> "+91 98••••3210" — hides the middle digits, keeps enough to recognize the number. */
-export function maskMobile(fullNumber: string): string {
-  const digits = fullNumber.replace(/^\+91/, "");
-  if (digits.length !== 10) return fullNumber;
-  return `+91 ${digits.slice(0, 2)}••••${digits.slice(-4)}`;
-}
