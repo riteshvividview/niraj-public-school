@@ -28,7 +28,7 @@ export default function LanguageSelectPage() {
       subtitle={t.auth.language.subtitle}
     >
       <LanguageOptionList />
-      <Button size="lg" className="w-full gap-2" onClick={handleNext}>
+      <Button size="lg" className="h-11 w-full gap-2 text-sm sm:h-12 sm:text-base" onClick={handleNext}>
         {t.auth.language.next}
         <ArrowRight className="size-4" />
       </Button>

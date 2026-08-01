@@ -35,19 +35,19 @@ export function LanguageOptionList({
               onSelect?.(option.code);
             }}
             className={cn(
-              "flex items-center justify-between rounded-2xl border px-5 py-4 text-left transition-all",
+              "flex items-center justify-between rounded-2xl border px-4 py-3 text-left transition-all sm:px-5 sm:py-4",
               isActive
                 ? "border-brand bg-section-workspace-bg shadow-sm"
                 : "border-line hover:border-brand/40 hover:bg-muted",
             )}
           >
             <span>
-              <span className="block font-heading text-lg font-semibold text-ink">
+              <span className="block font-heading text-base font-semibold text-ink sm:text-lg">
                 {option.nativeName}
               </span>
-              <span className="block text-sm text-sub">{option.englishName}</span>
+              <span className="block text-xs text-sub sm:text-sm">{option.englishName}</span>
             </span>
-            {isActive ? <span className="size-3 shrink-0 rounded-full bg-brand" /> : null}
+            {isActive ? <span className="size-2.5 shrink-0 rounded-full bg-brand sm:size-3" /> : null}
           </button>
         );
       })}

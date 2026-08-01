@@ -110,7 +110,7 @@ function RegisterForm() {
                 setErrors((prev) => ({ ...prev, name: undefined }));
               }}
               aria-invalid={errors.name ? true : undefined}
-              className={cn("h-12 pl-10 text-base", errors.name && "border-destructive")}
+              className={cn("h-11 pl-10 text-sm sm:h-12 sm:text-base", errors.name && "border-destructive")}
             />
           </div>
           {errors.name ? <p className="text-sm text-destructive">{errors.name}</p> : null}
@@ -132,7 +132,7 @@ function RegisterForm() {
                 setAlreadyRegistered(false);
               }}
               aria-invalid={errors.email ? true : undefined}
-              className={cn("h-12 pl-10 text-base", errors.email && "border-destructive")}
+              className={cn("h-11 pl-10 text-sm sm:h-12 sm:text-base", errors.email && "border-destructive")}
             />
           </div>
           {errors.email ? <p className="text-sm text-destructive">{errors.email}</p> : null}
@@ -154,7 +154,7 @@ function RegisterForm() {
                   setErrors((prev) => ({ ...prev, password: undefined }));
                 }}
                 aria-invalid={errors.password ? true : undefined}
-                className={cn("h-12 pl-10 text-base", errors.password && "border-destructive")}
+                className={cn("h-11 pl-10 text-sm sm:h-12 sm:text-base", errors.password && "border-destructive")}
               />
             </div>
             {errors.password ? <p className="text-sm text-destructive">{errors.password}</p> : null}
@@ -174,7 +174,10 @@ function RegisterForm() {
                   setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
                 }}
                 aria-invalid={errors.confirmPassword ? true : undefined}
-                className={cn("h-12 pl-10 text-base", errors.confirmPassword && "border-destructive")}
+                className={cn(
+                  "h-11 pl-10 text-sm sm:h-12 sm:text-base",
+                  errors.confirmPassword && "border-destructive",
+                )}
               />
             </div>
             {errors.confirmPassword ? (
@@ -193,7 +196,9 @@ function RegisterForm() {
               setErrors((prev) => ({ ...prev, school: undefined }));
             }}
           >
-            <SelectTrigger className={cn("h-12 w-full text-base", errors.school && "border-destructive")}>
+            <SelectTrigger
+              className={cn("h-11 w-full text-sm sm:h-12 sm:text-base", errors.school && "border-destructive")}
+            >
               <SelectValue placeholder={schools === null ? "…" : t.auth.register.schoolLabel} />
             </SelectTrigger>
             <SelectContent>
@@ -217,7 +222,9 @@ function RegisterForm() {
             }}
             disabled={!schoolId || classLevels.length === 0}
           >
-            <SelectTrigger className={cn("h-12 w-full text-base", errors.classLevel && "border-destructive")}>
+            <SelectTrigger
+              className={cn("h-11 w-full text-sm sm:h-12 sm:text-base", errors.classLevel && "border-destructive")}
+            >
               <SelectValue placeholder={t.auth.register.classPlaceholder} />
             </SelectTrigger>
             <SelectContent>
@@ -242,7 +249,12 @@ function RegisterForm() {
           </div>
         ) : null}
 
-        <Button type="submit" size="lg" className="h-12 w-full gap-2 text-base" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          size="lg"
+          className="h-11 w-full gap-2 text-sm sm:h-12 sm:text-base"
+          disabled={isSubmitting}
+        >
           {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
           {t.auth.register.submit}
         </Button>

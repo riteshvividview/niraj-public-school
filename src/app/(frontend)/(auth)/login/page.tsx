@@ -63,7 +63,7 @@ function LoginForm() {
                 setError(null);
               }}
               aria-invalid={error ? true : undefined}
-              className={cn("h-12 pl-10 text-base", error && "border-destructive")}
+              className={cn("h-11 pl-10 text-sm sm:h-12 sm:text-base", error && "border-destructive")}
               required
             />
           </div>
@@ -84,7 +84,7 @@ function LoginForm() {
                 setError(null);
               }}
               aria-invalid={error ? true : undefined}
-              className={cn("h-12 pl-10 text-base", error && "border-destructive")}
+              className={cn("h-11 pl-10 text-sm sm:h-12 sm:text-base", error && "border-destructive")}
               required
             />
           </div>
@@ -92,7 +92,12 @@ function LoginForm() {
 
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
-        <Button type="submit" size="lg" className="h-12 w-full gap-2 text-base" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          size="lg"
+          className="h-11 w-full gap-2 text-sm sm:h-12 sm:text-base"
+          disabled={isSubmitting}
+        >
           {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
           {t.auth.login.submit}
         </Button>

@@ -33,7 +33,7 @@ export function AuthShell({ imageSrc, imageAlt, eyebrow, title, subtitle, childr
       />
 
       {/* Image panel: compact banner on mobile, full-height on md+. */}
-      <div className="relative h-40 w-full shrink-0 overflow-hidden sm:h-52 md:h-auto md:w-2/5 lg:w-1/2">
+      <div className="relative h-28 w-full shrink-0 overflow-hidden sm:h-44 md:h-auto md:w-2/5 lg:w-1/2">
         <Image
           src={imageSrc}
           alt={imageAlt}
@@ -43,17 +43,17 @@ export function AuthShell({ imageSrc, imageAlt, eyebrow, title, subtitle, childr
           className="object-cover brightness-110 contrast-105 animate-in fade-in duration-700"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-ink/55 via-transparent to-transparent md:bg-gradient-to-t md:from-ink/50 md:via-transparent md:to-transparent" />
-        <span className="absolute bottom-4 left-4 w-fit rounded-full bg-white/15 px-3 py-1 text-xs font-semibold tracking-wide text-white uppercase backdrop-blur-sm md:bottom-8 md:left-8">
+        <span className="absolute bottom-3 left-3 w-fit rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-white uppercase backdrop-blur-sm sm:bottom-4 sm:left-4 sm:text-xs md:bottom-8 md:left-8">
           {eyebrow}
         </span>
       </div>
 
       {/* Form panel — fills the remaining space directly, no card. */}
-      <div className="relative z-10 flex flex-1 flex-col justify-center px-6 py-10 sm:px-10 md:px-14 lg:px-20">
-        <div className="mx-auto w-full max-w-lg animate-in fade-in slide-in-from-bottom-4 space-y-8 duration-500">
-          <div className="space-y-2">
-            <h1 className="font-heading text-3xl font-bold text-ink lg:text-4xl">{title}</h1>
-            <p className="text-base text-sub">{subtitle}</p>
+      <div className="relative z-10 flex flex-1 flex-col justify-center px-5 py-6 sm:px-10 sm:py-10 md:px-14 lg:px-20">
+        <div className="mx-auto w-full max-w-lg animate-in fade-in slide-in-from-bottom-4 space-y-5 duration-500 sm:space-y-8">
+          <div className="space-y-1 sm:space-y-2">
+            <h1 className="font-heading text-xl font-bold text-ink sm:text-3xl lg:text-4xl">{title}</h1>
+            <p className="text-sm text-sub sm:text-base">{subtitle}</p>
           </div>
           {children}
         </div>
