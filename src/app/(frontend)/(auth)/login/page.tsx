@@ -40,8 +40,8 @@ function LoginForm() {
 
   return (
     <AuthShell
-      imageSrc="https://commons.wikimedia.org/wiki/Special:FilePath/Students_reading_in_leisure_time.jpg?width=1200"
-      imageAlt="School children reading books together"
+      imageSrc="/loginPageImg.jpg"
+      imageAlt="School children in uniform"
       eyebrow="Welcome back"
       title={t.auth.login.title}
       subtitle={t.auth.login.subtitle}

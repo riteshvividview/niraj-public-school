@@ -89,8 +89,8 @@ function RegisterForm() {
 
   return (
     <AuthShell
-      imageSrc="https://commons.wikimedia.org/wiki/Special:FilePath/School_children_at_Nandikotkur_village_Andhra_Pradesh_India.jpg?width=1200"
-      imageAlt="A large group of school children"
+      imageSrc="/signupimage.png"
+      imageAlt="School children"
       eyebrow="Join Niraj Public School"
       title={t.auth.register.title}
       subtitle={t.auth.register.subtitle}

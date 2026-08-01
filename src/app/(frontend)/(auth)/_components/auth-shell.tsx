@@ -1,7 +1,8 @@
+import Image from "next/image";
 import type { ReactNode } from "react";
 
 interface AuthShellProps {
-  /** Verified-reachable stock photo URL — see the image src's own alt text for the theme. */
+  /** A path under public/ — see the image src's own alt text for the theme. */
   imageSrc: string;
   imageAlt: string;
   eyebrow: string;
@@ -33,10 +34,13 @@ export function AuthShell({ imageSrc, imageAlt, eyebrow, title, subtitle, childr
 
       {/* Image panel: compact banner on mobile, full-height on md+. */}
       <div className="relative h-40 w-full shrink-0 overflow-hidden sm:h-52 md:h-auto md:w-2/5 lg:w-1/2">
-        <img
+        <Image
           src={imageSrc}
           alt={imageAlt}
-          className="absolute inset-0 size-full object-cover brightness-110 contrast-105 animate-in fade-in duration-700"
+          fill
+          priority
+          sizes="(min-width: 768px) 40vw, 100vw"
+          className="object-cover brightness-110 contrast-105 animate-in fade-in duration-700"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-ink/55 via-transparent to-transparent md:bg-gradient-to-t md:from-ink/50 md:via-transparent md:to-transparent" />
         <span className="absolute bottom-4 left-4 w-fit rounded-full bg-white/15 px-3 py-1 text-xs font-semibold tracking-wide text-white uppercase backdrop-blur-sm md:bottom-8 md:left-8">
