@@ -41,7 +41,7 @@ export function ItemCard({
   return (
     <div
       className={cn(
-        "flex items-center gap-3 rounded-2xl border border-line bg-card p-4 transition-opacity",
+        "flex items-center gap-3 rounded-lg border border-line/60 bg-card p-4 transition-all hover:-translate-y-1 hover:border-brand/40 hover:shadow-md",
         !selected && "opacity-60",
         className,
       )}

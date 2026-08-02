@@ -52,7 +52,7 @@ export function groupItemsByKind(items: CartItem[]) {
   };
 }
 
-function subtotal(items: CartItem[]): number {
+export function subtotal(items: CartItem[]): number {
   return items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
 }
 

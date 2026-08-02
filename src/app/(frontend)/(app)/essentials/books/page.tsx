@@ -40,8 +40,8 @@ export default function BooksPage() {
 
   return (
     <>
-      <AppHeader title={t.essentials.books} backHref="/essentials" />
-      <div className="mx-auto w-full max-w-3xl space-y-4 p-4 pb-28 sm:space-y-5 sm:p-6 lg:p-8">
+      <AppHeader title={t.essentials.books} backHref="/essentials" showAvatar />
+      <div className="w-full space-y-4 p-4 pb-28 sm:space-y-5 sm:p-6 lg:p-8">
         <p className="text-sm text-sub">{t.essentials.booksSubtitle}</p>
 
         {books === null ? (
@@ -54,7 +54,7 @@ export default function BooksPage() {
           <EmptyState icon={BookOpen} title={t.common.noItemsYet} />
         ) : (
           <>
-            <div className="flex items-center justify-between rounded-2xl border border-line bg-card p-4">
+            <div className="flex items-center justify-between rounded-lg border border-line/60 bg-card p-4">
               <span className="text-sm text-sub">{t.common.total}</span>
               <span className="font-heading text-lg font-bold text-ink">
                 {formatCurrencyINR(subtotal, language)}
@@ -69,6 +69,7 @@ export default function BooksPage() {
                     name={book.title}
                     meta={book.subject}
                     price={book.price}
+                    imageUrl={book.coverImageUrl}
                     selected={cart.isIncluded(id)}
                     onToggleSelected={(selected) => cart.setIncluded(bookToCartItem(book), selected)}
                   />
@@ -78,7 +79,7 @@ export default function BooksPage() {
           </>
         )}
       </div>
-      <EssentialsReviewBar />
+      <EssentialsReviewBar kind="book" />
     </>
   );
 }

@@ -103,13 +103,13 @@ export default function ProfilePage() {
   return (
     <>
       <AppHeader title={t.nav.profile} />
-      <div className="mx-auto max-w-2xl space-y-5 p-4 pb-8 sm:space-y-7 sm:p-6 lg:p-8">
-        <section className="flex flex-col items-center gap-3 rounded-2xl border border-line bg-card p-6 text-center sm:p-8">
+      <div className="w-full space-y-5 p-4 pb-8 sm:space-y-7 sm:p-6 lg:p-8">
+        <section className="flex flex-col items-center gap-3 rounded-xl border border-line/60 bg-card p-6 text-center sm:p-8">
           <AvatarUpload />
-          <p className="font-heading text-lg font-bold text-ink sm:text-xl">{profile.name}</p>
+          <p className="font-heading text-lg font-semibold text-ink sm:text-xl">{profile.name}</p>
         </section>
 
-        <section className="rounded-2xl border border-line bg-card px-4 sm:px-6">
+        <section className="rounded-lg border border-line/60 bg-card px-4 sm:px-6">
           <ProfileRow label={t.profile.registerNumberLabel} value={profile.registerNumber} />
           {profile.mobileNumber ? (
             <ProfileRow label={t.profile.mobileLabel} value={profile.mobileNumber} />
@@ -123,7 +123,7 @@ export default function ProfilePage() {
 
         <Link
           href="/help"
-          className="flex items-center gap-3 rounded-2xl border border-line bg-card p-4 transition-colors hover:border-brand/30 hover:bg-muted sm:p-5"
+          className="flex items-center gap-3 rounded-lg border border-line/60 bg-card p-4 transition-colors hover:bg-muted/50 sm:p-5"
         >
           <HelpCircle className="size-5 text-sub" />
           <span className="flex-1 text-sm font-medium text-ink">{t.help.title}</span>

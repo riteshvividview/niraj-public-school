@@ -3,6 +3,7 @@
 import { LogOut } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { UserAvatar } from "@/components/shared/user-avatar";
 import { useTranslation } from "@/i18n/context";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/store/auth-store";
@@ -43,12 +44,19 @@ export function AppSidebar() {
       </nav>
 
       <div className="border-t border-line p-4">
-        <p className="truncate text-sm font-medium text-ink">{profile?.name}</p>
-        <p className="truncate text-xs text-sub">{profile?.registerNumber}</p>
+        <div className="flex items-center gap-3">
+          {profile ? (
+            <UserAvatar name={profile.name} avatarUrl={profile.avatarUrl} size="md" />
+          ) : null}
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium text-ink">{profile?.name}</p>
+            <p className="truncate text-xs text-sub">{profile?.registerNumber}</p>
+          </div>
+        </div>
         <button
           type="button"
           onClick={logout}
-          className="mt-2 flex cursor-pointer items-center gap-2 rounded-md text-sm font-medium text-section-pay transition-colors hover:text-section-pay/80"
+          className="mt-3 flex cursor-pointer items-center gap-2 rounded-md text-sm font-medium text-section-pay transition-colors hover:text-section-pay/80"
         >
           <LogOut className="size-4" />
           {t.profile.logout}

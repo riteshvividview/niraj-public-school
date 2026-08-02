@@ -28,6 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { UserAvatar } from "@/components/shared/user-avatar";
 import { parseStudentsFile, type ParsedStudentRow } from "@/lib/bulk-import";
 import {
   bulkCreateStudents,
@@ -528,7 +529,12 @@ export default function StudentsManagerPage() {
             <TableBody>
               {(students ?? []).map((student) => (
                 <TableRow key={student.id}>
-                  <TableCell>{student.name}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2.5">
+                      <UserAvatar name={student.name} avatarUrl={student.avatarUrl} size="sm" />
+                      {student.name}
+                    </div>
+                  </TableCell>
                   <TableCell>{student.registerNumber}</TableCell>
                   <TableCell>{classLabelById.get(student.classLevelId) ?? "—"}</TableCell>
                   <TableCell>{student.mobileNumber ?? "—"}</TableCell>

@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 /** Matches ItemCard's layout while a data-source call is resolving. */
 export function ItemCardSkeleton() {
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-line bg-card p-4">
+    <div className="flex items-center gap-3 rounded-lg border border-line/60 bg-card p-4">
       <Skeleton className="size-14 shrink-0 rounded-xl" />
       <div className="flex-1 space-y-2">
         <Skeleton className="h-4 w-2/3" />
@@ -18,7 +18,7 @@ export function ItemCardSkeleton() {
 /** Matches ProgramCard's layout. */
 export function ProgramCardSkeleton() {
   return (
-    <div className="rounded-2xl border border-line bg-card p-5">
+    <div className="rounded-xl border border-line/60 bg-card p-5">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="flex-1 space-y-2">
           <Skeleton className="h-4 w-3/4" />

@@ -33,7 +33,12 @@ export interface SectionCardProps {
  */
 export function SectionCard({ icon: Icon, title, description, items, accent, className }: SectionCardProps) {
   return (
-    <div className={cn("rounded-2xl border border-line bg-card p-3.5 sm:p-6", className)}>
+    <div
+      className={cn(
+        "rounded-lg border border-line/60 bg-card p-3.5 transition-all hover:-translate-y-1 hover:border-brand/40 hover:shadow-md sm:p-6",
+        className,
+      )}
+    >
       <div
         className={cn(
           "mb-2.5 flex size-9 items-center justify-center rounded-xl sm:mb-4 sm:size-11",

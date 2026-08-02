@@ -105,6 +105,7 @@ export default function UniformPage() {
       <AppHeader
         title={t.essentials.uniform}
         backHref="/essentials"
+        showAvatar
         right={
           <SizeGuide
             triggerLabel={t.essentials.sizeGuideCta}
@@ -114,7 +115,7 @@ export default function UniformPage() {
           />
         }
       />
-      <div className="mx-auto w-full max-w-3xl space-y-4 p-4 pb-28 sm:space-y-5 sm:p-6 lg:p-8">
+      <div className="w-full space-y-4 p-4 pb-28 sm:space-y-5 sm:p-6 lg:p-8">
         {items === null ? (
           <div className="space-y-3">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -137,6 +138,7 @@ export default function UniformPage() {
                   name={item.name}
                   meta={item.description}
                   price={displayPrice}
+                  imageUrl={item.imageUrl}
                   selected={Boolean(confirmed)}
                   trailing={
                     <div className="flex flex-col items-end gap-1.5">
@@ -178,7 +180,7 @@ export default function UniformPage() {
           </div>
         )}
       </div>
-      <EssentialsReviewBar />
+      <EssentialsReviewBar kind="uniform" />
     </>
   );
 }

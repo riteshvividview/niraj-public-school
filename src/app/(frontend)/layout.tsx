@@ -1,22 +1,31 @@
 import type { Metadata } from "next";
-import { Inter, Poppins } from "next/font/google";
+import { DM_Sans } from "next/font/google";
 import { LanguageProvider } from "@/i18n/context";
 import { AuthProvider } from "@/store/auth-store";
 import { CartProvider } from "@/store/cart-store";
 import { ConsoleAuthProvider } from "@/store/console-auth-store";
 import { ReceiptsProvider } from "@/store/receipts-store";
+import { ThemeProvider } from "@/store/theme-store";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
+/**
+ * Applies the persisted theme class before first paint — runs blocking, in
+ * <head>, ahead of any hydration — so there's no flash of the wrong theme.
+ * Kept in sync with src/store/theme-store.tsx's storage key/values.
+ */
+const THEME_INIT_SCRIPT = `
+(function () {
+  try {
+    var stored = window.localStorage.getItem("nps-theme");
+    if (stored === "dark") document.documentElement.classList.add("dark");
+  } catch (e) {}
+})();
+`;
+
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
-});
-
-const poppins = Poppins({
-  variable: "--font-poppins",
-  subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -33,18 +42,24 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${poppins.variable} h-full antialiased`}
+      className={`${dmSans.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col">
-        <LanguageProvider>
-          <AuthProvider>
-            <ConsoleAuthProvider>
-              <CartProvider>
-                <ReceiptsProvider>{children}</ReceiptsProvider>
-              </CartProvider>
-            </ConsoleAuthProvider>
-          </AuthProvider>
-        </LanguageProvider>
+        <ThemeProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <ConsoleAuthProvider>
+                <CartProvider>
+                  <ReceiptsProvider>{children}</ReceiptsProvider>
+                </CartProvider>
+              </ConsoleAuthProvider>
+            </AuthProvider>
+          </LanguageProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -7,8 +7,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
-  --font-heading: var(--font-poppins);
+  --font-sans: var(--font-dm-sans);
+  --font-heading: var(--font-dm-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -96,7 +96,7 @@
   --section-platform-bg: #f3e8fd;
 
   /* shadcn semantic tokens, mapped onto the brand palette above. */
-  --background: #eef1f6;
+  --background: #f7f8fa;
   --foreground: var(--ink);
   --card: #ffffff;
   --card-foreground: var(--ink);
@@ -132,37 +132,61 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* Brand tokens, dark-mode values — same hues as :root, lightened/tinted
+     for contrast against a dark background rather than a literal palette
+     swap. Keep in sync with :root's brand tokens above when either changes. */
+  --ink: #eef1f6;
+  --sub: #98a2b3;
+  --line: #2a3038;
+  --brand: #5f93ff;
+  --brand-2: #22c3b0;
+  --warm: #f2a93c;
+
+  --section-workspace: #7ea6ff;
+  --section-workspace-bg: #1e2540;
+  --section-essentials: #2dd4bf;
+  --section-essentials-bg: #16302c;
+  --section-programs: #f2a93c;
+  --section-programs-bg: #332510;
+  --section-pay: #f2726b;
+  --section-pay-bg: #3a1f1d;
+  --section-console: #b0bac2;
+  --section-console-bg: #232830;
+  --section-platform: #b98eef;
+  --section-platform-bg: #2a1f3d;
+
+  --background: #12151c;
+  --foreground: var(--ink);
+  --card: #1b2029;
+  --card-foreground: var(--ink);
+  --popover: #1b2029;
+  --popover-foreground: var(--ink);
+  --primary: var(--brand);
+  --primary-foreground: #ffffff;
+  --secondary: var(--section-workspace-bg);
+  --secondary-foreground: var(--section-workspace);
+  --muted: #232830;
+  --muted-foreground: var(--sub);
+  --accent: var(--section-workspace-bg);
+  --accent-foreground: var(--ink);
+  --destructive: var(--section-pay);
+  --destructive-foreground: #ffffff;
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--brand);
+  --chart-1: var(--brand);
+  --chart-2: var(--brand-2);
+  --chart-3: var(--warm);
+  --chart-4: var(--section-platform);
+  --chart-5: var(--section-pay);
+  --sidebar: #1b2029;
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--section-workspace-bg);
+  --sidebar-accent-foreground: var(--section-workspace);
+  --sidebar-border: var(--line);
+  --sidebar-ring: var(--brand);
 }
 
 @layer base {

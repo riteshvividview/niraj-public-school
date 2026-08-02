@@ -24,7 +24,7 @@ function CartLineRow({
 }) {
   const { language } = useTranslation();
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-line bg-card p-4">
+    <div className="flex items-center gap-3 px-4 py-4">
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium text-ink">{item.label}</p>
         {item.meta ? <p className="truncate text-sm text-sub">{item.meta}</p> : null}
@@ -57,17 +57,18 @@ export default function CartPage() {
   const cart = useCart();
 
   const grouped = groupItemsByKind(cart.items);
-  const lines = buildPriceSummaryLines(cart.items, {
+  const categoryLabels = {
     books: t.essentials.books,
     uniform: t.essentials.uniform,
     stationery: t.essentials.stationery,
     programs: t.nav.programs,
-  });
+  };
+  const lines = buildPriceSummaryLines(cart.items, categoryLabels);
 
   return (
     <>
-      <AppHeader title={t.cart.title} backHref="/essentials" />
-      <div className="mx-auto w-full max-w-2xl space-y-4 p-4 pb-8 sm:space-y-5 sm:p-6 lg:p-8">
+      <AppHeader title={t.cart.title} backHref="/essentials" showAvatar />
+      <div className="w-full space-y-4 p-4 pb-8 sm:space-y-5 sm:p-6 lg:p-8">
         {cart.count === 0 ? (
           <EmptyState
             icon={ShoppingCart}
@@ -78,24 +79,60 @@ export default function CartPage() {
           />
         ) : (
           <>
-            <div className="space-y-3">
-              {grouped.books.map((item) => (
-                <CartLineRow key={item.id} item={item} onRemove={() => cart.setIncluded(item, false)} />
-              ))}
-              {grouped.uniform.map((item) => (
-                <CartLineRow
-                  key={item.id}
-                  item={item}
-                  onRemove={() => cart.setIncluded(item, false)}
-                  changeSizeLabel={t.cart.changeSize}
-                />
-              ))}
-              {grouped.stationery.map((item) => (
-                <CartLineRow key={item.id} item={item} onRemove={() => cart.setIncluded(item, false)} />
-              ))}
-              {grouped.programs.map((item) => (
-                <CartLineRow key={item.id} item={item} onRemove={() => cart.setIncluded(item, false)} />
-              ))}
+            <div className="space-y-6">
+              {grouped.books.length > 0 ? (
+                <div>
+                  <h2 className="mb-2 font-heading text-base font-semibold text-ink">
+                    {categoryLabels.books}
+                  </h2>
+                  <div className="divide-y divide-line rounded-lg border border-line/60 bg-card">
+                    {grouped.books.map((item) => (
+                      <CartLineRow key={item.id} item={item} onRemove={() => cart.setIncluded(item, false)} />
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              {grouped.uniform.length > 0 ? (
+                <div>
+                  <h2 className="mb-2 font-heading text-base font-semibold text-ink">
+                    {categoryLabels.uniform}
+                  </h2>
+                  <div className="divide-y divide-line rounded-lg border border-line/60 bg-card">
+                    {grouped.uniform.map((item) => (
+                      <CartLineRow
+                        key={item.id}
+                        item={item}
+                        onRemove={() => cart.setIncluded(item, false)}
+                        changeSizeLabel={t.cart.changeSize}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              {grouped.stationery.length > 0 ? (
+                <div>
+                  <h2 className="mb-2 font-heading text-base font-semibold text-ink">
+                    {categoryLabels.stationery}
+                  </h2>
+                  <div className="divide-y divide-line rounded-lg border border-line/60 bg-card">
+                    {grouped.stationery.map((item) => (
+                      <CartLineRow key={item.id} item={item} onRemove={() => cart.setIncluded(item, false)} />
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              {grouped.programs.length > 0 ? (
+                <div>
+                  <h2 className="mb-2 font-heading text-base font-semibold text-ink">
+                    {categoryLabels.programs}
+                  </h2>
+                  <div className="divide-y divide-line rounded-lg border border-line/60 bg-card">
+                    {grouped.programs.map((item) => (
+                      <CartLineRow key={item.id} item={item} onRemove={() => cart.setIncluded(item, false)} />
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
 
             <div className="space-y-2">

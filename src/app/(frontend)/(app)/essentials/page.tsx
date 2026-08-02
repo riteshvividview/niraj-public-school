@@ -24,7 +24,7 @@ function HubRow({ href, icon: Icon, title, statusLabel, isComplete }: HubRowProp
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 rounded-2xl border border-line bg-card p-4 transition-colors hover:border-brand/30 hover:bg-muted sm:p-5"
+      className="mb-2.5 flex items-center gap-3 rounded-lg border border-line/60 bg-card p-4 transition-all hover:-translate-y-1 hover:border-brand/40 hover:shadow-md last:mb-0"
     >
       <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-section-essentials-bg text-section-essentials sm:size-12">
         <Icon className="size-5" />
@@ -72,11 +72,11 @@ export default function EssentialsHubPage() {
 
   return (
     <>
-      <AppHeader title={t.essentials.hubTitle} />
-      <div className="mx-auto w-full max-w-2xl space-y-4 p-4 pb-8 sm:space-y-5 sm:p-6 lg:p-8">
+      <AppHeader title={t.essentials.hubTitle} showAvatar />
+      <div className="w-full space-y-4 p-4 pb-8 sm:space-y-5 sm:p-6 lg:p-8">
         <p className="text-sm text-sub">{t.essentials.hubSubtitle}</p>
 
-        <div className="space-y-3">
+        <div>
           <HubRow
             href="/essentials/books"
             icon={BookOpen}

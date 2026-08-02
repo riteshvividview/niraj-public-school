@@ -38,8 +38,8 @@ export default function StationeryPage() {
 
   return (
     <>
-      <AppHeader title={t.essentials.stationery} backHref="/essentials" />
-      <div className="mx-auto w-full max-w-3xl space-y-4 p-4 pb-28 sm:space-y-5 sm:p-6 lg:p-8">
+      <AppHeader title={t.essentials.stationery} backHref="/essentials" showAvatar />
+      <div className="w-full space-y-4 p-4 pb-28 sm:space-y-5 sm:p-6 lg:p-8">
         <p className="text-sm text-sub">{t.essentials.stationerySubtitle}</p>
 
         {items === null ? (
@@ -52,7 +52,7 @@ export default function StationeryPage() {
           <EmptyState icon={PencilRuler} title={t.common.noItemsYet} />
         ) : (
           <>
-            <div className="flex items-center justify-between rounded-2xl border border-line bg-card p-4">
+            <div className="flex items-center justify-between rounded-lg border border-line/60 bg-card p-4">
               <span className="text-sm text-sub">{t.common.total}</span>
               <span className="font-heading text-lg font-bold text-ink">
                 {formatCurrencyINR(subtotal, language)}
@@ -67,6 +67,7 @@ export default function StationeryPage() {
                     name={item.name}
                     meta={item.quantityLabel}
                     price={item.price}
+                    imageUrl={item.imageUrl}
                     selected={cart.isIncluded(id)}
                     onToggleSelected={(selected) => cart.setIncluded(stationeryToCartItem(item), selected)}
                   />
@@ -76,7 +77,7 @@ export default function StationeryPage() {
           </>
         )}
       </div>
-      <EssentialsReviewBar />
+      <EssentialsReviewBar kind="stationery" />
     </>
   );
 }

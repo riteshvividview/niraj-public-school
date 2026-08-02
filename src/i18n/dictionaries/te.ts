@@ -10,6 +10,7 @@ const te: Dictionary = {
     home: "హోమ్",
     essentials: "అవసరమైనవి",
     programs: "కార్యక్రమాలు",
+    timetable: "టైమ్‌టేబుల్",
     receipts: "రసీదులు",
     profile: "ప్రొఫైల్",
   },
@@ -70,6 +71,24 @@ const te: Dictionary = {
     hasReceiptsMessage: "మీ రసీదులు స్కూల్‌లో చూపించడానికి సిద్ధంగా ఉన్నాయి.",
     noReceiptsTitle: "ఇంకా రసీదులు లేవు",
     noReceiptsDescription: "మీ మొదటి రసీదు పొందడానికి ఒక కొనుగోలు లేదా కార్యక్రమ నమోదు పూర్తి చేయండి.",
+    viewTimetable: "టైమ్‌టేబుల్ చూడండి",
+  },
+
+  timetable: {
+    title: "టైమ్‌టేబుల్",
+    subtitle: "మీ తరగతి వారపు షెడ్యూల్.",
+    periodColumnLabel: "పీరియడ్",
+    monday: "సోమ",
+    tuesday: "మంగళ",
+    wednesday: "బుధ",
+    thursday: "గురు",
+    friday: "శుక్ర",
+    saturday: "శని",
+    notesTitle: "గమనికలు",
+    fullScreenLabel: "పూర్తి స్క్రీన్",
+    exitFullScreenLabel: "పూర్తి స్క్రీన్ నుండి నిష్క్రమించండి",
+    emptyTitle: "ఇంకా టైమ్‌టేబుల్ లేదు",
+    emptyDescription: "మీ పాఠశాల ఈ తరగతికి ఇంకా టైమ్‌టేబుల్ ప్రచురించలేదు.",
   },
 
   essentials: {

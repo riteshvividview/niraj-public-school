@@ -21,7 +21,7 @@ export function PriceSummary({ lines, total, note, className }: PriceSummaryProp
   const { language, t } = useTranslation();
 
   return (
-    <div className={cn("rounded-2xl border border-line bg-card p-5", className)}>
+    <div className={cn("rounded-lg border border-line/60 bg-card p-4", className)}>
       <div className="space-y-2.5">
         {lines.map((line) => (
           <div key={line.label} className="flex items-center justify-between text-sm">

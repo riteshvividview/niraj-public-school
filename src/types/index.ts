@@ -5,6 +5,7 @@ export * from "./book";
 export * from "./uniform-item";
 export * from "./stationery-item";
 export * from "./program";
+export * from "./timetable";
 export * from "./cart";
 export * from "./order";
 export * from "./receipt";

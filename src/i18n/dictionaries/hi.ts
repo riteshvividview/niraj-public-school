@@ -10,6 +10,7 @@ const hi: Dictionary = {
     home: "होम",
     essentials: "आवश्यक सामग्री",
     programs: "कार्यक्रम",
+    timetable: "समय सारणी",
     receipts: "रसीदें",
     profile: "प्रोफ़ाइल",
   },
@@ -70,6 +71,24 @@ const hi: Dictionary = {
     hasReceiptsMessage: "आपकी रसीदें स्कूल में दिखाने के लिए तैयार हैं।",
     noReceiptsTitle: "अभी कोई रसीद नहीं",
     noReceiptsDescription: "अपनी पहली रसीद पाने के लिए कोई खरीदारी या कार्यक्रम पंजीकरण पूरा करें।",
+    viewTimetable: "समय सारणी देखें",
+  },
+
+  timetable: {
+    title: "समय सारणी",
+    subtitle: "आपकी कक्षा की साप्ताहिक समय सारणी।",
+    periodColumnLabel: "पीरियड",
+    monday: "सोम",
+    tuesday: "मंगल",
+    wednesday: "बुध",
+    thursday: "गुरु",
+    friday: "शुक्र",
+    saturday: "शनि",
+    notesTitle: "सूचनाएं",
+    fullScreenLabel: "पूर्ण स्क्रीन",
+    exitFullScreenLabel: "पूर्ण स्क्रीन से बाहर निकलें",
+    emptyTitle: "अभी कोई समय सारणी नहीं",
+    emptyDescription: "आपके स्कूल ने अभी तक इस कक्षा के लिए समय सारणी प्रकाशित नहीं की है।",
   },
 
   essentials: {

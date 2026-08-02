@@ -18,7 +18,7 @@ function ReceiptRow({ record, schoolName }: { record: ReceiptRecord; schoolName:
   return (
     <Link
       href={`/receipts/${record.receipt.id}`}
-      className="flex items-center gap-3 rounded-2xl border border-line bg-card p-4"
+      className="mb-2.5 flex items-center gap-3 rounded-lg border border-line/60 bg-card p-4 transition-colors hover:bg-muted/50 last:mb-0"
     >
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium text-ink">{schoolName}</p>
@@ -52,8 +52,8 @@ export default function ReceiptsListPage() {
 
   return (
     <>
-      <AppHeader title={t.receiptsPage.title} />
-      <div className="mx-auto w-full max-w-2xl space-y-3 p-4 pb-8 sm:p-6 lg:p-8">
+      <AppHeader title={t.receiptsPage.title} showAvatar />
+      <div className="w-full p-4 pb-8 sm:p-6 lg:p-8">
         {records.length === 0 ? (
           <EmptyState
             icon={ReceiptIcon}

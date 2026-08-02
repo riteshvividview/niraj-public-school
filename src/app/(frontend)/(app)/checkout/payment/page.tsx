@@ -75,9 +75,9 @@ export default function PaymentPage() {
 
   return (
     <>
-      <AppHeader title={t.payment.title} backHref="/cart" />
-      <div className="mx-auto w-full max-w-2xl space-y-6 p-4 pb-8 sm:p-6 lg:p-8">
-        <div className="flex items-center justify-between rounded-2xl border border-line bg-card p-4">
+      <AppHeader title={t.payment.title} backHref="/cart" showAvatar />
+      <div className="w-full space-y-6 p-4 pb-8 sm:p-6 lg:p-8">
+        <div className="flex items-center justify-between rounded-lg border border-line/60 bg-card p-4">
           <span className="text-sm text-sub">{t.common.total}</span>
           <span className="font-heading text-xl font-bold text-ink">
             {formatCurrencyINR(cart.total, language)}
@@ -85,7 +85,7 @@ export default function PaymentPage() {
         </div>
 
         {failed ? (
-          <div className="flex items-start gap-3 rounded-2xl border border-section-pay bg-section-pay-bg p-4">
+          <div className="flex items-start gap-3 rounded-lg border border-section-pay/30 bg-section-pay-bg p-4">
             <AlertTriangle className="mt-0.5 size-5 shrink-0 text-section-pay" />
             <div>
               <p className="font-medium text-section-pay">{t.payment.failureTitle}</p>
@@ -96,14 +96,20 @@ export default function PaymentPage() {
 
         <div className="space-y-2">
           <Label>{t.payment.methodLabel}</Label>
-          <RadioGroup value={method} onValueChange={(value) => setMethod(value as PaymentMethod)}>
+          <RadioGroup
+            value={method}
+            onValueChange={(value) => setMethod(value as PaymentMethod)}
+            className="gap-2"
+          >
             {METHODS.map(({ value, icon: Icon }) => (
               <Label
                 key={value}
                 htmlFor={`method-${value}`}
                 className={cn(
-                  "flex cursor-pointer items-center gap-3 rounded-2xl border p-4",
-                  method === value ? "border-brand bg-section-workspace-bg" : "border-line bg-card",
+                  "flex cursor-pointer items-center gap-3 rounded-lg border p-3.5 transition-colors",
+                  method === value
+                    ? "border-brand bg-section-workspace-bg"
+                    : "border-line/60 bg-card hover:bg-muted/50",
                 )}
               >
                 <RadioGroupItem value={value} id={`method-${value}`} />
@@ -114,7 +120,7 @@ export default function PaymentPage() {
           </RadioGroup>
         </div>
 
-        <div className="flex items-center gap-2 rounded-2xl border border-dashed border-line p-3">
+        <div className="flex items-center gap-2 rounded-lg border border-line/60 bg-muted/60 p-3">
           <Checkbox
             id="dev-force-failure"
             checked={devForceFailure}

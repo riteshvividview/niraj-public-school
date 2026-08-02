@@ -36,7 +36,7 @@ export default function ProgramDetailPage() {
     return (
       <>
         <AppHeader title={t.nav.programs} backHref="/programs" />
-        <div className="mx-auto w-full max-w-2xl space-y-4 p-4 sm:p-6 lg:p-8">
+        <div className="w-full space-y-4 p-4 sm:p-6 lg:p-8">
           <Skeleton className="h-40 w-full rounded-2xl" />
           <Skeleton className="h-24 w-full rounded-2xl" />
         </div>
@@ -69,11 +69,11 @@ export default function ProgramDetailPage() {
 
   return (
     <>
-      <AppHeader title={program.title} backHref="/programs" />
-      <div className="mx-auto w-full max-w-2xl space-y-5 p-4 pb-8 sm:p-6 lg:p-8">
+      <AppHeader title={program.title} backHref="/programs" showAvatar />
+      <div className="w-full space-y-5 p-4 pb-8 sm:p-6 lg:p-8">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="font-heading text-xl font-bold text-ink">{program.title}</h1>
+            <h1 className="font-heading text-xl font-semibold text-ink">{program.title}</h1>
             <p className="mt-1 text-xs font-medium text-brand">{categoryLabel}</p>
           </div>
           <StatusBadge status={toBadgeStatus(program.status)} />
@@ -81,22 +81,22 @@ export default function ProgramDetailPage() {
 
         <p className="text-sm text-ink">{program.description}</p>
 
-        <div className="space-y-3 rounded-2xl border border-line bg-card p-4">
-          <div className="flex items-center gap-3">
+        <div className="divide-y divide-line rounded-lg border border-line/60 bg-card px-4">
+          <div className="flex items-center gap-3 py-3">
             <Calendar className="size-4 shrink-0 text-sub" />
             <div>
               <p className="text-xs text-sub">{t.programsPage.dateLabel}</p>
               <p className="text-sm font-medium text-ink">{formatDate(program.date, language)}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 py-3">
             <MapPin className="size-4 shrink-0 text-sub" />
             <div>
               <p className="text-xs text-sub">{t.programsPage.venueLabel}</p>
               <p className="text-sm font-medium text-ink">{program.venue}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 py-3">
             <Users className="size-4 shrink-0 text-sub" />
             <div>
               <p className="text-xs text-sub">{t.programsPage.seatsLabel}</p>
@@ -105,17 +105,16 @@ export default function ProgramDetailPage() {
               </p>
             </div>
           </div>
-        </div>
-
-        <div className="rounded-2xl border border-line bg-card p-4">
-          <p className="text-xs text-sub">{t.programsPage.contactLabel}</p>
-          <div className="mt-1 flex items-center gap-2 text-sm font-medium text-ink">
-            <Phone className="size-4 text-sub" />
-            {program.contactPhone}
+          <div className="flex items-center gap-3 py-3">
+            <Phone className="size-4 shrink-0 text-sub" />
+            <div>
+              <p className="text-xs text-sub">{t.programsPage.contactLabel}</p>
+              <p className="text-sm font-medium text-ink">{program.contactPhone}</p>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-between rounded-2xl border border-line bg-card p-4">
+        <div className="flex items-center justify-between rounded-lg border border-line/60 bg-card p-4">
           <span className="text-sm text-sub">{t.programsPage.feeLabel}</span>
           <span className="font-heading text-xl font-bold text-ink">
             {formatCurrencyINR(program.fee, language)}
@@ -123,12 +122,12 @@ export default function ProgramDetailPage() {
         </div>
 
         {isFull ? (
-          <div className="rounded-2xl border border-section-pay bg-section-pay-bg p-4 text-center">
+          <div className="rounded-lg border border-section-pay/30 bg-section-pay-bg p-4 text-center">
             <p className="font-medium text-section-pay">{t.programsPage.fullTitle}</p>
             <p className="mt-1 text-sm text-section-pay">{t.programsPage.fullDescription}</p>
           </div>
         ) : inCart ? (
-          <div className="space-y-2 rounded-2xl border border-line bg-card p-4 text-center">
+          <div className="space-y-2 text-center">
             <p className="text-sm text-ink">{t.programsPage.alreadyInCart}</p>
             <Button className="w-full" variant="outline" onClick={() => router.push("/cart")}>
               {t.programsPage.viewCart}

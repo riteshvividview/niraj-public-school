@@ -18,7 +18,7 @@ function stationeryItem(
     name,
     quantityLabel,
     price,
-    imageUrl: null,
+    imageUrl: "/essentials/stationery.jpg",
     createdAt: SEED_TIMESTAMP,
     updatedAt: SEED_TIMESTAMP,
   };

@@ -32,7 +32,12 @@ export function ProgramCard({
   const { language, t } = useTranslation();
 
   const content = (
-    <div className={cn("rounded-2xl border border-line bg-card p-5 transition-shadow hover:shadow-md", className)}>
+    <div
+      className={cn(
+        "rounded-xl border border-line/60 bg-card p-5 transition-all hover:-translate-y-1 hover:border-brand/40 hover:shadow-md",
+        className,
+      )}
+    >
       <div className="mb-3 flex items-start justify-between gap-3">
         <h4 className="min-w-0 truncate font-heading text-base font-semibold text-ink">{title}</h4>
         <StatusBadge status={toBadgeStatus(status)} />

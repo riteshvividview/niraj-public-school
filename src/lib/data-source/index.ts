@@ -3,4 +3,5 @@ export * from "./books";
 export * from "./uniform";
 export * from "./stationery";
 export * from "./programs";
+export * from "./timetable";
 export * from "./users";

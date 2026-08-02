@@ -3,6 +3,7 @@ import { MOCK_BOOKS } from "@/lib/mock/books";
 import { MOCK_PROGRAMS } from "@/lib/mock/programs";
 import { MOCK_CLASS_LEVELS, MOCK_SCHOOL } from "@/lib/mock/school";
 import { MOCK_STATIONERY_ITEMS } from "@/lib/mock/stationery";
+import { MOCK_TIMETABLES } from "@/lib/mock/timetable";
 import { MOCK_UNIFORM_ITEMS } from "@/lib/mock/uniform";
 import { MOCK_USER_PASSWORD, MOCK_USERS } from "@/lib/mock/users";
 
@@ -60,6 +61,7 @@ export async function seedPayload(payload: Payload): Promise<{ schoolId: string 
         category: item.category,
         description: item.description,
         sizeOptions: item.sizeOptions,
+        imageUrl: item.imageUrl ?? undefined,
       },
     });
   }
@@ -73,6 +75,7 @@ export async function seedPayload(payload: Payload): Promise<{ schoolId: string 
         name: item.name,
         quantityLabel: item.quantityLabel,
         price: item.price,
+        imageUrl: item.imageUrl ?? undefined,
       },
     });
   }
@@ -92,6 +95,18 @@ export async function seedPayload(payload: Payload): Promise<{ schoolId: string 
         seatsAvailable: program.seatsAvailable,
         status: program.status,
         contactPhone: program.contactPhone,
+      },
+    });
+  }
+
+  for (const timetable of MOCK_TIMETABLES) {
+    await payload.create({
+      collection: "timetables",
+      data: {
+        school: school.id,
+        classLevel: classLevelIdByMockId.get(timetable.classLevelId),
+        periods: timetable.periods,
+        notes: timetable.notes,
       },
     });
   }

@@ -13,6 +13,7 @@ export interface Dictionary {
     home: string;
     essentials: string;
     programs: string;
+    timetable: string;
     receipts: string;
     profile: string;
   };
@@ -79,6 +80,7 @@ export interface Dictionary {
     hasReceiptsMessage: string;
     noReceiptsTitle: string;
     noReceiptsDescription: string;
+    viewTimetable: string;
   };
 
   essentials: {
@@ -105,6 +107,23 @@ export interface Dictionary {
     notNeeded: string;
     booksSubtitle: string;
     stationerySubtitle: string;
+  };
+
+  timetable: {
+    title: string;
+    subtitle: string;
+    periodColumnLabel: string;
+    monday: string;
+    tuesday: string;
+    wednesday: string;
+    thursday: string;
+    friday: string;
+    saturday: string;
+    notesTitle: string;
+    fullScreenLabel: string;
+    exitFullScreenLabel: string;
+    emptyTitle: string;
+    emptyDescription: string;
   };
 
   cart: {

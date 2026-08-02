@@ -2,6 +2,7 @@ import * as migration_20260731_132628_init from './20260731_132628_init';
 import * as migration_20260801_052203_users_auth from './20260801_052203_users_auth';
 import * as migration_20260801_120934_avatar_upload from './20260801_120934_avatar_upload';
 import * as migration_20260801_125554_register_number_login from './20260801_125554_register_number_login';
+import * as migration_20260802_182304_add_timetables from './20260802_182304_add_timetables';
 
 export const migrations = [
   {
@@ -22,6 +23,11 @@ export const migrations = [
   {
     up: migration_20260801_125554_register_number_login.up,
     down: migration_20260801_125554_register_number_login.down,
-    name: '20260801_125554_register_number_login'
+    name: '20260801_125554_register_number_login',
+  },
+  {
+    up: migration_20260802_182304_add_timetables.up,
+    down: migration_20260802_182304_add_timetables.down,
+    name: '20260802_182304_add_timetables'
   },
 ];

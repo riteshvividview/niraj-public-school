@@ -10,6 +10,7 @@ const en: Dictionary = {
     home: "Home",
     essentials: "Essentials",
     programs: "Programs",
+    timetable: "Timetable",
     receipts: "Receipts",
     profile: "Profile",
   },
@@ -70,6 +71,24 @@ const en: Dictionary = {
     hasReceiptsMessage: "You have receipts ready to show at school.",
     noReceiptsTitle: "No receipts yet",
     noReceiptsDescription: "Complete a purchase or program enrollment to get your first receipt.",
+    viewTimetable: "View Time Table",
+  },
+
+  timetable: {
+    title: "Timetable",
+    subtitle: "Your class's weekly schedule.",
+    periodColumnLabel: "Period",
+    monday: "Mon",
+    tuesday: "Tue",
+    wednesday: "Wed",
+    thursday: "Thu",
+    friday: "Fri",
+    saturday: "Sat",
+    notesTitle: "Notes",
+    fullScreenLabel: "Full Screen",
+    exitFullScreenLabel: "Exit Full Screen",
+    emptyTitle: "No timetable yet",
+    emptyDescription: "Your school hasn't published a timetable for this class yet.",
   },
 
   essentials: {

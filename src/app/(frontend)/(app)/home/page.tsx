@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, PencilRuler, Receipt as ReceiptIcon, Shirt, User } from "lucide-react";
+import { BookOpen, CalendarDays, PencilRuler, Receipt as ReceiptIcon, Shirt } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/shared/app-header";
@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { ProgramCardSkeleton } from "@/components/shared/loading-skeletons";
 import { ProgramCard } from "@/components/shared/program-card";
 import { SectionCard } from "@/components/shared/section-card";
+import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/i18n/context";
 import { getClassLevelById, getPrograms, getSchoolById } from "@/lib/data-source";
 import { useAuth } from "@/store/auth-store";
@@ -42,21 +43,21 @@ export default function HomePage() {
     <>
       <AppHeader
         title={t.appName}
+        showAvatar
         right={
-          <Link
-            href="/profile"
-            aria-label={t.nav.profile}
-            className="flex size-9 items-center justify-center rounded-full bg-section-workspace-bg text-brand"
-          >
-            <User className="size-5" />
-          </Link>
+          <Button variant="outline" size="sm" className="gap-1.5 px-2.5 sm:px-3" asChild>
+            <Link href="/timetable" aria-label={t.home.viewTimetable}>
+              <CalendarDays className="size-4" />
+              <span className="hidden sm:inline">{t.home.viewTimetable}</span>
+            </Link>
+          </Button>
         }
       />
 
-      <div className="mx-auto w-full max-w-4xl space-y-6 p-4 pb-8 sm:space-y-8 sm:p-6 lg:p-8">
-        <section className="rounded-2xl border border-line bg-card p-5 sm:p-6">
+      <div className="w-full space-y-6 p-4 pb-8 sm:space-y-8 sm:p-6 lg:p-8">
+        <section className="animate-in fade-in slide-in-from-bottom-2 rounded-xl border border-line/60 bg-card p-5 duration-500 sm:p-6">
           <p className="text-sm text-sub">{t.welcome},</p>
-          <p className="font-heading text-xl font-bold text-ink sm:text-2xl">{profile.name}</p>
+          <p className="font-heading text-xl font-semibold text-ink sm:text-2xl">{profile.name}</p>
           {school ? (
             <p className="mt-2 text-sm text-sub">
               {school.name}
@@ -68,13 +69,13 @@ export default function HomePage() {
         <section className="space-y-3">
           <h2 className="font-heading text-base font-semibold text-ink">{t.nav.essentials}</h2>
           <div className="grid grid-cols-3 gap-2 sm:gap-3">
-            <Link href="/essentials">
+            <Link href="/essentials/books">
               <SectionCard icon={BookOpen} title={t.essentials.books} accent="essentials" />
             </Link>
-            <Link href="/essentials">
+            <Link href="/essentials/uniform">
               <SectionCard icon={Shirt} title={t.essentials.uniform} accent="essentials" />
             </Link>
-            <Link href="/essentials">
+            <Link href="/essentials/stationery">
               <SectionCard icon={PencilRuler} title={t.essentials.stationery} accent="essentials" />
             </Link>
           </div>
@@ -114,7 +115,7 @@ export default function HomePage() {
           {hasReceipts ? (
             <Link
               href="/receipts"
-              className="flex items-center gap-3 rounded-2xl border border-line bg-card p-4"
+              className="flex items-center gap-3 rounded-lg border border-line/60 bg-card p-4 transition-colors hover:bg-muted/50"
             >
               <div className="flex size-10 items-center justify-center rounded-xl bg-section-workspace-bg text-brand">
                 <ReceiptIcon className="size-5" />

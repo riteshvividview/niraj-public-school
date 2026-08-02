@@ -13,6 +13,7 @@ import { Programs } from "./src/collections/Programs";
 import { Receipts } from "./src/collections/Receipts";
 import { Schools } from "./src/collections/Schools";
 import { StationeryItems } from "./src/collections/StationeryItems";
+import { Timetables } from "./src/collections/Timetables";
 import { UniformItems } from "./src/collections/UniformItems";
 import { Users } from "./src/collections/Users";
 
@@ -33,6 +34,7 @@ export default buildConfig({
     UniformItems,
     StationeryItems,
     Programs,
+    Timetables,
     Users,
     Orders,
     Receipts,

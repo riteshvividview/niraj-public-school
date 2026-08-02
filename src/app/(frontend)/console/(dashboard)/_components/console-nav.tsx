@@ -1,8 +1,9 @@
 "use client";
 
-import { BookMarked, CalendarClock, LayoutDashboard, LogOut, ScanLine, Users } from "lucide-react";
+import { BookMarked, CalendarClock, LayoutDashboard, LogOut, ScanLine, Table2, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { cn } from "@/lib/utils";
 import { useConsoleAuth } from "@/store/console-auth-store";
 
@@ -10,6 +11,7 @@ const NAV_ITEMS = [
   { href: "/console/catalogue", label: "Catalogue Manager", icon: BookMarked },
   { href: "/console/programs", label: "Program Manager", icon: CalendarClock },
   { href: "/console/students", label: "Students", icon: Users },
+  { href: "/console/timetable", label: "Timetable Manager", icon: Table2 },
   { href: "/console/scan", label: "Receipt / QR Scanner", icon: ScanLine },
   { href: "/console/reports", label: "Reports Dashboard", icon: LayoutDashboard },
 ];
@@ -42,9 +44,12 @@ export function ConsoleSidebar() {
   const { staff, logout } = useConsoleAuth();
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r border-line bg-card md:flex">
-      <div className="border-b border-line p-5">
-        <p className="font-heading text-sm font-bold text-ink">School Workspace</p>
-        <p className="text-xs text-sub">Staff Console</p>
+      <div className="flex items-center justify-between border-b border-line p-5">
+        <div>
+          <p className="font-heading text-sm font-bold text-ink">School Workspace</p>
+          <p className="text-xs text-sub">Staff Console</p>
+        </div>
+        <ThemeToggle />
       </div>
       <div className="flex-1 p-4">
         <NavLinks />
@@ -73,13 +78,16 @@ export function ConsoleMobileNav() {
         <div>
           <p className="font-heading text-sm font-bold text-ink">School Workspace — Console</p>
         </div>
-        <button
-          type="button"
-          onClick={logout}
-          className="cursor-pointer text-sm font-medium text-section-pay transition-colors hover:text-section-pay/80"
-        >
-          Log out
-        </button>
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <button
+            type="button"
+            onClick={logout}
+            className="cursor-pointer text-sm font-medium text-section-pay transition-colors hover:text-section-pay/80"
+          >
+            Log out
+          </button>
+        </div>
       </div>
       <div className="overflow-x-auto px-3 pb-3">
         <NavLinks direction="horizontal" />

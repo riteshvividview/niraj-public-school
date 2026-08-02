@@ -85,9 +85,9 @@ export default function ProgramsFeedPage() {
 
   return (
     <>
-      <AppHeader title={t.nav.programs} />
-      <div className="mx-auto w-full max-w-5xl space-y-4 p-4 pb-8 sm:space-y-5 sm:p-6 lg:p-8">
-        <div className="grid grid-cols-2 gap-3 rounded-2xl border border-line bg-card p-4 sm:grid-cols-3">
+      <AppHeader title={t.nav.programs} showAvatar />
+      <div className="w-full space-y-4 p-4 pb-8 sm:space-y-5 sm:p-6 lg:p-8">
+        <div className="grid grid-cols-2 gap-3 rounded-lg border border-line/60 bg-card p-4 sm:grid-cols-3">
           <div className="space-y-1">
             <label className="text-xs text-sub">{t.programsPage.filterCategoryLabel}</label>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
