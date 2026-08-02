@@ -43,7 +43,7 @@ function CartLineRow({
         type="button"
         onClick={onRemove}
         aria-label={item.label}
-        className="flex size-8 shrink-0 items-center justify-center rounded-full text-sub transition-colors hover:bg-muted hover:text-destructive"
+        className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-sub transition-colors hover:bg-muted hover:text-destructive"
       >
         <X className="size-4" />
       </button>

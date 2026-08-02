@@ -1,7 +1,7 @@
 import type { Dictionary } from "../types";
 
 const en: Dictionary = {
-  appName: "Niraj Public School",
+  appName: "School Workspace",
   language: "Language",
   continueLabel: "Continue",
   welcome: "Welcome",
@@ -52,42 +52,15 @@ const en: Dictionary = {
     },
     login: {
       title: "Welcome back",
-      subtitle: "Log in with your email to continue.",
-      emailLabel: "Email address",
-      emailPlaceholder: "you@example.com",
+      subtitle: "Log in with your register number to continue.",
+      registerNumberLabel: "Register number",
+      registerNumberPlaceholder: "e.g. NPS2026001",
       passwordLabel: "Password",
       passwordPlaceholder: "Enter your password",
       submit: "Log in",
-      invalidCredentials: "That email and password don't match an account.",
-      createAccountCta: "Create an account",
-      newHere: "New here?",
-    },
-    register: {
-      title: "Create your account",
-      subtitle: "Tell us a little about your child to set up your school workspace.",
-      nameLabel: "Parent / student name",
-      namePlaceholder: "e.g. Ritesh Kumar",
-      emailLabel: "Email address",
-      emailPlaceholder: "you@example.com",
-      passwordLabel: "Password",
-      passwordPlaceholder: "At least 8 characters",
-      confirmPasswordLabel: "Confirm password",
-      schoolLabel: "School",
-      classLabel: "Class",
-      classPlaceholder: "Select class",
-      alreadyRegistered: "This email is already registered.",
-      loginInsteadCta: "Log in instead",
-      submit: "Create account",
-      haveAccount: "Already have an account?",
-      loginCta: "Log in",
-    },
-    errors: {
-      invalidEmail: "Enter a valid email address.",
-      passwordTooShort: "Password must be at least 8 characters.",
-      passwordMismatch: "Passwords don't match.",
-      required: "This field is required.",
-      selectSchool: "Please select a school.",
-      selectClass: "Please select a class.",
+      invalidCredentials: "That register number and password don't match an account.",
+      cantLogIn:
+        "Can't log in? Contact your school office or class teacher — they can add or fix your record, then you can try again.",
     },
   },
 
@@ -155,8 +128,6 @@ const en: Dictionary = {
   },
 
   programsPage: {
-    filterSchoolLabel: "School",
-    filterAllSchools: "All schools",
     filterCategoryLabel: "Category",
     filterAllCategories: "All categories",
     filterDateFromLabel: "From date",
@@ -181,7 +152,6 @@ const en: Dictionary = {
     dateLabel: "Date",
     feeLabel: "Fee",
     seatsLabel: "Seats",
-    organizedBy: "Organized by",
     contactLabel: "Contact",
     enrollAndPay: "Enroll & Pay",
     fullTitle: "This program is full",
@@ -191,9 +161,8 @@ const en: Dictionary = {
   },
 
   profile: {
-    emailLabel: "Email",
+    registerNumberLabel: "Register number",
     mobileLabel: "Mobile number",
-    schoolLabel: "School",
     classLabel: "Class",
     languageLabel: "Language",
     logout: "Log out",

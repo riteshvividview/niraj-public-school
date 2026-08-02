@@ -23,7 +23,7 @@ export default function LanguageSelectPage() {
     <AuthShell
       imageSrc="/languagePage.png"
       imageAlt="School children standing together in their classroom"
-      eyebrow="Niraj Public School"
+      eyebrow="School Workspace"
       title={t.auth.language.title}
       subtitle={t.auth.language.subtitle}
     >

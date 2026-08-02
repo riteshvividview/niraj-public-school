@@ -37,7 +37,7 @@ export function LanguageOptionList({
               onSelect?.(option.code);
             }}
             className={cn(
-              "flex items-center justify-between rounded-2xl border px-4 py-3 text-left transition-all sm:px-5 sm:py-4",
+              "flex cursor-pointer items-center justify-between rounded-2xl border px-4 py-3 text-left transition-all sm:px-5 sm:py-4",
               isActive
                 ? "border-brand bg-section-workspace-bg shadow-sm"
                 : "border-line hover:border-brand/40 hover:bg-muted",

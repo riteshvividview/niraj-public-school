@@ -1,7 +1,7 @@
 import type { Dictionary } from "../types";
 
 const hi: Dictionary = {
-  appName: "निराज पब्लिक स्कूल",
+  appName: "स्कूल वर्कस्पेस",
   language: "भाषा",
   continueLabel: "जारी रखें",
   welcome: "स्वागत है",
@@ -52,42 +52,15 @@ const hi: Dictionary = {
     },
     login: {
       title: "वापसी पर स्वागत है",
-      subtitle: "जारी रखने के लिए अपने ईमेल से लॉग इन करें।",
-      emailLabel: "ईमेल पता",
-      emailPlaceholder: "you@example.com",
+      subtitle: "जारी रखने के लिए अपने रजिस्टर नंबर से लॉग इन करें।",
+      registerNumberLabel: "रजिस्टर नंबर",
+      registerNumberPlaceholder: "उदा. NPS2026001",
       passwordLabel: "पासवर्ड",
       passwordPlaceholder: "अपना पासवर्ड दर्ज करें",
       submit: "लॉग इन करें",
-      invalidCredentials: "यह ईमेल और पासवर्ड किसी खाते से मेल नहीं खाते।",
-      createAccountCta: "खाता बनाएं",
-      newHere: "यहाँ नए हैं?",
-    },
-    register: {
-      title: "अपना खाता बनाएं",
-      subtitle: "अपना स्कूल वर्कस्पेस सेट करने के लिए अपने बच्चे के बारे में थोड़ी जानकारी दें।",
-      nameLabel: "अभिभावक / छात्र का नाम",
-      namePlaceholder: "उदा. रितेश कुमार",
-      emailLabel: "ईमेल पता",
-      emailPlaceholder: "you@example.com",
-      passwordLabel: "पासवर्ड",
-      passwordPlaceholder: "कम से कम 8 अक्षर",
-      confirmPasswordLabel: "पासवर्ड की पुष्टि करें",
-      schoolLabel: "स्कूल",
-      classLabel: "कक्षा",
-      classPlaceholder: "कक्षा चुनें",
-      alreadyRegistered: "यह ईमेल पहले से पंजीकृत है।",
-      loginInsteadCta: "इसके बजाय लॉग इन करें",
-      submit: "खाता बनाएं",
-      haveAccount: "पहले से खाता है?",
-      loginCta: "लॉग इन करें",
-    },
-    errors: {
-      invalidEmail: "एक मान्य ईमेल पता दर्ज करें।",
-      passwordTooShort: "पासवर्ड कम से कम 8 अक्षर का होना चाहिए।",
-      passwordMismatch: "पासवर्ड मेल नहीं खाते।",
-      required: "यह फ़ील्ड आवश्यक है।",
-      selectSchool: "कृपया एक स्कूल चुनें।",
-      selectClass: "कृपया एक कक्षा चुनें।",
+      invalidCredentials: "यह रजिस्टर नंबर और पासवर्ड किसी खाते से मेल नहीं खाते।",
+      cantLogIn:
+        "लॉग इन नहीं कर पा रहे? अपने स्कूल कार्यालय या कक्षा शिक्षक से संपर्क करें — वे आपका रिकॉर्ड जोड़ या ठीक कर सकते हैं, फिर आप फिर से प्रयास कर सकते हैं।",
     },
   },
 
@@ -155,8 +128,6 @@ const hi: Dictionary = {
   },
 
   programsPage: {
-    filterSchoolLabel: "स्कूल",
-    filterAllSchools: "सभी स्कूल",
     filterCategoryLabel: "श्रेणी",
     filterAllCategories: "सभी श्रेणियां",
     filterDateFromLabel: "इस तारीख से",
@@ -181,7 +152,6 @@ const hi: Dictionary = {
     dateLabel: "तारीख",
     feeLabel: "शुल्क",
     seatsLabel: "सीटें",
-    organizedBy: "आयोजक",
     contactLabel: "संपर्क",
     enrollAndPay: "नामांकन करें और भुगतान करें",
     fullTitle: "यह कार्यक्रम फुल है",
@@ -191,9 +161,8 @@ const hi: Dictionary = {
   },
 
   profile: {
-    emailLabel: "ईमेल",
+    registerNumberLabel: "रजिस्टर नंबर",
     mobileLabel: "मोबाइल नंबर",
-    schoolLabel: "स्कूल",
     classLabel: "कक्षा",
     languageLabel: "भाषा",
     logout: "लॉग आउट करें",

@@ -1,7 +1,6 @@
 "use client";
 
-import { Loader2, Lock, Mail } from "lucide-react";
-import Link from "next/link";
+import { IdCard, Info, Loader2, Lock } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,7 @@ function LoginForm() {
   const { t } = useTranslation();
   const { login } = useAuth();
 
-  const [email, setEmail] = useState(searchParams.get("email") ?? "");
+  const [registerNumber, setRegisterNumber] = useState(searchParams.get("registerNumber") ?? "");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,7 +28,7 @@ function LoginForm() {
     setError(null);
     setIsSubmitting(true);
     try {
-      const profile = await loginUser(email.trim(), password);
+      const profile = await loginUser(registerNumber.trim(), password);
       login(profile);
       router.push("/home");
     } catch {
@@ -48,18 +47,17 @@ function LoginForm() {
     >
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div className="space-y-2">
-          <Label htmlFor="email">{t.auth.login.emailLabel}</Label>
+          <Label htmlFor="register-number">{t.auth.login.registerNumberLabel}</Label>
           <div className="relative">
-            <Mail className="pointer-events-none absolute top-1/2 left-3.5 size-[18px] -translate-y-1/2 text-sub" />
+            <IdCard className="pointer-events-none absolute top-1/2 left-3.5 size-[18px] -translate-y-1/2 text-sub" />
             <Input
-              id="email"
-              type="email"
-              autoComplete="email"
+              id="register-number"
+              autoComplete="username"
               autoFocus
-              placeholder={t.auth.login.emailPlaceholder}
-              value={email}
+              placeholder={t.auth.login.registerNumberPlaceholder}
+              value={registerNumber}
               onChange={(event) => {
-                setEmail(event.target.value);
+                setRegisterNumber(event.target.value);
                 setError(null);
               }}
               aria-invalid={error ? true : undefined}
@@ -95,19 +93,17 @@ function LoginForm() {
         <Button
           type="submit"
           size="lg"
-          className="h-11 w-full gap-2 text-sm sm:h-12 sm:text-base"
+          className="h-11 w-full cursor-pointer gap-2 text-sm sm:h-12 sm:text-base"
           disabled={isSubmitting}
         >
           {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
           {t.auth.login.submit}
         </Button>
 
-        <p className="text-center text-sm text-sub">
-          {t.auth.login.newHere}{" "}
-          <Link href="/register" className="font-medium text-brand hover:underline">
-            {t.auth.login.createAccountCta}
-          </Link>
-        </p>
+        <div className="flex items-start gap-2.5 rounded-2xl border border-dashed border-line bg-muted/60 p-3.5 text-xs text-sub sm:text-sm">
+          <Info className="mt-0.5 size-4 shrink-0" />
+          <p>{t.auth.login.cantLogIn}</p>
+        </div>
       </form>
     </AuthShell>
   );

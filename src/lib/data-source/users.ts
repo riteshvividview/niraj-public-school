@@ -1,6 +1,8 @@
 import type { LanguageCode, UserProfile, UserRole } from "@/types";
 import {
   payloadCreate,
+  payloadDelete,
+  payloadFind,
   payloadFindById,
   payloadLogin,
   payloadLogout,
@@ -12,7 +14,7 @@ import {
 interface PayloadUserDoc {
   id: string;
   name: string;
-  email: string;
+  username: string;
   avatar?: string | null;
   mobileNumber?: string | null;
   role: UserRole;
@@ -39,7 +41,7 @@ async function toUserProfile(doc: PayloadUserDoc): Promise<UserProfile> {
   return {
     id: doc.id,
     name: doc.name,
-    email: doc.email,
+    registerNumber: doc.username,
     avatarUrl: avatarUrl?.url ?? undefined,
     mobileNumber: doc.mobileNumber ?? undefined,
     role: doc.role,
@@ -62,34 +64,8 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
   return doc ? toUserProfile(doc) : null;
 }
 
-export interface RegisterUserInput {
-  name: string;
-  email: string;
-  password: string;
-  mobileNumber?: string;
-  role: UserRole;
-  schoolId: string;
-  classLevelId: string;
-  preferredLanguage: LanguageCode;
-}
-
-/** Creates the account, then logs in immediately (Payload's create endpoint doesn't set a session on its own). */
-export async function registerUser(input: RegisterUserInput): Promise<UserProfile> {
-  await payloadCreate<PayloadUserDoc>("users", {
-    name: input.name,
-    email: input.email,
-    password: input.password,
-    mobileNumber: input.mobileNumber,
-    role: input.role,
-    school: input.schoolId,
-    classLevel: input.classLevelId,
-    preferredLanguage: input.preferredLanguage,
-  });
-  return loginUser(input.email, input.password);
-}
-
-export async function loginUser(email: string, password: string): Promise<UserProfile> {
-  const doc = await payloadLogin<PayloadUserDoc>("users", { email, password });
+export async function loginUser(registerNumber: string, password: string): Promise<UserProfile> {
+  const doc = await payloadLogin<PayloadUserDoc>("users", { username: registerNumber, password });
   return toUserProfile(doc);
 }
 
@@ -102,4 +78,112 @@ export async function updateUserAvatar(userId: string, file: File): Promise<User
   const media = await payloadUploadFile<PayloadMediaDoc>("media", file);
   const doc = await payloadUpdate<PayloadUserDoc>("users", userId, { avatar: media.id });
   return toUserProfile(doc);
+}
+
+export interface CreateStudentInput {
+  name: string;
+  registerNumber: string;
+  password: string;
+  mobileNumber?: string;
+  role: UserRole;
+  schoolId: string;
+  classLevelId: string;
+  preferredLanguage?: LanguageCode;
+}
+
+/**
+ * Payload's own field is `username` (see Users.ts), but this app never shows
+ * that word to a user — every label says "register number." Rewrites the
+ * one string that would otherwise leak it: Payload's validation error on a
+ * duplicate/missing username.
+ */
+function toRegisterNumberError(error: unknown): Error {
+  if (error instanceof Error) {
+    return new Error(error.message.replace(/\busername\b/gi, "register number"));
+  }
+  return new Error("Couldn't save this student.");
+}
+
+/** Staff-driven account creation (console "Add Student" / bulk import) — no self-registration in this app. */
+export async function createStudent(input: CreateStudentInput): Promise<UserProfile> {
+  try {
+    const doc = await payloadCreate<PayloadUserDoc>("users", {
+      name: input.name,
+      username: input.registerNumber,
+      password: input.password,
+      mobileNumber: input.mobileNumber,
+      role: input.role,
+      school: input.schoolId,
+      classLevel: input.classLevelId,
+      preferredLanguage: input.preferredLanguage ?? "en",
+    });
+    return toUserProfile(doc);
+  } catch (error) {
+    throw toRegisterNumberError(error);
+  }
+}
+
+export interface BulkCreateResult {
+  row: number;
+  registerNumber: string;
+  ok: boolean;
+  error?: string;
+}
+
+/**
+ * Sequential, not parallel — Payload validates `username` uniqueness against
+ * the database per-request, so firing 100 creates at once risks duplicate
+ * register numbers within the same batch racing past each other. Returns a
+ * per-row result so the console can show exactly which rows failed and why.
+ */
+export async function bulkCreateStudents(inputs: CreateStudentInput[]): Promise<BulkCreateResult[]> {
+  const results: BulkCreateResult[] = [];
+  for (let i = 0; i < inputs.length; i++) {
+    const input = inputs[i];
+    try {
+      await createStudent(input);
+      results.push({ row: i + 1, registerNumber: input.registerNumber, ok: true });
+    } catch (error) {
+      results.push({
+        row: i + 1,
+        registerNumber: input.registerNumber,
+        ok: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+  return results;
+}
+
+/** Console "Students" list — every portal account at this school (staff-created only, no self-registration). */
+export async function getStudentsBySchool(schoolId: string): Promise<UserProfile[]> {
+  const docs = await payloadFind<PayloadUserDoc>("users", { school: schoolId });
+  const sorted = [...docs].sort((a, b) => a.name.localeCompare(b.name));
+  return Promise.all(sorted.map(toUserProfile));
+}
+
+export interface UpdateStudentInput {
+  name?: string;
+  mobileNumber?: string;
+  classLevelId?: string;
+  preferredLanguage?: LanguageCode;
+}
+
+export async function updateStudent(id: string, input: UpdateStudentInput): Promise<UserProfile> {
+  const doc = await payloadUpdate<PayloadUserDoc>("users", id, {
+    name: input.name,
+    mobileNumber: input.mobileNumber,
+    classLevel: input.classLevelId,
+    preferredLanguage: input.preferredLanguage,
+  });
+  return toUserProfile(doc);
+}
+
+/** Staff resetting a student's forgotten password — there's no self-service "forgot password" flow in this app. */
+export async function resetStudentPassword(id: string, newPassword: string): Promise<void> {
+  await payloadUpdate("users", id, { password: newPassword });
+}
+
+export async function deleteStudent(id: string): Promise<void> {
+  await payloadDelete("users", id);
 }

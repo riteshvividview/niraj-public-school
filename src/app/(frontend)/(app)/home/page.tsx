@@ -98,7 +98,6 @@ export default function HomePage() {
                   <ProgramCard
                     key={program.id}
                     title={program.title}
-                    schoolName={school?.name ?? ""}
                     date={program.date}
                     venue={program.venue}
                     fee={program.fee}

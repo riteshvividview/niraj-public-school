@@ -1,7 +1,7 @@
 import type { Dictionary } from "../types";
 
 const te: Dictionary = {
-  appName: "నీరజ్ పబ్లిక్ స్కూల్",
+  appName: "స్కూల్ వర్క్‌స్పేస్",
   language: "భాష",
   continueLabel: "కొనసాగించండి",
   welcome: "స్వాగతం",
@@ -52,42 +52,15 @@ const te: Dictionary = {
     },
     login: {
       title: "తిరిగి స్వాగతం",
-      subtitle: "కొనసాగించడానికి మీ ఇమెయిల్‌తో లాగిన్ చేయండి.",
-      emailLabel: "ఇమెయిల్ చిరునామా",
-      emailPlaceholder: "you@example.com",
+      subtitle: "కొనసాగించడానికి మీ రిజిస్టర్ నంబర్‌తో లాగిన్ చేయండి.",
+      registerNumberLabel: "రిజిస్టర్ నంబర్",
+      registerNumberPlaceholder: "ఉదా. NPS2026001",
       passwordLabel: "పాస్‌వర్డ్",
       passwordPlaceholder: "మీ పాస్‌వర్డ్‌ను నమోదు చేయండి",
       submit: "లాగిన్ చేయండి",
-      invalidCredentials: "ఈ ఇమెయిల్ మరియు పాస్‌వర్డ్ ఏ ఖాతాతోనూ సరిపోలలేదు.",
-      createAccountCta: "ఖాతా సృష్టించండి",
-      newHere: "ఇక్కడ కొత్తగా వచ్చారా?",
-    },
-    register: {
-      title: "మీ ఖాతాను సృష్టించండి",
-      subtitle: "మీ స్కూల్ వర్క్‌స్పేస్‌ను సెటప్ చేయడానికి మీ పిల్లల గురించి కొంచెం సమాచారం ఇవ్వండి.",
-      nameLabel: "తల్లిదండ్రి / విద్యార్థి పేరు",
-      namePlaceholder: "ఉదా. రితేష్ కుమార్",
-      emailLabel: "ఇమెయిల్ చిరునామా",
-      emailPlaceholder: "you@example.com",
-      passwordLabel: "పాస్‌వర్డ్",
-      passwordPlaceholder: "కనీసం 8 అక్షరాలు",
-      confirmPasswordLabel: "పాస్‌వర్డ్‌ను నిర్ధారించండి",
-      schoolLabel: "స్కూల్",
-      classLabel: "తరగతి",
-      classPlaceholder: "తరగతిని ఎంచుకోండి",
-      alreadyRegistered: "ఈ ఇమెయిల్ ఇప్పటికే నమోదు చేయబడింది.",
-      loginInsteadCta: "బదులుగా లాగిన్ చేయండి",
-      submit: "ఖాతా సృష్టించండి",
-      haveAccount: "ఇప్పటికే ఖాతా ఉందా?",
-      loginCta: "లాగిన్ చేయండి",
-    },
-    errors: {
-      invalidEmail: "సరైన ఇమెయిల్ చిరునామాను నమోదు చేయండి.",
-      passwordTooShort: "పాస్‌వర్డ్ కనీసం 8 అక్షరాలు ఉండాలి.",
-      passwordMismatch: "పాస్‌వర్డ్‌లు సరిపోలలేదు.",
-      required: "ఈ ఫీల్డ్ తప్పనిసరి.",
-      selectSchool: "దయచేసి ఒక స్కూల్‌ను ఎంచుకోండి.",
-      selectClass: "దయచేసి ఒక తరగతిని ఎంచుకోండి.",
+      invalidCredentials: "ఈ రిజిస్టర్ నంబర్ మరియు పాస్‌వర్డ్ ఏ ఖాతాతోనూ సరిపోలలేదు.",
+      cantLogIn:
+        "లాగిన్ చేయలేకపోతున్నారా? మీ స్కూల్ ఆఫీస్ లేదా తరగతి ఉపాధ్యాయుడిని సంప్రదించండి — వారు మీ రికార్డును జోడించవచ్చు లేదా సరిదిద్దవచ్చు, తర్వాత మీరు మళ్లీ ప్రయత్నించవచ్చు.",
     },
   },
 
@@ -155,8 +128,6 @@ const te: Dictionary = {
   },
 
   programsPage: {
-    filterSchoolLabel: "స్కూల్",
-    filterAllSchools: "అన్ని స్కూళ్లు",
     filterCategoryLabel: "వర్గం",
     filterAllCategories: "అన్ని వర్గాలు",
     filterDateFromLabel: "ఈ తేదీ నుండి",
@@ -181,7 +152,6 @@ const te: Dictionary = {
     dateLabel: "తేదీ",
     feeLabel: "రుసుము",
     seatsLabel: "సీట్లు",
-    organizedBy: "నిర్వాహకులు",
     contactLabel: "సంప్రదించండి",
     enrollAndPay: "నమోదు చేసుకుని చెల్లించండి",
     fullTitle: "ఈ కార్యక్రమం నిండిపోయింది",
@@ -191,9 +161,8 @@ const te: Dictionary = {
   },
 
   profile: {
-    emailLabel: "ఇమెయిల్",
+    registerNumberLabel: "రిజిస్టర్ నంబర్",
     mobileLabel: "మొబైల్ నంబర్",
-    schoolLabel: "స్కూల్",
     classLabel: "తరగతి",
     languageLabel: "భాష",
     logout: "లాగ్ అవుట్ చేయండి",

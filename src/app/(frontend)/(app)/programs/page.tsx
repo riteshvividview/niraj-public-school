@@ -15,10 +15,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTranslation } from "@/i18n/context";
-import { getPrograms, getSchools } from "@/lib/data-source";
+import { getPrograms } from "@/lib/data-source";
 import { kebabToCamel } from "@/lib/utils";
 import type { Dictionary } from "@/i18n/types";
-import type { Program, ProgramCategory, School } from "@/types";
+import type { Program, ProgramCategory } from "@/types";
 
 const CATEGORIES: ProgramCategory[] = [
   "workshop",
@@ -42,18 +42,12 @@ const ALL = "all";
 export default function ProgramsFeedPage() {
   const { t } = useTranslation();
 
-  const [schools, setSchools] = useState<School[] | null>(null);
   const [programs, setPrograms] = useState<Program[] | null>(null);
 
-  const [schoolFilter, setSchoolFilter] = useState<string>(ALL);
   const [categoryFilter, setCategoryFilter] = useState<string>(ALL);
   const [dateFrom, setDateFrom] = useState("");
   const [maxFee, setMaxFee] = useState<string>(ALL);
   const [sortBy, setSortBy] = useState<SortOption>("date");
-
-  useEffect(() => {
-    getSchools().then(setSchools);
-  }, []);
 
   useEffect(() => {
     // Guard against out-of-order responses: if the filters change again
@@ -61,7 +55,6 @@ export default function ProgramsFeedPage() {
     // overwrite whatever the latest filter selection fetched.
     let cancelled = false;
     getPrograms({
-      schoolId: schoolFilter === ALL ? undefined : schoolFilter,
       category: categoryFilter === ALL ? undefined : (categoryFilter as ProgramCategory),
       dateFrom: dateFrom || undefined,
       maxFee: maxFee === ALL ? undefined : Number(maxFee),
@@ -71,7 +64,7 @@ export default function ProgramsFeedPage() {
     return () => {
       cancelled = true;
     };
-  }, [schoolFilter, categoryFilter, dateFrom, maxFee]);
+  }, [categoryFilter, dateFrom, maxFee]);
 
   const sortedPrograms = useMemo(() => {
     if (!programs) return null;
@@ -82,40 +75,19 @@ export default function ProgramsFeedPage() {
     return copy;
   }, [programs, sortBy]);
 
-  const hasActiveFilters =
-    schoolFilter !== ALL || categoryFilter !== ALL || dateFrom !== "" || maxFee !== ALL;
+  const hasActiveFilters = categoryFilter !== ALL || dateFrom !== "" || maxFee !== ALL;
 
   function clearFilters() {
-    setSchoolFilter(ALL);
     setCategoryFilter(ALL);
     setDateFrom("");
     setMaxFee(ALL);
   }
 
-  const schoolNameById = new Map((schools ?? []).map((school) => [school.id, school.name]));
-
   return (
     <>
       <AppHeader title={t.nav.programs} />
       <div className="mx-auto w-full max-w-5xl space-y-4 p-4 pb-8 sm:space-y-5 sm:p-6 lg:p-8">
-        <div className="grid grid-cols-2 gap-3 rounded-2xl border border-line bg-card p-4 sm:grid-cols-4">
-          <div className="space-y-1">
-            <label className="text-xs text-sub">{t.programsPage.filterSchoolLabel}</label>
-            <Select value={schoolFilter} onValueChange={setSchoolFilter}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL}>{t.programsPage.filterAllSchools}</SelectItem>
-                {(schools ?? []).map((school) => (
-                  <SelectItem key={school.id} value={school.id}>
-                    {school.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
+        <div className="grid grid-cols-2 gap-3 rounded-2xl border border-line bg-card p-4 sm:grid-cols-3">
           <div className="space-y-1">
             <label className="text-xs text-sub">{t.programsPage.filterCategoryLabel}</label>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -142,7 +114,7 @@ export default function ProgramsFeedPage() {
               type="date"
               value={dateFrom}
               onChange={(event) => setDateFrom(event.target.value)}
-              className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              className="h-8 w-full cursor-pointer rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
             />
           </div>
 
@@ -163,7 +135,7 @@ export default function ProgramsFeedPage() {
             </Select>
           </div>
 
-          <div className="col-span-2 flex items-end justify-between gap-3 sm:col-span-4">
+          <div className="col-span-2 flex items-end justify-between gap-3 sm:col-span-3">
             <div className="flex-1 space-y-1">
               <label className="text-xs text-sub">{t.programsPage.filterSortLabel}</label>
               <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
@@ -203,7 +175,6 @@ export default function ProgramsFeedPage() {
               <ProgramCard
                 key={program.id}
                 title={program.title}
-                schoolName={schoolNameById.get(program.schoolId) ?? ""}
                 date={program.date}
                 venue={program.venue}
                 fee={program.fee}

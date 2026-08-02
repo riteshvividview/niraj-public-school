@@ -1,6 +1,6 @@
 "use client";
 
-import { BookMarked, CalendarClock, LayoutDashboard, LogOut, ScanLine } from "lucide-react";
+import { BookMarked, CalendarClock, LayoutDashboard, LogOut, ScanLine, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -9,6 +9,7 @@ import { useConsoleAuth } from "@/store/console-auth-store";
 const NAV_ITEMS = [
   { href: "/console/catalogue", label: "Catalogue Manager", icon: BookMarked },
   { href: "/console/programs", label: "Program Manager", icon: CalendarClock },
+  { href: "/console/students", label: "Students", icon: Users },
   { href: "/console/scan", label: "Receipt / QR Scanner", icon: ScanLine },
   { href: "/console/reports", label: "Reports Dashboard", icon: LayoutDashboard },
 ];
@@ -42,8 +43,8 @@ export function ConsoleSidebar() {
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r border-line bg-card md:flex">
       <div className="border-b border-line p-5">
-        <p className="font-heading text-sm font-bold text-ink">Niraj Public School</p>
-        <p className="text-xs text-sub">School Console</p>
+        <p className="font-heading text-sm font-bold text-ink">School Workspace</p>
+        <p className="text-xs text-sub">Staff Console</p>
       </div>
       <div className="flex-1 p-4">
         <NavLinks />
@@ -54,7 +55,7 @@ export function ConsoleSidebar() {
         <button
           type="button"
           onClick={logout}
-          className="mt-2 flex items-center gap-2 text-sm font-medium text-section-pay"
+          className="mt-2 flex cursor-pointer items-center gap-2 rounded-md text-sm font-medium text-section-pay transition-colors hover:text-section-pay/80"
         >
           <LogOut className="size-4" />
           Log out
@@ -70,9 +71,13 @@ export function ConsoleMobileNav() {
     <div className="border-b border-line bg-card md:hidden">
       <div className="flex items-center justify-between px-4 py-3">
         <div>
-          <p className="font-heading text-sm font-bold text-ink">Niraj Public School — Console</p>
+          <p className="font-heading text-sm font-bold text-ink">School Workspace — Console</p>
         </div>
-        <button type="button" onClick={logout} className="text-sm font-medium text-section-pay">
+        <button
+          type="button"
+          onClick={logout}
+          className="cursor-pointer text-sm font-medium text-section-pay transition-colors hover:text-section-pay/80"
+        >
           Log out
         </button>
       </div>

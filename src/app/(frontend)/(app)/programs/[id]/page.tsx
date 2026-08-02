@@ -8,11 +8,11 @@ import { StatusBadge, toBadgeStatus } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "@/i18n/context";
-import { getProgramById, getSchoolById } from "@/lib/data-source";
+import { getProgramById } from "@/lib/data-source";
 import { formatCurrencyINR, formatDate } from "@/lib/format";
 import { kebabToCamel } from "@/lib/utils";
 import { lineId, useCart } from "@/store/cart-store";
-import type { CartItem, Program, School } from "@/types";
+import type { CartItem, Program } from "@/types";
 
 export default function ProgramDetailPage() {
   const params = useParams<{ id: string }>();
@@ -21,16 +21,10 @@ export default function ProgramDetailPage() {
   const cart = useCart();
 
   const [program, setProgram] = useState<Program | null | undefined>(undefined);
-  const [school, setSchool] = useState<School | null>(null);
 
   useEffect(() => {
     getProgramById(params.id).then(setProgram);
   }, [params.id]);
-
-  useEffect(() => {
-    if (!program) return;
-    getSchoolById(program.schoolId).then(setSchool);
-  }, [program]);
 
   useEffect(() => {
     if (program === null) {
@@ -79,7 +73,6 @@ export default function ProgramDetailPage() {
       <div className="mx-auto w-full max-w-2xl space-y-5 p-4 pb-8 sm:p-6 lg:p-8">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-sm text-sub">{school?.name ?? ""}</p>
             <h1 className="font-heading text-xl font-bold text-ink">{program.title}</h1>
             <p className="mt-1 text-xs font-medium text-brand">{categoryLabel}</p>
           </div>
@@ -115,10 +108,9 @@ export default function ProgramDetailPage() {
         </div>
 
         <div className="rounded-2xl border border-line bg-card p-4">
-          <p className="text-xs text-sub">{t.programsPage.organizedBy}</p>
-          <p className="text-sm font-medium text-ink">{school?.name ?? ""}</p>
-          <div className="mt-2 flex items-center gap-2 text-sm text-sub">
-            <Phone className="size-4" />
+          <p className="text-xs text-sub">{t.programsPage.contactLabel}</p>
+          <div className="mt-1 flex items-center gap-2 text-sm font-medium text-ink">
+            <Phone className="size-4 text-sub" />
             {program.contactPhone}
           </div>
         </div>

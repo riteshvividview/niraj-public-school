@@ -18,8 +18,8 @@ export function AppSidebar() {
   return (
     <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-line bg-card md:flex">
       <div className="border-b border-line p-5">
-        <p className="font-heading text-sm font-bold text-ink">Niraj Public School</p>
-        <p className="text-xs text-sub">Parent Portal</p>
+        <p className="font-heading text-sm font-bold text-ink">{t.appName}</p>
+        <p className="text-xs text-sub">Student Portal</p>
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 p-4">
@@ -44,11 +44,11 @@ export function AppSidebar() {
 
       <div className="border-t border-line p-4">
         <p className="truncate text-sm font-medium text-ink">{profile?.name}</p>
-        <p className="truncate text-xs text-sub">{profile?.email}</p>
+        <p className="truncate text-xs text-sub">{profile?.registerNumber}</p>
         <button
           type="button"
           onClick={logout}
-          className="mt-2 flex items-center gap-2 text-sm font-medium text-section-pay"
+          className="mt-2 flex cursor-pointer items-center gap-2 rounded-md text-sm font-medium text-section-pay transition-colors hover:text-section-pay/80"
         >
           <LogOut className="size-4" />
           {t.profile.logout}

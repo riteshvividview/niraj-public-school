@@ -117,7 +117,7 @@ interface PayloadAuthResponse<T> {
 /** Logs into an `auth: true` collection — Payload sets the session as an HTTP-only cookie on success. */
 export async function payloadLogin<T>(
   collection: string,
-  credentials: { email: string; password: string },
+  credentials: { email: string; password: string } | { username: string; password: string },
 ): Promise<T> {
   const res = await fetch(`${API_BASE}/${collection}/login?depth=0`, {
     method: "POST",

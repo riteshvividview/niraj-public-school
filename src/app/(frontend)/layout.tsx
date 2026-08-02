@@ -20,7 +20,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Niraj Public School",
+  title: "School Workspace",
   description:
     "Order books, uniform kits, stationery and enroll in school programs — pay online, collect at school.",
 };

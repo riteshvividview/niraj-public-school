@@ -101,7 +101,7 @@ export async function seedPayload(payload: Payload): Promise<{ schoolId: string 
       collection: "users",
       data: {
         name: user.name,
-        email: user.email,
+        username: user.registerNumber,
         password: MOCK_USER_PASSWORD,
         mobileNumber: user.mobileNumber,
         role: user.role,

@@ -10,7 +10,6 @@ import { cn } from "@/lib/utils";
 
 export interface ProgramCardProps {
   title: string;
-  schoolName: string;
   date: string;
   venue: string;
   fee: number;
@@ -22,7 +21,6 @@ export interface ProgramCardProps {
 
 export function ProgramCard({
   title,
-  schoolName,
   date,
   venue,
   fee,
@@ -36,10 +34,7 @@ export function ProgramCard({
   const content = (
     <div className={cn("rounded-2xl border border-line bg-card p-5 transition-shadow hover:shadow-md", className)}>
       <div className="mb-3 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h4 className="truncate font-heading text-base font-semibold text-ink">{title}</h4>
-          <p className="truncate text-sm text-sub">{schoolName}</p>
-        </div>
+        <h4 className="min-w-0 truncate font-heading text-base font-semibold text-ink">{title}</h4>
         <StatusBadge status={toBadgeStatus(status)} />
       </div>
       <div className="space-y-1.5 text-sm text-sub">

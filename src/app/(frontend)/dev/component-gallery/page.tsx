@@ -155,7 +155,6 @@ export default function ComponentGalleryPage() {
                   <ProgramCard
                     key={program.id}
                     title={program.title}
-                    schoolName="Niraj Public School"
                     date={program.date}
                     venue={program.venue}
                     fee={program.fee}

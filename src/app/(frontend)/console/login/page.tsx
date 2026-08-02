@@ -36,7 +36,7 @@ export default function ConsoleLoginPage() {
             <ShieldCheck className="size-6" />
           </div>
           <h1 className="font-heading text-xl font-bold text-ink">School Console</h1>
-          <p className="text-sm text-sub">Staff sign-in — Niraj Public School</p>
+          <p className="text-sm text-sub">Staff sign-in — School Workspace</p>
         </div>
 
         <div className="rounded-xl border border-dashed border-line bg-muted p-3 text-center text-xs text-sub">

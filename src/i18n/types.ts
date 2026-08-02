@@ -62,41 +62,14 @@ export interface Dictionary {
     login: {
       title: string;
       subtitle: string;
-      emailLabel: string;
-      emailPlaceholder: string;
+      registerNumberLabel: string;
+      registerNumberPlaceholder: string;
       passwordLabel: string;
       passwordPlaceholder: string;
       submit: string;
       invalidCredentials: string;
-      createAccountCta: string;
-      newHere: string;
-    };
-    register: {
-      title: string;
-      subtitle: string;
-      nameLabel: string;
-      namePlaceholder: string;
-      emailLabel: string;
-      emailPlaceholder: string;
-      passwordLabel: string;
-      passwordPlaceholder: string;
-      confirmPasswordLabel: string;
-      schoolLabel: string;
-      classLabel: string;
-      classPlaceholder: string;
-      alreadyRegistered: string;
-      loginInsteadCta: string;
-      submit: string;
-      haveAccount: string;
-      loginCta: string;
-    };
-    errors: {
-      invalidEmail: string;
-      passwordTooShort: string;
-      passwordMismatch: string;
-      required: string;
-      selectSchool: string;
-      selectClass: string;
+      /** Shown below the form — no self-registration, so this points students at staff instead. */
+      cantLogIn: string;
     };
   };
 
@@ -167,8 +140,6 @@ export interface Dictionary {
   };
 
   programsPage: {
-    filterSchoolLabel: string;
-    filterAllSchools: string;
     filterCategoryLabel: string;
     filterAllCategories: string;
     filterDateFromLabel: string;
@@ -193,7 +164,6 @@ export interface Dictionary {
     dateLabel: string;
     feeLabel: string;
     seatsLabel: string;
-    organizedBy: string;
     contactLabel: string;
     enrollAndPay: string;
     fullTitle: string;
@@ -203,9 +173,8 @@ export interface Dictionary {
   };
 
   profile: {
-    emailLabel: string;
+    registerNumberLabel: string;
     mobileLabel: string;
-    schoolLabel: string;
     classLabel: string;
     languageLabel: string;
     logout: string;

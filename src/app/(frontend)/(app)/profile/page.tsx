@@ -7,13 +7,13 @@ import { AppHeader } from "@/components/shared/app-header";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/i18n/context";
-import { getClassLevelById, getSchoolById, updateUserAvatar } from "@/lib/data-source";
+import { getClassLevelById, updateUserAvatar } from "@/lib/data-source";
 import { useAuth } from "@/store/auth-store";
-import type { ClassLevel, School } from "@/types";
+import type { ClassLevel } from "@/types";
 
 function ProfileRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between border-b border-line py-3 last:border-b-0">
+    <div className="flex items-center justify-between border-b border-line py-3.5 last:border-b-0 sm:py-4">
       <span className="text-sm text-sub">{label}</span>
       <span className="text-sm font-medium text-ink">{value}</span>
     </div>
@@ -53,7 +53,7 @@ function AvatarUpload() {
         onClick={() => fileInputRef.current?.click()}
         disabled={isUploading}
         aria-label={t.profile.changePhoto}
-        className="relative flex size-20 items-center justify-center overflow-hidden rounded-full bg-section-workspace-bg font-heading text-2xl font-bold text-brand ring-4 ring-card transition-opacity disabled:opacity-70"
+        className="relative flex size-20 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-section-workspace-bg font-heading text-2xl font-bold text-brand ring-4 ring-card transition-opacity disabled:cursor-not-allowed disabled:opacity-70 sm:size-24"
       >
         {profile.avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- user-uploaded avatar, arbitrary local/remote origin, next/image would need per-deploy remotePatterns config
@@ -72,7 +72,7 @@ function AvatarUpload() {
         onClick={() => fileInputRef.current?.click()}
         disabled={isUploading}
         aria-label={t.profile.changePhoto}
-        className="absolute right-0 bottom-0 flex size-7 items-center justify-center rounded-full border-2 border-card bg-brand text-white shadow-sm transition-transform hover:scale-105 disabled:opacity-70"
+        className="absolute right-0 bottom-0 flex size-7 cursor-pointer items-center justify-center rounded-full border-2 border-card bg-brand text-white shadow-sm transition-transform hover:scale-105 disabled:cursor-not-allowed disabled:opacity-70"
       >
         <Camera className="size-3.5" />
       </button>
@@ -91,12 +91,10 @@ function AvatarUpload() {
 export default function ProfilePage() {
   const { t } = useTranslation();
   const { profile, logout } = useAuth();
-  const [school, setSchool] = useState<School | null>(null);
   const [classLevel, setClassLevel] = useState<ClassLevel | null>(null);
 
   useEffect(() => {
     if (!profile) return;
-    getSchoolById(profile.schoolId).then(setSchool);
     getClassLevelById(profile.classLevelId).then(setClassLevel);
   }, [profile]);
 
@@ -105,20 +103,19 @@ export default function ProfilePage() {
   return (
     <>
       <AppHeader title={t.nav.profile} />
-      <div className="mx-auto max-w-2xl space-y-5 p-4 pb-8 sm:space-y-6 sm:p-6 lg:p-8">
-        <section className="flex flex-col items-center gap-2 rounded-2xl border border-line bg-card p-5 text-center sm:p-6">
+      <div className="mx-auto max-w-2xl space-y-5 p-4 pb-8 sm:space-y-7 sm:p-6 lg:p-8">
+        <section className="flex flex-col items-center gap-3 rounded-2xl border border-line bg-card p-6 text-center sm:p-8">
           <AvatarUpload />
-          <p className="font-heading text-lg font-bold text-ink">{profile.name}</p>
+          <p className="font-heading text-lg font-bold text-ink sm:text-xl">{profile.name}</p>
         </section>
 
-        <section className="rounded-2xl border border-line bg-card px-4">
-          <ProfileRow label={t.profile.emailLabel} value={profile.email} />
+        <section className="rounded-2xl border border-line bg-card px-4 sm:px-6">
+          <ProfileRow label={t.profile.registerNumberLabel} value={profile.registerNumber} />
           {profile.mobileNumber ? (
             <ProfileRow label={t.profile.mobileLabel} value={profile.mobileNumber} />
           ) : null}
-          <ProfileRow label={t.profile.schoolLabel} value={school?.name ?? "…"} />
           <ProfileRow label={t.profile.classLabel} value={classLevel?.label ?? "…"} />
-          <div className="flex items-center justify-between py-3">
+          <div className="flex items-center justify-between py-3.5 sm:py-4">
             <span className="text-sm text-sub">{t.profile.languageLabel}</span>
             <LanguageSwitcher />
           </div>
@@ -126,7 +123,7 @@ export default function ProfilePage() {
 
         <Link
           href="/help"
-          className="flex items-center gap-3 rounded-2xl border border-line bg-card p-4"
+          className="flex items-center gap-3 rounded-2xl border border-line bg-card p-4 transition-colors hover:border-brand/30 hover:bg-muted sm:p-5"
         >
           <HelpCircle className="size-5 text-sub" />
           <span className="flex-1 text-sm font-medium text-ink">{t.help.title}</span>

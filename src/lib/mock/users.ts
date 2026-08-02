@@ -14,9 +14,9 @@ export const MOCK_USERS: UserProfile[] = [
   {
     id: "user-ritesh",
     name: "Ritesh Kumar",
-    email: "ritesh.kumar@example.com",
+    registerNumber: "NPS2026001",
     mobileNumber: "+919876500001",
-    role: "parent",
+    role: "student",
     schoolId: MOCK_SCHOOL.id,
     classLevelId: "class-6",
     preferredLanguage: "en",
@@ -26,9 +26,9 @@ export const MOCK_USERS: UserProfile[] = [
   {
     id: "user-ananya",
     name: "Ananya Sharma",
-    email: "ananya.sharma@example.com",
+    registerNumber: "NPS2026002",
     mobileNumber: "+919876500002",
-    role: "parent",
+    role: "student",
     schoolId: MOCK_SCHOOL.id,
     classLevelId: "class-3",
     preferredLanguage: "hi",
