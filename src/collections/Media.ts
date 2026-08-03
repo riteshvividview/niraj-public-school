@@ -2,10 +2,12 @@ import type { CollectionConfig } from "payload";
 import { authenticated } from "../access/authenticated";
 
 /**
- * Backs upload fields elsewhere (currently just Users.avatar). Local disk
- * storage (staticDir) — fine for now, but won't survive a redeploy on an
- * ephemeral host (Vercel etc.); swap to Supabase Storage/S3 via a
- * @payloadcms/storage-* adapter before a real production deploy.
+ * Backs upload fields elsewhere (currently just Users.avatar). Files go to
+ * Vercel Blob in any environment where BLOB_READ_WRITE_TOKEN is set (see
+ * payload.config.ts's `plugins` — @payloadcms/storage-vercel-blob), since
+ * Vercel's serverless filesystem is ephemeral and can't be written to
+ * persistently. `staticDir` below is only ever used as the local-disk
+ * fallback for local dev when that token isn't set.
  */
 export const Media: CollectionConfig = {
   slug: "media",

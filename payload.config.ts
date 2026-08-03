@@ -1,5 +1,6 @@
 import { postgresAdapter } from "@payloadcms/db-postgres";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
+import { vercelBlobStorage } from "@payloadcms/storage-vercel-blob";
 import path from "path";
 import { buildConfig } from "payload";
 import { fileURLToPath } from "url";
@@ -42,6 +43,20 @@ export default buildConfig({
   ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET ?? "",
+  // Media uploads (avatars) go to Vercel Blob instead of local disk — the
+  // Media collection's own staticDir option only ever mattered for local
+  // dev; Vercel's serverless filesystem is ephemeral/read-only, so any file
+  // written there during a request never persists past that invocation.
+  // No-op (falls back to Media's local staticDir) when the token isn't set,
+  // so local dev without a Blob store configured still works.
+  plugins: process.env.BLOB_READ_WRITE_TOKEN
+    ? [
+        vercelBlobStorage({
+          collections: { media: true },
+          token: process.env.BLOB_READ_WRITE_TOKEN,
+        }),
+      ]
+    : [],
   typescript: {
     outputFile: path.resolve(dirname, "payload-types.ts"),
   },
