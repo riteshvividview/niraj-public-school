@@ -69,7 +69,6 @@ export default function BooksPage() {
                     name={book.title}
                     meta={book.subject}
                     price={book.price}
-                    imageUrl={book.coverImageUrl}
                     selected={cart.isIncluded(id)}
                     onToggleSelected={(selected) => cart.setIncluded(bookToCartItem(book), selected)}
                   />

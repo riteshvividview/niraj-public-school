@@ -67,7 +67,6 @@ export default function StationeryPage() {
                     name={item.name}
                     meta={item.quantityLabel}
                     price={item.price}
-                    imageUrl={item.imageUrl}
                     selected={cart.isIncluded(id)}
                     onToggleSelected={(selected) => cart.setIncluded(stationeryToCartItem(item), selected)}
                   />

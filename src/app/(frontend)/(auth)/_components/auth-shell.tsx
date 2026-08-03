@@ -21,7 +21,7 @@ interface AuthShellProps {
  */
 export function AuthShell({ imageSrc, imageAlt, eyebrow, title, subtitle, children }: AuthShellProps) {
   return (
-    <div className="relative flex min-h-dvh flex-col overflow-hidden bg-background md:flex-row">
+    <div className="relative flex h-dvh flex-col overflow-hidden bg-background md:flex-row">
       {/* Decorative ambient blobs — subtle motion, brand palette only. */}
       <div
         aria-hidden
@@ -33,7 +33,7 @@ export function AuthShell({ imageSrc, imageAlt, eyebrow, title, subtitle, childr
       />
 
       {/* Image panel: compact banner on mobile, full-height on md+. */}
-      <div className="relative h-28 w-full shrink-0 overflow-hidden sm:h-44 md:h-auto md:w-2/5 lg:w-1/2">
+      <div className="relative h-48 w-full shrink-0 overflow-hidden sm:h-56 md:h-auto md:w-2/5 lg:w-1/2">
         <Image
           src={imageSrc}
           alt={imageAlt}
@@ -49,10 +49,10 @@ export function AuthShell({ imageSrc, imageAlt, eyebrow, title, subtitle, childr
       </div>
 
       {/* Form panel — fills the remaining space directly, no card. */}
-      <div className="relative z-10 flex flex-1 flex-col justify-center px-5 py-6 sm:px-10 sm:py-10 md:px-14 lg:px-20">
-        <div className="mx-auto w-full max-w-lg animate-in fade-in slide-in-from-bottom-4 space-y-5 duration-500 sm:space-y-8">
+      <div className="relative z-10 flex flex-1 flex-col justify-center overflow-y-auto px-5 py-6 sm:px-10 sm:py-10 md:px-14 lg:px-20">
+        <div className="mx-auto w-full max-w-lg animate-in fade-in slide-in-from-bottom-4 space-y-4 duration-500 sm:space-y-8">
           <div className="space-y-1 sm:space-y-2">
-            <h1 className="font-heading text-xl font-bold text-ink sm:text-3xl lg:text-4xl">{title}</h1>
+            <h1 className="font-heading text-lg font-bold text-ink sm:text-3xl lg:text-4xl">{title}</h1>
             <p className="text-sm text-sub sm:text-base">{subtitle}</p>
           </div>
           {children}

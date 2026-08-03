@@ -12,7 +12,7 @@ function book(id: string, classLevelId: string, title: string, subject: string, 
     title,
     subject,
     price,
-    coverImageUrl: "/essentials/books.jpg",
+    coverImageUrl: null,
     createdAt: SEED_TIMESTAMP,
     updatedAt: SEED_TIMESTAMP,
   };

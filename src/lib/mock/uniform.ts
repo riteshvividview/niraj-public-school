@@ -31,7 +31,7 @@ function uniformItem(
     name,
     category,
     description,
-    imageUrl: "/essentials/uniform.jpg",
+    imageUrl: null,
     sizeOptions: sizesFor(classLevelId, basePrice),
     createdAt: SEED_TIMESTAMP,
     updatedAt: SEED_TIMESTAMP,

@@ -138,7 +138,6 @@ export default function UniformPage() {
                   name={item.name}
                   meta={item.description}
                   price={displayPrice}
-                  imageUrl={item.imageUrl}
                   selected={Boolean(confirmed)}
                   trailing={
                     <div className="flex flex-col items-end gap-1.5">
