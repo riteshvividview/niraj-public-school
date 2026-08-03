@@ -47,16 +47,20 @@ export default buildConfig({
   // Media collection's own staticDir option only ever mattered for local
   // dev; Vercel's serverless filesystem is ephemeral/read-only, so any file
   // written there during a request never persists past that invocation.
-  // No-op (falls back to Media's local staticDir) when the token isn't set,
-  // so local dev without a Blob store configured still works.
-  plugins: process.env.BLOB_READ_WRITE_TOKEN
-    ? [
-        vercelBlobStorage({
-          collections: { media: true },
-          token: process.env.BLOB_READ_WRITE_TOKEN,
-        }),
-      ]
-    : [],
+  // Always registered (not gated on the env var) so the admin UI's import
+  // map — a static file checked into git — always contains this plugin's
+  // client component. The plugin itself already no-ops internally when
+  // `token` is empty (see its own `isPluginDisabled` check), so leaving it
+  // out of the array here bought nothing except an import map that silently
+  // went stale between environments and blanked /admin in production with
+  // "PayloadComponent not found in importMap" once the token was set there
+  // but the map had been last generated locally, without it.
+  plugins: [
+    vercelBlobStorage({
+      collections: { media: true },
+      token: process.env.BLOB_READ_WRITE_TOKEN ?? "",
+    }),
+  ],
   typescript: {
     outputFile: path.resolve(dirname, "payload-types.ts"),
   },
