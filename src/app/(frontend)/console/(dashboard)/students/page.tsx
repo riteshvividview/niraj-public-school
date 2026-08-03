@@ -1,7 +1,21 @@
 "use client";
 
-import { AlertCircle, CheckCircle2, Loader2, Pencil, Plus, Trash2, Upload } from "lucide-react";
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  Pencil,
+  Plus,
+  Trash2,
+  Upload,
+} from "lucide-react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -65,7 +79,8 @@ function AddStudentForm({
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!name.trim() || !registerNumber.trim() || !password || !classLevelId) return;
+    if (!name.trim() || !registerNumber.trim() || !password || !classLevelId)
+      return;
     setError(null);
     setIsSubmitting(true);
     try {
@@ -80,7 +95,9 @@ function AddStudentForm({
       });
       onDone();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't create this student.");
+      setError(
+        err instanceof Error ? err.message : "Couldn't create this student.",
+      );
       setIsSubmitting(false);
     }
   }
@@ -89,7 +106,12 @@ function AddStudentForm({
     <form className="space-y-4" onSubmit={handleSubmit}>
       <div className="space-y-2">
         <Label htmlFor="student-name">Name</Label>
-        <Input id="student-name" value={name} onChange={(e) => setName(e.target.value)} required />
+        <Input
+          id="student-name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
@@ -184,12 +206,19 @@ function EditStudentForm({
     <form className="space-y-4" onSubmit={handleSubmit}>
       <div className="space-y-2">
         <Label htmlFor="edit-name">Name</Label>
-        <Input id="edit-name" value={name} onChange={(e) => setName(e.target.value)} required />
+        <Input
+          id="edit-name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
       </div>
       <div className="space-y-2">
         <Label>Register number</Label>
         <Input value={student.registerNumber} disabled />
-        <p className="text-xs text-sub">Register number can&apos;t be changed once created.</p>
+        <p className="text-xs text-sub">
+          Register number can&apos;t be changed once created.
+        </p>
       </div>
       <div className="space-y-2">
         <Label>Class</Label>
@@ -208,7 +237,11 @@ function EditStudentForm({
       </div>
       <div className="space-y-2">
         <Label htmlFor="edit-mobile">Mobile number (optional)</Label>
-        <Input id="edit-mobile" value={mobileNumber} onChange={(e) => setMobileNumber(e.target.value)} />
+        <Input
+          id="edit-mobile"
+          value={mobileNumber}
+          onChange={(e) => setMobileNumber(e.target.value)}
+        />
       </div>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <DialogFooter>
@@ -221,7 +254,13 @@ function EditStudentForm({
   );
 }
 
-function ResetPasswordForm({ student, onDone }: { student: UserProfile; onDone: () => void }) {
+function ResetPasswordForm({
+  student,
+  onDone,
+}: {
+  student: UserProfile;
+  onDone: () => void;
+}) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -238,7 +277,9 @@ function ResetPasswordForm({ student, onDone }: { student: UserProfile; onDone: 
       await resetStudentPassword(student.id, password);
       onDone();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't reset the password.");
+      setError(
+        err instanceof Error ? err.message : "Couldn't reset the password.",
+      );
       setIsSubmitting(false);
     }
   }
@@ -246,7 +287,8 @@ function ResetPasswordForm({ student, onDone }: { student: UserProfile; onDone: 
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
       <p className="text-sm text-sub">
-        Set a new password for <span className="font-medium text-ink">{student.name}</span> (
+        Set a new password for{" "}
+        <span className="font-medium text-ink">{student.name}</span> (
         {student.registerNumber}).
       </p>
       <div className="space-y-2">
@@ -277,13 +319,18 @@ interface ResolvedRow extends ParsedStudentRow {
   issue?: string;
 }
 
-function resolveRows(rows: ParsedStudentRow[], classLevels: ClassLevel[]): ResolvedRow[] {
+function resolveRows(
+  rows: ParsedStudentRow[],
+  classLevels: ClassLevel[],
+): ResolvedRow[] {
   return rows.map((row) => {
     if (!row.name || !row.registerNumber) {
       return { ...row, issue: "Missing name or register number" };
     }
     const match = row.className
-      ? classLevels.find((level) => level.label.toLowerCase() === row.className!.toLowerCase())
+      ? classLevels.find(
+          (level) => level.label.toLowerCase() === row.className!.toLowerCase(),
+        )
       : undefined;
     if (row.className && !match) {
       return { ...row, issue: `No class matching "${row.className}"` };
@@ -319,7 +366,9 @@ function BulkUploadForm({
       setRows(resolveRows(parsed, classLevels));
     } catch (err) {
       setRows(null);
-      setParseError(err instanceof Error ? err.message : "Couldn't read that file.");
+      setParseError(
+        err instanceof Error ? err.message : "Couldn't read that file.",
+      );
     }
   }
 
@@ -330,7 +379,10 @@ function BulkUploadForm({
     const inputs: CreateStudentInput[] = validRows.map((row) => ({
       name: row.name,
       registerNumber: row.registerNumber,
-      password: row.password && row.password.length >= 8 ? row.password : row.registerNumber,
+      password:
+        row.password && row.password.length >= 8
+          ? row.password
+          : row.registerNumber,
       mobileNumber: row.mobileNumber,
       role: "student",
       schoolId,
@@ -349,7 +401,8 @@ function BulkUploadForm({
         <div className="flex items-center gap-2 rounded-2xl border border-line bg-muted p-4">
           <CheckCircle2 className="size-5 shrink-0 text-section-essentials" />
           <p className="text-sm text-ink">
-            {succeeded} student{succeeded === 1 ? "" : "s"} imported{failed ? `, ${failed} failed` : ""}.
+            {succeeded} student{succeeded === 1 ? "" : "s"} imported
+            {failed ? `, ${failed} failed` : ""}.
           </p>
         </div>
         {failed ? (
@@ -375,9 +428,10 @@ function BulkUploadForm({
   return (
     <div className="space-y-4">
       <p className="text-sm text-sub">
-        Upload a CSV, Excel (.xlsx/.xls), ODS, or JSON file with columns for name, register number,
-        class, and optionally password and mobile number. Rows without a password default to using
-        the register number as the password.
+        Upload a CSV, Excel (.xlsx/.xls), ODS, or JSON file with columns for
+        name, register number, class, and optionally password and mobile number.
+        Rows without a password default to using the register number as the
+        password.
       </p>
 
       <button
@@ -409,10 +463,14 @@ function BulkUploadForm({
       {rows ? (
         <div className="space-y-2">
           <p className="text-sm text-ink">
-            {rows.length} row{rows.length === 1 ? "" : "s"} found — {validRows.length} ready to import
-            {rows.length - validRows.length ? `, ${rows.length - validRows.length} with issues` : ""}.
+            {rows.length} row{rows.length === 1 ? "" : "s"} found —{" "}
+            {validRows.length} ready to import
+            {rows.length - validRows.length
+              ? `, ${rows.length - validRows.length} with issues`
+              : ""}
+            .
           </p>
-          <div className="max-h-56 overflow-y-auto rounded-2xl border border-line">
+          <div className="max-h-56 overflow-x-auto overflow-y-auto rounded-2xl border border-line">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -428,7 +486,13 @@ function BulkUploadForm({
                     <TableCell>{row.name || "—"}</TableCell>
                     <TableCell>{row.registerNumber || "—"}</TableCell>
                     <TableCell>{row.className || "—"}</TableCell>
-                    <TableCell className={row.issue ? "text-destructive" : "text-section-essentials"}>
+                    <TableCell
+                      className={
+                        row.issue
+                          ? "text-destructive"
+                          : "text-section-essentials"
+                      }
+                    >
                       {row.issue ?? "Ready"}
                     </TableCell>
                   </TableRow>
@@ -440,9 +504,16 @@ function BulkUploadForm({
       ) : null}
 
       <DialogFooter>
-        <Button type="button" disabled={!validRows.length || isImporting} onClick={handleImport}>
+        <Button
+          type="button"
+          disabled={!validRows.length || isImporting}
+          onClick={handleImport}
+        >
           {isImporting ? <Loader2 className="size-4 animate-spin" /> : null}
-          Import {validRows.length ? `${validRows.length} Student${validRows.length === 1 ? "" : "s"}` : ""}
+          Import{" "}
+          {validRows.length
+            ? `${validRows.length} Student${validRows.length === 1 ? "" : "s"}`
+            : ""}
         </Button>
       </DialogFooter>
     </div>
@@ -459,7 +530,8 @@ export default function StudentsManagerPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [editing, setEditing] = useState<UserProfile | null>(null);
-  const [resettingPassword, setResettingPassword] = useState<UserProfile | null>(null);
+  const [resettingPassword, setResettingPassword] =
+    useState<UserProfile | null>(null);
 
   useEffect(() => {
     getSchools().then((schools) => {
@@ -481,10 +553,17 @@ export default function StudentsManagerPage() {
     refresh();
   }, [refresh]);
 
-  const classLabelById = new Map(classLevels.map((level) => [level.id, level.label]));
+  const classLabelById = new Map(
+    classLevels.map((level) => [level.id, level.label]),
+  );
 
   async function handleDelete(student: UserProfile) {
-    if (!window.confirm(`Remove ${student.name} (${student.registerNumber})? This can't be undone.`)) return;
+    if (
+      !window.confirm(
+        `Remove ${student.name} (${student.registerNumber})? This can't be undone.`,
+      )
+    )
+      return;
     await deleteStudent(student.id);
     refresh();
   }
@@ -495,16 +574,25 @@ export default function StudentsManagerPage() {
         <div>
           <h1 className="font-heading text-2xl font-bold text-ink">Students</h1>
           <p className="text-sm text-sub">
-            Add students one at a time, or bulk-import a class list from a spreadsheet. Only students
-            added here can log in.
+            Add students one at a time, or bulk-import a class list from a
+            spreadsheet. Only students added here can log in.
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2" disabled={!schoolId} onClick={() => setBulkOpen(true)}>
+          <Button
+            variant="outline"
+            className="gap-2"
+            disabled={!schoolId}
+            onClick={() => setBulkOpen(true)}
+          >
             <Upload className="size-4" />
             Bulk Upload
           </Button>
-          <Button className="gap-2" disabled={!schoolId} onClick={() => setAddOpen(true)}>
+          <Button
+            className="gap-2"
+            disabled={!schoolId}
+            onClick={() => setAddOpen(true)}
+          >
             <Plus className="size-4" />
             Add Student
           </Button>
@@ -516,52 +604,72 @@ export default function StudentsManagerPage() {
           <CardTitle>All Students</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Register #</TableHead>
-                <TableHead>Class</TableHead>
-                <TableHead>Mobile</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {(students ?? []).map((student) => (
-                <TableRow key={student.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2.5">
-                      <UserAvatar name={student.name} avatarUrl={student.avatarUrl} size="sm" />
-                      {student.name}
-                    </div>
-                  </TableCell>
-                  <TableCell>{student.registerNumber}</TableCell>
-                  <TableCell>{classLabelById.get(student.classLevelId) ?? "—"}</TableCell>
-                  <TableCell>{student.mobileNumber ?? "—"}</TableCell>
-                  <TableCell className="space-x-1 text-right">
-                    <Button variant="ghost" size="sm" onClick={() => setEditing(student)}>
-                      <Pencil className="size-3.5" />
-                      Edit
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setResettingPassword(student)}>
-                      Reset Password
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(student)}>
-                      <Trash2 className="size-3.5" />
-                      Delete
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {students !== null && students.length === 0 ? (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-sub">
-                    No students yet — add one or bulk-upload a class list.
-                  </TableCell>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Register #</TableHead>
+                  <TableHead>Class</TableHead>
+                  <TableHead>Mobile</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ) : null}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {(students ?? []).map((student) => (
+                  <TableRow key={student.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-2.5">
+                        <UserAvatar
+                          name={student.name}
+                          avatarUrl={student.avatarUrl}
+                          size="sm"
+                        />
+                        {student.name}
+                      </div>
+                    </TableCell>
+                    <TableCell>{student.registerNumber}</TableCell>
+                    <TableCell>
+                      {classLabelById.get(student.classLevelId) ?? "—"}
+                    </TableCell>
+                    <TableCell>{student.mobileNumber ?? "—"}</TableCell>
+                    <TableCell className="space-x-1 text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditing(student)}
+                      >
+                        <Pencil className="size-3.5" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setResettingPassword(student)}
+                      >
+                        Reset Password
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(student)}
+                      >
+                        <Trash2 className="size-3.5" />
+                        Delete
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {students !== null && students.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-sub">
+                      No students yet — add one or bulk-upload a class list.
+                    </TableCell>
+                  </TableRow>
+                ) : null}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
@@ -601,7 +709,10 @@ export default function StudentsManagerPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(null)}>
+      <Dialog
+        open={Boolean(editing)}
+        onOpenChange={(open) => !open && setEditing(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Student</DialogTitle>
@@ -620,7 +731,10 @@ export default function StudentsManagerPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={Boolean(resettingPassword)} onOpenChange={(open) => !open && setResettingPassword(null)}>
+      <Dialog
+        open={Boolean(resettingPassword)}
+        onOpenChange={(open) => !open && setResettingPassword(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Reset Password</DialogTitle>

@@ -58,19 +58,30 @@ function ProgramForm({
   onDone: () => void;
 }) {
   const [title, setTitle] = useState(editing?.title ?? "");
-  const [category, setCategory] = useState<ProgramCategory>(editing?.category ?? "workshop");
+  const [category, setCategory] = useState<ProgramCategory>(
+    editing?.category ?? "workshop",
+  );
   const [description, setDescription] = useState(editing?.description ?? "");
   const [venue, setVenue] = useState(editing?.venue ?? "");
   const [date, setDate] = useState(editing?.date ?? "");
   const [fee, setFee] = useState(editing ? String(editing.fee) : "");
-  const [seatsTotal, setSeatsTotal] = useState(editing ? String(editing.seatsTotal) : "");
+  const [seatsTotal, setSeatsTotal] = useState(
+    editing ? String(editing.seatsTotal) : "",
+  );
   const [contactPhone, setContactPhone] = useState(editing?.contactPhone ?? "");
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     const feeNum = Number(fee);
     const seatsNum = Number(seatsTotal);
-    if (!title.trim() || !venue.trim() || !date || !contactPhone.trim() || !seatsNum) return;
+    if (
+      !title.trim() ||
+      !venue.trim() ||
+      !date ||
+      !contactPhone.trim() ||
+      !seatsNum
+    )
+      return;
     if (editing) {
       await updateProgram(editing.id, {
         title: title.trim(),
@@ -101,11 +112,19 @@ function ProgramForm({
     <form className="space-y-4" onSubmit={handleSubmit}>
       <div className="space-y-2">
         <Label htmlFor="program-title">Title</Label>
-        <Input id="program-title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+        <Input
+          id="program-title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+        />
       </div>
       <div className="space-y-2">
         <Label>Category</Label>
-        <Select value={category} onValueChange={(v) => setCategory(v as ProgramCategory)}>
+        <Select
+          value={category}
+          onValueChange={(v) => setCategory(v as ProgramCategory)}
+        >
           <SelectTrigger className="w-full">
             <SelectValue />
           </SelectTrigger>
@@ -133,11 +152,22 @@ function ProgramForm({
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
           <Label htmlFor="program-venue">Venue</Label>
-          <Input id="program-venue" value={venue} onChange={(e) => setVenue(e.target.value)} required />
+          <Input
+            id="program-venue"
+            value={venue}
+            onChange={(e) => setVenue(e.target.value)}
+            required
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="program-date">Date</Label>
-          <Input id="program-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+          <Input
+            id="program-date"
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            required
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="program-fee">Fee (₹)</Label>
@@ -179,7 +209,9 @@ function ProgramForm({
         </p>
       ) : null}
       <DialogFooter>
-        <Button type="submit">{editing ? "Save Changes" : "Create Program"}</Button>
+        <Button type="submit">
+          {editing ? "Save Changes" : "Create Program"}
+        </Button>
       </DialogFooter>
     </form>
   );
@@ -202,7 +234,9 @@ function ProgramDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{editing ? "Edit Program" : "Create Program"}</DialogTitle>
+          <DialogTitle>
+            {editing ? "Edit Program" : "Create Program"}
+          </DialogTitle>
         </DialogHeader>
         {open ? (
           <ProgramForm
@@ -238,7 +272,10 @@ export default function ProgramManagerPage() {
   }, [schoolId]);
 
   async function handleDelete(id: string) {
-    if (!window.confirm("Delete this program? This can't be undone in this demo.")) return;
+    if (
+      !window.confirm("Delete this program? This can't be undone in this demo.")
+    )
+      return;
     await deleteProgram(id);
     refresh();
   }
@@ -252,8 +289,12 @@ export default function ProgramManagerPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-2xl font-bold text-ink">Program Manager</h1>
-          <p className="text-sm text-sub">Create and publish programs & events for this school.</p>
+          <h1 className="font-heading text-2xl font-bold text-ink">
+            Program Manager
+          </h1>
+          <p className="text-sm text-sub">
+            Create and publish programs & events for this school.
+          </p>
         </div>
         <Button
           disabled={!schoolId}
@@ -271,60 +312,70 @@ export default function ProgramManagerPage() {
           <CardTitle>All Programs</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Seats</TableHead>
-                <TableHead>Fee</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {(programs ?? []).map((program) => (
-                <TableRow key={program.id}>
-                  <TableCell>{program.title}</TableCell>
-                  <TableCell>{program.date}</TableCell>
-                  <TableCell>
-                    {program.seatsAvailable} / {program.seatsTotal}
-                  </TableCell>
-                  <TableCell>₹{program.fee}</TableCell>
-                  <TableCell>
-                    <StatusBadge status={toBadgeStatus(program.status)} />
-                  </TableCell>
-                  <TableCell className="space-x-1 text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setEditing(program);
-                        setDialogOpen(true);
-                      }}
-                    >
-                      Edit
-                    </Button>
-                    {program.status !== "closed" ? (
-                      <Button variant="ghost" size="sm" onClick={() => handleCloseRegistration(program.id)}>
-                        Close Registration
-                      </Button>
-                    ) : null}
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(program.id)}>
-                      Delete
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {programs !== null && programs.length === 0 ? (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-sub">
-                    No programs published yet.
-                  </TableCell>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Seats</TableHead>
+                  <TableHead>Fee</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ) : null}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {(programs ?? []).map((program) => (
+                  <TableRow key={program.id}>
+                    <TableCell>{program.title}</TableCell>
+                    <TableCell>{program.date}</TableCell>
+                    <TableCell>
+                      {program.seatsAvailable} / {program.seatsTotal}
+                    </TableCell>
+                    <TableCell>₹{program.fee}</TableCell>
+                    <TableCell>
+                      <StatusBadge status={toBadgeStatus(program.status)} />
+                    </TableCell>
+                    <TableCell className="space-x-1 text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setEditing(program);
+                          setDialogOpen(true);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                      {program.status !== "closed" ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleCloseRegistration(program.id)}
+                        >
+                          Close Registration
+                        </Button>
+                      ) : null}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(program.id)}
+                      >
+                        Delete
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {programs !== null && programs.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-sub">
+                      No programs published yet.
+                    </TableCell>
+                  </TableRow>
+                ) : null}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 

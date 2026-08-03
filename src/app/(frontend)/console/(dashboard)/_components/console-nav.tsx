@@ -1,6 +1,14 @@
 "use client";
 
-import { BookMarked, CalendarClock, LayoutDashboard, LogOut, ScanLine, Table2, Users } from "lucide-react";
+import {
+  BookMarked,
+  CalendarClock,
+  LayoutDashboard,
+  LogOut,
+  ScanLine,
+  Table2,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
@@ -13,13 +21,26 @@ const NAV_ITEMS = [
   { href: "/console/students", label: "Students", icon: Users },
   { href: "/console/timetable", label: "Timetable Manager", icon: Table2 },
   { href: "/console/scan", label: "Receipt / QR Scanner", icon: ScanLine },
-  { href: "/console/reports", label: "Reports Dashboard", icon: LayoutDashboard },
+  {
+    href: "/console/reports",
+    label: "Reports Dashboard",
+    icon: LayoutDashboard,
+  },
 ];
 
-function NavLinks({ direction = "vertical" }: { direction?: "vertical" | "horizontal" }) {
+function NavLinks({
+  direction = "vertical",
+}: {
+  direction?: "vertical" | "horizontal";
+}) {
   const pathname = usePathname();
   return (
-    <nav className={cn("flex gap-1", direction === "vertical" ? "flex-col" : "flex-row")}>
+    <nav
+      className={cn(
+        "flex gap-1",
+        direction === "vertical" ? "flex-col" : "flex-row",
+      )}
+    >
       {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
         const isActive = pathname === href || pathname.startsWith(`${href}/`);
         return (
@@ -28,7 +49,9 @@ function NavLinks({ direction = "vertical" }: { direction?: "vertical" | "horizo
             href={href}
             className={cn(
               "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors",
-              isActive ? "bg-section-console text-white" : "text-sub hover:bg-muted hover:text-ink",
+              isActive
+                ? "bg-section-console text-white"
+                : "text-sub hover:bg-muted hover:text-ink",
             )}
           >
             <Icon className="size-4 shrink-0" />
@@ -46,7 +69,9 @@ export function ConsoleSidebar() {
     <aside className="hidden w-64 shrink-0 flex-col border-r border-line bg-card md:flex">
       <div className="flex items-center justify-between border-b border-line p-5">
         <div>
-          <p className="font-heading text-sm font-bold text-ink">School Workspace</p>
+          <p className="font-heading text-sm font-bold text-ink">
+            School Workspace
+          </p>
           <p className="text-xs text-sub">Staff Console</p>
         </div>
         <ThemeToggle />
@@ -74,11 +99,11 @@ export function ConsoleMobileNav() {
   const { logout } = useConsoleAuth();
   return (
     <div className="border-b border-line bg-card md:hidden">
-      <div className="flex items-center justify-between px-4 py-3">
-        <div>
-          <p className="font-heading text-sm font-bold text-ink">School Workspace — Console</p>
-        </div>
-        <div className="flex items-center gap-1">
+      <div className="flex items-center justify-between gap-2 px-4 py-3">
+        <p className="min-w-0 truncate font-heading text-sm font-bold text-ink">
+          School Workspace
+        </p>
+        <div className="flex shrink-0 items-center gap-1">
           <ThemeToggle />
           <button
             type="button"

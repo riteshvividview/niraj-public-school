@@ -67,7 +67,11 @@ function BookForm({
     const priceNum = Number(price);
     if (!title.trim() || !subject.trim() || !priceNum) return;
     if (editing) {
-      await updateBook(editing.id, { title: title.trim(), subject: subject.trim(), price: priceNum });
+      await updateBook(editing.id, {
+        title: title.trim(),
+        subject: subject.trim(),
+        price: priceNum,
+      });
     } else {
       await createBook({
         schoolId,
@@ -84,11 +88,21 @@ function BookForm({
     <form className="space-y-4" onSubmit={handleSubmit}>
       <div className="space-y-2">
         <Label htmlFor="book-title">Title</Label>
-        <Input id="book-title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+        <Input
+          id="book-title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+        />
       </div>
       <div className="space-y-2">
         <Label htmlFor="book-subject">Subject</Label>
-        <Input id="book-subject" value={subject} onChange={(e) => setSubject(e.target.value)} required />
+        <Input
+          id="book-subject"
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          required
+        />
       </div>
       <div className="space-y-2">
         <Label htmlFor="book-price">Price (₹)</Label>
@@ -146,7 +160,13 @@ function BookDialog({
   );
 }
 
-function BooksManager({ schoolId, classLevelId }: { schoolId: string; classLevelId: string }) {
+function BooksManager({
+  schoolId,
+  classLevelId,
+}: {
+  schoolId: string;
+  classLevelId: string;
+}) {
   const [books, setBooks] = useState<Book[] | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Book | null>(null);
@@ -180,47 +200,53 @@ function BooksManager({ schoolId, classLevelId }: { schoolId: string; classLevel
         </Button>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Subject</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {(books ?? []).map((book) => (
-              <TableRow key={book.id}>
-                <TableCell>{book.title}</TableCell>
-                <TableCell>{book.subject}</TableCell>
-                <TableCell>₹{book.price}</TableCell>
-                <TableCell className="space-x-1 text-right">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setEditing(book);
-                      setDialogOpen(true);
-                    }}
-                  >
-                    Edit
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => handleDelete(book.id)}>
-                    Delete
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-            {books !== null && books.length === 0 ? (
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-sub">
-                  No books for this class yet.
-                </TableCell>
+                <TableHead>Title</TableHead>
+                <TableHead>Subject</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            ) : null}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {(books ?? []).map((book) => (
+                <TableRow key={book.id}>
+                  <TableCell>{book.title}</TableCell>
+                  <TableCell>{book.subject}</TableCell>
+                  <TableCell>₹{book.price}</TableCell>
+                  <TableCell className="space-x-1 text-right">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setEditing(book);
+                        setDialogOpen(true);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(book.id)}
+                    >
+                      Delete
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {books !== null && books.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-sub">
+                    No books for this class yet.
+                  </TableCell>
+                </TableRow>
+              ) : null}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
       <BookDialog
         open={dialogOpen}
@@ -248,7 +274,9 @@ function StationeryForm({
   onDone: () => void;
 }) {
   const [name, setName] = useState(editing?.name ?? "");
-  const [quantityLabel, setQuantityLabel] = useState(editing?.quantityLabel ?? "");
+  const [quantityLabel, setQuantityLabel] = useState(
+    editing?.quantityLabel ?? "",
+  );
   const [price, setPrice] = useState(editing ? String(editing.price) : "");
 
   async function handleSubmit(event: FormEvent) {
@@ -277,7 +305,12 @@ function StationeryForm({
     <form className="space-y-4" onSubmit={handleSubmit}>
       <div className="space-y-2">
         <Label htmlFor="stationery-name">Name</Label>
-        <Input id="stationery-name" value={name} onChange={(e) => setName(e.target.value)} required />
+        <Input
+          id="stationery-name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
       </div>
       <div className="space-y-2">
         <Label htmlFor="stationery-qty">Quantity label</Label>
@@ -326,7 +359,9 @@ function StationeryDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{editing ? "Edit Stationery Item" : "Add Stationery Item"}</DialogTitle>
+          <DialogTitle>
+            {editing ? "Edit Stationery Item" : "Add Stationery Item"}
+          </DialogTitle>
         </DialogHeader>
         {open ? (
           <StationeryForm
@@ -345,7 +380,13 @@ function StationeryDialog({
   );
 }
 
-function StationeryManager({ schoolId, classLevelId }: { schoolId: string; classLevelId: string }) {
+function StationeryManager({
+  schoolId,
+  classLevelId,
+}: {
+  schoolId: string;
+  classLevelId: string;
+}) {
   const [items, setItems] = useState<StationeryItem[] | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<StationeryItem | null>(null);
@@ -379,47 +420,53 @@ function StationeryManager({ schoolId, classLevelId }: { schoolId: string; class
         </Button>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Quantity</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {(items ?? []).map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>{item.name}</TableCell>
-                <TableCell>{item.quantityLabel}</TableCell>
-                <TableCell>₹{item.price}</TableCell>
-                <TableCell className="space-x-1 text-right">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setEditing(item);
-                      setDialogOpen(true);
-                    }}
-                  >
-                    Edit
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)}>
-                    Delete
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-            {items !== null && items.length === 0 ? (
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-sub">
-                  No stationery items for this class yet.
-                </TableCell>
+                <TableHead>Name</TableHead>
+                <TableHead>Quantity</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            ) : null}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {(items ?? []).map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell>{item.name}</TableCell>
+                  <TableCell>{item.quantityLabel}</TableCell>
+                  <TableCell>₹{item.price}</TableCell>
+                  <TableCell className="space-x-1 text-right">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setEditing(item);
+                        setDialogOpen(true);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(item.id)}
+                    >
+                      Delete
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {items !== null && items.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-sub">
+                    No stationery items for this class yet.
+                  </TableCell>
+                </TableRow>
+              ) : null}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
       <StationeryDialog
         open={dialogOpen}
@@ -447,9 +494,13 @@ function UniformForm({
   onDone: () => void;
 }) {
   const [name, setName] = useState(editing?.name ?? "");
-  const [category, setCategory] = useState<"uniform" | "kit">(editing?.category ?? "uniform");
+  const [category, setCategory] = useState<"uniform" | "kit">(
+    editing?.category ?? "uniform",
+  );
   const [description, setDescription] = useState(editing?.description ?? "");
-  const [basePrice, setBasePrice] = useState(editing ? String(editing.sizeOptions[0]?.price ?? "") : "");
+  const [basePrice, setBasePrice] = useState(
+    editing ? String(editing.sizeOptions[0]?.price ?? "") : "",
+  );
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -479,11 +530,19 @@ function UniformForm({
     <form className="space-y-4" onSubmit={handleSubmit}>
       <div className="space-y-2">
         <Label htmlFor="uniform-name">Name</Label>
-        <Input id="uniform-name" value={name} onChange={(e) => setName(e.target.value)} required />
+        <Input
+          id="uniform-name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
       </div>
       <div className="space-y-2">
         <Label>Category</Label>
-        <Select value={category} onValueChange={(v) => setCategory(v as "uniform" | "kit")}>
+        <Select
+          value={category}
+          onValueChange={(v) => setCategory(v as "uniform" | "kit")}
+        >
           <SelectTrigger className="w-full">
             <SelectValue />
           </SelectTrigger>
@@ -495,7 +554,11 @@ function UniformForm({
       </div>
       <div className="space-y-2">
         <Label htmlFor="uniform-description">Description</Label>
-        <Input id="uniform-description" value={description} onChange={(e) => setDescription(e.target.value)} />
+        <Input
+          id="uniform-description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
       </div>
       <div className="space-y-2">
         <Label htmlFor="uniform-price">Base price (₹, smallest size)</Label>
@@ -508,7 +571,8 @@ function UniformForm({
           required
         />
         <p className="text-xs text-sub">
-          Prices for larger sizes are generated automatically, same as the seed catalogue.
+          Prices for larger sizes are generated automatically, same as the seed
+          catalogue.
         </p>
       </div>
       <DialogFooter>
@@ -537,7 +601,9 @@ function UniformDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{editing ? "Edit Uniform Item" : "Add Uniform Item"}</DialogTitle>
+          <DialogTitle>
+            {editing ? "Edit Uniform Item" : "Add Uniform Item"}
+          </DialogTitle>
         </DialogHeader>
         {open ? (
           <UniformForm
@@ -556,7 +622,13 @@ function UniformDialog({
   );
 }
 
-function UniformManager({ schoolId, classLevelId }: { schoolId: string; classLevelId: string }) {
+function UniformManager({
+  schoolId,
+  classLevelId,
+}: {
+  schoolId: string;
+  classLevelId: string;
+}) {
   const [items, setItems] = useState<UniformItem[] | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<UniformItem | null>(null);
@@ -590,51 +662,58 @@ function UniformManager({ schoolId, classLevelId }: { schoolId: string; classLev
         </Button>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Sizes</TableHead>
-              <TableHead>Price range</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {(items ?? []).map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>{item.name}</TableCell>
-                <TableCell className="capitalize">{item.category}</TableCell>
-                <TableCell>{item.sizeOptions.length}</TableCell>
-                <TableCell>
-                  ₹{item.sizeOptions[0]?.price} – ₹{item.sizeOptions[item.sizeOptions.length - 1]?.price}
-                </TableCell>
-                <TableCell className="space-x-1 text-right">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setEditing(item);
-                      setDialogOpen(true);
-                    }}
-                  >
-                    Edit
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)}>
-                    Delete
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-            {items !== null && items.length === 0 ? (
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-sub">
-                  No uniform/kit items for this class yet.
-                </TableCell>
+                <TableHead>Name</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Sizes</TableHead>
+                <TableHead>Price range</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            ) : null}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {(items ?? []).map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell>{item.name}</TableCell>
+                  <TableCell className="capitalize">{item.category}</TableCell>
+                  <TableCell>{item.sizeOptions.length}</TableCell>
+                  <TableCell>
+                    ₹{item.sizeOptions[0]?.price} – ₹
+                    {item.sizeOptions[item.sizeOptions.length - 1]?.price}
+                  </TableCell>
+                  <TableCell className="space-x-1 text-right">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setEditing(item);
+                        setDialogOpen(true);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(item.id)}
+                    >
+                      Delete
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {items !== null && items.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-sub">
+                    No uniform/kit items for this class yet.
+                  </TableCell>
+                </TableRow>
+              ) : null}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
       <UniformDialog
         open={dialogOpen}
@@ -672,11 +751,13 @@ export default function CatalogueManagerPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-heading text-2xl font-bold text-ink">Catalogue Manager</h1>
+        <h1 className="font-heading text-2xl font-bold text-ink">
+          Catalogue Manager
+        </h1>
         <p className="text-sm text-sub">
-          Manage the fixed book, uniform and stationery lists by class. In Phase 9 this
-          becomes Payload&apos;s generated <code>/admin</code> collection UI — this
-          screen is a temporary stand-in, not a bulk-import tool.
+          Manage the fixed book, uniform and stationery lists by class. In Phase
+          9 this becomes Payload&apos;s generated <code>/admin</code> collection
+          UI — this screen is a temporary stand-in, not a bulk-import tool.
         </p>
       </div>
 
