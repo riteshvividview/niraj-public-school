@@ -1,6 +1,8 @@
+import type { Order } from "./order";
+
 export type RedemptionStatus = "ready" | "collected" | "checked-in";
 
-/** Mirrors the future Payload `receipts` collection. Built in Phase 6. */
+/** Mirrors the Payload `receipts` collection. */
 export interface Receipt {
   id: string;
   orderId: string;
@@ -13,4 +15,18 @@ export interface Receipt {
   redeemedAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/** A receipt with its underlying order populated — the shape every receipts UI actually renders. */
+export interface ReceiptRecord {
+  order: Order;
+  receipt: Receipt;
+}
+
+/** A ReceiptRecord plus the paying student's identity — console Payments page only (a student never needs their own name attached). */
+export interface PaymentRecord extends ReceiptRecord {
+  studentName: string;
+  registerNumber: string;
+  classLevelId: string;
+  section?: string;
 }

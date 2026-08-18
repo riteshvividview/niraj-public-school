@@ -10,9 +10,9 @@ import { ProgramCard } from "@/components/shared/program-card";
 import { SectionCard } from "@/components/shared/section-card";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/i18n/context";
-import { getClassLevelById, getPrograms, getSchoolById } from "@/lib/data-source";
+import { registeredProgramIds } from "@/lib/cart-items";
+import { getClassLevelById, getPrograms, getReceiptsByUser, getSchoolById } from "@/lib/data-source";
 import { useAuth } from "@/store/auth-store";
-import { useReceipts } from "@/store/receipts-store";
 import type { ClassLevel, Program, School } from "@/types";
 
 const UPCOMING_PROGRAMS_LIMIT = 2;
@@ -20,11 +20,12 @@ const UPCOMING_PROGRAMS_LIMIT = 2;
 export default function HomePage() {
   const { t } = useTranslation();
   const { profile } = useAuth();
-  const receipts = useReceipts();
 
   const [school, setSchool] = useState<School | null>(null);
   const [classLevel, setClassLevel] = useState<ClassLevel | null>(null);
   const [programs, setPrograms] = useState<Program[] | null>(null);
+  const [hasReceipts, setHasReceipts] = useState(false);
+  const [registeredIds, setRegisteredIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!profile) return;
@@ -33,11 +34,13 @@ export default function HomePage() {
     getPrograms({ schoolId: profile.schoolId }).then((result) =>
       setPrograms(result.slice(0, UPCOMING_PROGRAMS_LIMIT)),
     );
+    getReceiptsByUser(profile.id).then((records) => {
+      setHasReceipts(records.length > 0);
+      setRegisteredIds(registeredProgramIds(records));
+    });
   }, [profile]);
 
   if (!profile) return null;
-
-  const hasReceipts = receipts.getForUser(profile.id).length > 0;
 
   return (
     <>
@@ -104,6 +107,7 @@ export default function HomePage() {
                     fee={program.fee}
                     seatsAvailable={program.seatsAvailable}
                     status={program.status}
+                    registered={registeredIds.has(program.id)}
                     href={`/programs/${program.id}`}
                   />
                 ))}

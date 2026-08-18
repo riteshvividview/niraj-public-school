@@ -4,16 +4,19 @@ import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge, type BadgeStatus } from "@/components/shared/status-badge";
 import { useTranslation } from "@/i18n/context";
-import { formatCurrencyINR, formatDate } from "@/lib/format";
+import { formatCurrencyINR, formatDate, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import type { CartItem } from "@/types";
 
 export interface ReceiptCardProps {
+  /** Derived from what's actually in the order, e.g. "Books & Uniform Receipt" — see deriveReceiptTitle. */
+  title: string;
   schoolName: string;
-  /** Item/program summary lines, e.g. "Grade 6 Book Set", "Uniform (Size 32)". */
-  summaryLines: string[];
+  /** Every purchased line, shown itemized (name, meta, quantity, price). */
+  items: CartItem[];
   amount: number;
   date: string;
-  /** Encoded into the QR code — the receipt id is enough for this mock phase. */
+  /** Encoded into the QR code and shown as readable text — the receipt's short human code (see qrPayload). */
   qrValue: string;
   status: BadgeStatus;
   /**
@@ -31,8 +34,9 @@ export interface ReceiptCardProps {
 }
 
 export function ReceiptCard({
+  title,
   schoolName,
-  summaryLines,
+  items,
   amount,
   date,
   qrValue,
@@ -54,9 +58,12 @@ export function ReceiptCard({
       )}
     >
       <div className="flex items-start justify-between gap-3 bg-section-workspace-bg p-5">
-        <div>
-          <p className="font-heading text-base font-semibold text-ink">{schoolName}</p>
-          <p className="text-sm text-sub">{formatDate(date, language)}</p>
+        <div className="min-w-0">
+          <p className="truncate font-heading text-base font-semibold text-ink">{title}</p>
+          <p className="text-xs text-sub">{schoolName}</p>
+          <p className="mt-1 text-sm text-sub">
+            {formatDate(date, language)} · {formatTime(date, language)}
+          </p>
           {isTicket && venue ? <p className="text-sm font-medium text-ink">{venue}</p> : null}
         </div>
         <div className="flex flex-col items-end gap-1.5">
@@ -69,20 +76,35 @@ export function ReceiptCard({
         </div>
       </div>
 
-      <div className="flex flex-col items-center gap-4 border-b border-dashed border-line p-6">
+      <div className="flex flex-col items-center gap-3 border-b border-dashed border-line p-6">
         <div className="rounded-xl border border-line bg-white p-3">
           <QRCodeSVG value={qrValue} size={144} />
+        </div>
+        <div className="text-center">
+          <p className="text-xs text-sub">{t.receiptsPage.receiptCodeLabel}</p>
+          <p className="font-mono text-lg font-semibold tracking-widest text-ink">{qrValue}</p>
         </div>
         <p className="text-center text-xs text-sub">
           {isTicket ? t.common.showAtEntry : t.common.showAtCounter}
         </p>
       </div>
 
-      <div className="space-y-2 p-5">
-        <ul className="space-y-1">
-          {summaryLines.map((line) => (
-            <li key={line} className="text-sm text-ink">
-              {line}
+      <div className="space-y-3 p-5">
+        <ul className="space-y-2.5">
+          {items.map((item) => (
+            <li key={item.id} className="flex items-start justify-between gap-3 text-sm">
+              <div className="min-w-0">
+                <p className="text-ink">{item.label}</p>
+                {item.meta ? <p className="text-xs text-sub">{item.meta}</p> : null}
+                {item.quantity > 1 ? (
+                  <p className="text-xs text-sub">
+                    {item.quantity} × {formatCurrencyINR(item.unitPrice, language)}
+                  </p>
+                ) : null}
+              </div>
+              <span className="shrink-0 font-medium text-ink">
+                {formatCurrencyINR(item.unitPrice * item.quantity, language)}
+              </span>
             </li>
           ))}
         </ul>

@@ -10,25 +10,19 @@ export const Programs: CollectionConfig = {
   fields: [
     { name: "school", type: "relationship", relationTo: "schools", required: true },
     { name: "title", type: "text", required: true },
-    {
-      name: "category",
-      type: "select",
-      required: true,
-      options: [
-        { label: "Workshop", value: "workshop" },
-        { label: "Sports", value: "sports" },
-        { label: "Camp", value: "camp" },
-        { label: "Annual Day", value: "annual-day" },
-        { label: "Exhibition", value: "exhibition" },
-        { label: "Extra Class", value: "extra-class" },
-      ],
-    },
+    // Free text, not a fixed select — staff can type any category rather
+    // than being limited to a preset list. The console form still suggests
+    // common ones via a <datalist>.
+    { name: "category", type: "text", required: true },
     { name: "description", type: "textarea", required: true },
-    { name: "venue", type: "text", required: true },
+    { name: "venue", type: "text" },
     { name: "date", type: "date", required: true },
     { name: "fee", type: "number", required: true },
-    { name: "seatsTotal", type: "number", required: true },
-    { name: "seatsAvailable", type: "number", required: true },
+    { name: "seatsTotal", type: "number" },
+    { name: "seatsAvailable", type: "number" },
+    // Unset/empty = open to every grade, not "no grades" — the console form
+    // never lets staff produce a program nobody can see.
+    { name: "eligibleClassLevels", type: "relationship", relationTo: "class-levels", hasMany: true },
     {
       name: "status",
       type: "select",

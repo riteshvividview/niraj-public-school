@@ -1,5 +1,5 @@
 import type { ClassLevel, School } from "@/types";
-import { payloadFind, payloadFindById } from "./payload-rest";
+import { payloadCreate, payloadDelete, payloadFind, payloadFindById, payloadUpdate } from "./payload-rest";
 
 interface PayloadSchoolDoc {
   id: string;
@@ -75,4 +75,34 @@ export async function getClassLevelsBySchool(schoolId: string): Promise<ClassLev
 export async function getClassLevelById(id: string): Promise<ClassLevel | null> {
   const doc = await payloadFindById<PayloadClassLevelDoc>("class-levels", id);
   return doc ? toClassLevel(doc) : null;
+}
+
+export interface ClassLevelInput {
+  schoolId: string;
+  label: string;
+  board: string;
+  order: number;
+}
+
+/** Console — Students tab's "Add new class" flow (also usable anywhere a class picker lives). */
+export async function createClassLevel(input: ClassLevelInput): Promise<ClassLevel> {
+  const doc = await payloadCreate<PayloadClassLevelDoc>("class-levels", {
+    school: input.schoolId,
+    label: input.label,
+    board: input.board,
+    order: input.order,
+  });
+  return toClassLevel(doc);
+}
+
+export async function updateClassLevel(
+  id: string,
+  patch: Partial<Omit<ClassLevelInput, "schoolId">>,
+): Promise<ClassLevel | null> {
+  const doc = await payloadUpdate<PayloadClassLevelDoc>("class-levels", id, patch);
+  return doc ? toClassLevel(doc) : null;
+}
+
+export async function deleteClassLevel(id: string): Promise<void> {
+  await payloadDelete("class-levels", id);
 }

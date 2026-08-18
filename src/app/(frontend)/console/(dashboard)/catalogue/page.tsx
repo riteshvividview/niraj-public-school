@@ -1,6 +1,9 @@
 "use client";
 
+import { Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { toast } from "sonner";
+import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -43,7 +46,32 @@ import {
   updateStationeryItem,
   updateUniformItem,
 } from "@/lib/data-source";
-import type { Book, ClassLevel, StationeryItem, UniformItem } from "@/types";
+import type {
+  AcademicLanguage,
+  Book,
+  ClassLevel,
+  Elective,
+  StationeryItem,
+  Stream,
+  UniformItem,
+  UniformSizeOption,
+} from "@/types";
+
+const NONE_VALUE = "__none__";
+
+const LANGUAGE_OPTIONS: { value: AcademicLanguage; label: string }[] = [
+  { value: "hindi", label: "Hindi" },
+  { value: "telugu", label: "Telugu" },
+];
+const STREAM_OPTIONS: { value: Stream; label: string }[] = [
+  { value: "science", label: "Science" },
+  { value: "economics", label: "Economics" },
+];
+const ELECTIVE_OPTIONS: { value: Elective; label: string }[] = [
+  { value: "ena", label: "ENA" },
+  { value: "homeScience", label: "Home Science" },
+  { value: "roboticsAI", label: "Robotics & AI" },
+];
 
 // --- Books --------------------------------------------------------------
 
@@ -61,6 +89,9 @@ function BookForm({
   const [title, setTitle] = useState(editing?.title ?? "");
   const [subject, setSubject] = useState(editing?.subject ?? "");
   const [price, setPrice] = useState(editing ? String(editing.price) : "");
+  const [language, setLanguage] = useState<AcademicLanguage | "">(editing?.language ?? "");
+  const [stream, setStream] = useState<Stream | "">(editing?.stream ?? "");
+  const [elective, setElective] = useState<Elective | "">(editing?.elective ?? "");
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -71,7 +102,11 @@ function BookForm({
         title: title.trim(),
         subject: subject.trim(),
         price: priceNum,
+        language: language || undefined,
+        stream: stream || undefined,
+        elective: elective || undefined,
       });
+      toast.success("Book updated");
     } else {
       await createBook({
         schoolId,
@@ -79,7 +114,11 @@ function BookForm({
         title: title.trim(),
         subject: subject.trim(),
         price: priceNum,
+        language: language || undefined,
+        stream: stream || undefined,
+        elective: elective || undefined,
       });
+      toast.success("Book added");
     }
     onDone();
   }
@@ -103,6 +142,65 @@ function BookForm({
           onChange={(e) => setSubject(e.target.value)}
           required
         />
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div className="space-y-2">
+          <Label>Language</Label>
+          <Select
+            value={language || NONE_VALUE}
+            onValueChange={(v) => setLanguage(v === NONE_VALUE ? "" : (v as AcademicLanguage))}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NONE_VALUE}>None</SelectItem>
+              {LANGUAGE_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>Specialization 1</Label>
+          <Select
+            value={stream || NONE_VALUE}
+            onValueChange={(v) => setStream(v === NONE_VALUE ? "" : (v as Stream))}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NONE_VALUE}>None</SelectItem>
+              {STREAM_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>Specialization 2</Label>
+          <Select
+            value={elective || NONE_VALUE}
+            onValueChange={(v) => setElective(v === NONE_VALUE ? "" : (v as Elective))}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NONE_VALUE}>None</SelectItem>
+              {ELECTIVE_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       <div className="space-y-2">
         <Label htmlFor="book-price">Price (₹)</Label>
@@ -170,6 +268,7 @@ function BooksManager({
   const [books, setBooks] = useState<Book[] | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Book | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Book | null>(null);
 
   const refresh = useCallback(() => {
     getBooksByClass(schoolId, classLevelId).then(setBooks);
@@ -179,9 +278,11 @@ function BooksManager({
     refresh();
   }, [refresh]);
 
-  async function handleDelete(id: string) {
-    if (!window.confirm("Delete this book from the class list?")) return;
-    await deleteBook(id);
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    await deleteBook(deleteTarget.id);
+    setDeleteTarget(null);
+    toast.success("Book deleted");
     refresh();
   }
 
@@ -206,6 +307,9 @@ function BooksManager({
               <TableRow>
                 <TableHead>Title</TableHead>
                 <TableHead>Subject</TableHead>
+                <TableHead>Language</TableHead>
+                <TableHead>Specialization 1</TableHead>
+                <TableHead>Specialization 2</TableHead>
                 <TableHead>Price</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -215,6 +319,17 @@ function BooksManager({
                 <TableRow key={book.id}>
                   <TableCell>{book.title}</TableCell>
                   <TableCell>{book.subject}</TableCell>
+                  <TableCell className="capitalize">{book.language ?? "—"}</TableCell>
+                  <TableCell className="capitalize">{book.stream ?? "—"}</TableCell>
+                  <TableCell>
+                    {book.elective === "roboticsAI"
+                      ? "Robotics & AI"
+                      : book.elective === "homeScience"
+                        ? "Home Science"
+                        : book.elective === "ena"
+                          ? "ENA"
+                          : "—"}
+                  </TableCell>
                   <TableCell>₹{book.price}</TableCell>
                   <TableCell className="space-x-1 text-right">
                     <Button
@@ -230,7 +345,7 @@ function BooksManager({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDelete(book.id)}
+                      onClick={() => setDeleteTarget(book)}
                     >
                       Delete
                     </Button>
@@ -239,7 +354,7 @@ function BooksManager({
               ))}
               {books !== null && books.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-sub">
+                  <TableCell colSpan={7} className="text-center text-sub">
                     No books for this class yet.
                   </TableCell>
                 </TableRow>
@@ -255,6 +370,13 @@ function BooksManager({
         classLevelId={classLevelId}
         editing={editing}
         onSaved={refresh}
+      />
+      <ConfirmDeleteDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete this book?"
+        description={`"${deleteTarget?.title}" will be removed from this class's book list. This can't be undone.`}
+        onConfirm={handleDelete}
       />
     </Card>
   );
@@ -289,6 +411,7 @@ function StationeryForm({
         quantityLabel: quantityLabel.trim(),
         price: priceNum,
       });
+      toast.success("Stationery item updated");
     } else {
       await createStationeryItem({
         schoolId,
@@ -297,6 +420,7 @@ function StationeryForm({
         quantityLabel: quantityLabel.trim(),
         price: priceNum,
       });
+      toast.success("Stationery item added");
     }
     onDone();
   }
@@ -390,6 +514,7 @@ function StationeryManager({
   const [items, setItems] = useState<StationeryItem[] | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<StationeryItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<StationeryItem | null>(null);
 
   const refresh = useCallback(() => {
     getStationeryItemsByClass(schoolId, classLevelId).then(setItems);
@@ -399,9 +524,11 @@ function StationeryManager({
     refresh();
   }, [refresh]);
 
-  async function handleDelete(id: string) {
-    if (!window.confirm("Delete this item from the class list?")) return;
-    await deleteStationeryItem(id);
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    await deleteStationeryItem(deleteTarget.id);
+    setDeleteTarget(null);
+    toast.success("Stationery item deleted");
     refresh();
   }
 
@@ -450,7 +577,7 @@ function StationeryManager({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDelete(item.id)}
+                      onClick={() => setDeleteTarget(item)}
                     >
                       Delete
                     </Button>
@@ -476,6 +603,13 @@ function StationeryManager({
         editing={editing}
         onSaved={refresh}
       />
+      <ConfirmDeleteDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete this item?"
+        description={`"${deleteTarget?.name}" will be removed from this class's stationery list. This can't be undone.`}
+        onConfirm={handleDelete}
+      />
     </Card>
   );
 }
@@ -498,21 +632,31 @@ function UniformForm({
     editing?.category ?? "uniform",
   );
   const [description, setDescription] = useState(editing?.description ?? "");
-  const [basePrice, setBasePrice] = useState(
-    editing ? String(editing.sizeOptions[0]?.price ?? "") : "",
+  const [sizeRows, setSizeRows] = useState<UniformSizeOption[]>(
+    editing?.sizeOptions.length ? editing.sizeOptions : [{ size: "Standard", price: 0 }],
   );
+  const [gender, setGender] = useState<"male" | "female" | "">(editing?.gender ?? "");
+
+  function updateSizeRow(index: number, patch: Partial<UniformSizeOption>) {
+    setSizeRows((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+  }
+
+  const cleanSizeRows = sizeRows
+    .map((row) => ({ size: row.size.trim(), price: Number(row.price) }))
+    .filter((row) => row.size && row.price > 0);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    const priceNum = Number(basePrice);
-    if (!name.trim() || !priceNum) return;
+    if (!name.trim() || cleanSizeRows.length === 0) return;
     if (editing) {
       await updateUniformItem(editing.id, {
         name: name.trim(),
         category,
         description: description.trim(),
-        basePrice: priceNum,
+        sizeOptions: cleanSizeRows,
+        gender: gender || undefined,
       });
+      toast.success("Uniform item updated");
     } else {
       await createUniformItem({
         schoolId,
@@ -520,8 +664,10 @@ function UniformForm({
         name: name.trim(),
         category,
         description: description.trim(),
-        basePrice: priceNum,
+        sizeOptions: cleanSizeRows,
+        gender: gender || undefined,
       });
+      toast.success("Uniform item added");
     }
     onDone();
   }
@@ -561,22 +707,75 @@ function UniformForm({
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="uniform-price">Base price (₹, smallest size)</Label>
-        <Input
-          id="uniform-price"
-          type="number"
-          min="0"
-          value={basePrice}
-          onChange={(e) => setBasePrice(e.target.value)}
-          required
-        />
+        <Label>Gender</Label>
+        <Select
+          value={gender || NONE_VALUE}
+          onValueChange={(v) => setGender(v === NONE_VALUE ? "" : (v as "male" | "female"))}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={NONE_VALUE}>Unisex</SelectItem>
+            <SelectItem value="male">Male</SelectItem>
+            <SelectItem value="female">Female</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label>Sizes &amp; prices</Label>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setSizeRows((rows) => [...rows, { size: "", price: 0 }])}
+          >
+            <Plus className="size-4" />
+            Add Size
+          </Button>
+        </div>
         <p className="text-xs text-sub">
-          Prices for larger sizes are generated automatically, same as the seed
-          catalogue.
+          Add one row per size a student can pick — e.g. &quot;Standard&quot; for a
+          one-size item, or &quot;S&quot;, &quot;M&quot;, &quot;L&quot; with their own
+          prices. At least one size is required.
         </p>
+        <div className="space-y-2">
+          {sizeRows.map((row, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <Input
+                placeholder="Size, e.g. M"
+                value={row.size}
+                onChange={(e) => updateSizeRow(index, { size: e.target.value })}
+                className="flex-1"
+              />
+              <Input
+                type="number"
+                min="0"
+                placeholder="Price (₹)"
+                value={row.price || ""}
+                onChange={(e) => updateSizeRow(index, { price: Number(e.target.value) })}
+                className="w-28"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Remove size"
+                disabled={sizeRows.length === 1}
+                onClick={() => setSizeRows((rows) => rows.filter((_, i) => i !== index))}
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            </div>
+          ))}
+        </div>
       </div>
       <DialogFooter>
-        <Button type="submit">{editing ? "Save Changes" : "Add Item"}</Button>
+        <Button type="submit" disabled={cleanSizeRows.length === 0}>
+          {editing ? "Save Changes" : "Add Item"}
+        </Button>
       </DialogFooter>
     </form>
   );
@@ -599,7 +798,7 @@ function UniformDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {editing ? "Edit Uniform Item" : "Add Uniform Item"}
@@ -632,6 +831,7 @@ function UniformManager({
   const [items, setItems] = useState<UniformItem[] | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<UniformItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<UniformItem | null>(null);
 
   const refresh = useCallback(() => {
     getUniformItemsByClass(schoolId, classLevelId).then(setItems);
@@ -641,9 +841,11 @@ function UniformManager({
     refresh();
   }, [refresh]);
 
-  async function handleDelete(id: string) {
-    if (!window.confirm("Delete this item from the class list?")) return;
-    await deleteUniformItem(id);
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    await deleteUniformItem(deleteTarget.id);
+    setDeleteTarget(null);
+    toast.success("Uniform item deleted");
     refresh();
   }
 
@@ -668,8 +870,9 @@ function UniformManager({
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Category</TableHead>
+                <TableHead>Gender</TableHead>
                 <TableHead>Sizes</TableHead>
-                <TableHead>Price range</TableHead>
+                <TableHead>Price</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -678,10 +881,15 @@ function UniformManager({
                 <TableRow key={item.id}>
                   <TableCell>{item.name}</TableCell>
                   <TableCell className="capitalize">{item.category}</TableCell>
-                  <TableCell>{item.sizeOptions.length}</TableCell>
+                  <TableCell className="capitalize">{item.gender ?? "Unisex"}</TableCell>
+                  <TableCell>{item.sizeOptions.map((o) => o.size).join(", ") || "—"}</TableCell>
                   <TableCell>
-                    ₹{item.sizeOptions[0]?.price} – ₹
-                    {item.sizeOptions[item.sizeOptions.length - 1]?.price}
+                    {(() => {
+                      const prices = item.sizeOptions.map((o) => o.price);
+                      const min = Math.min(...prices);
+                      const max = Math.max(...prices);
+                      return min === max ? `₹${min}` : `₹${min} – ₹${max}`;
+                    })()}
                   </TableCell>
                   <TableCell className="space-x-1 text-right">
                     <Button
@@ -697,7 +905,7 @@ function UniformManager({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDelete(item.id)}
+                      onClick={() => setDeleteTarget(item)}
                     >
                       Delete
                     </Button>
@@ -706,7 +914,7 @@ function UniformManager({
               ))}
               {items !== null && items.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-sub">
+                  <TableCell colSpan={6} className="text-center text-sub">
                     No uniform/kit items for this class yet.
                   </TableCell>
                 </TableRow>
@@ -722,6 +930,13 @@ function UniformManager({
         classLevelId={classLevelId}
         editing={editing}
         onSaved={refresh}
+      />
+      <ConfirmDeleteDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete this item?"
+        description={`"${deleteTarget?.name}" will be removed from this class's uniform & kit list. This can't be undone.`}
+        onConfirm={handleDelete}
       />
     </Card>
   );

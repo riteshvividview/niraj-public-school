@@ -4,17 +4,19 @@ import { AlertTriangle, Building2, CreditCard, Smartphone } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/shared/app-header";
+import { PaymentSuccessOverlay } from "@/components/shared/payment-success-overlay";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useTranslation } from "@/i18n/context";
+import { formatTemplate } from "@/i18n/format";
 import { formatCurrencyINR } from "@/lib/format";
 import { simulatePayment } from "@/lib/mock-payment";
 import { cn } from "@/lib/utils";
+import { createOrder, createReceiptForOrder, decrementProgramSeats } from "@/lib/data-source";
 import { useAuth } from "@/store/auth-store";
 import { useCart } from "@/store/cart-store";
-import { useReceipts } from "@/store/receipts-store";
 import type { PaymentMethod } from "@/types";
 
 const METHODS: { value: PaymentMethod; icon: typeof Smartphone }[] = [
@@ -28,10 +30,13 @@ export default function PaymentPage() {
   const router = useRouter();
   const { profile } = useAuth();
   const cart = useCart();
-  const receipts = useReceipts();
 
   const [method, setMethod] = useState<PaymentMethod | "">("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [paidAmount, setPaidAmount] = useState(0);
+  const [paidMethod, setPaidMethod] = useState<PaymentMethod>("upi");
+  const [paidItemCount, setPaidItemCount] = useState(0);
   const [failed, setFailed] = useState(false);
   const [devForceFailure, setDevForceFailure] = useState(false);
 
@@ -44,13 +49,18 @@ export default function PaymentPage() {
     }
   }, [cart.isReady, cart.count, isProcessing, router]);
 
-  if (!profile || cart.count === 0) return null;
+  if (!profile || (cart.count === 0 && !isProcessing)) return null;
 
   const methodLabels: Record<PaymentMethod, string> = {
     upi: t.payment.upi,
     card: t.payment.card,
     netbanking: t.payment.netbanking,
   };
+
+  // Minimum time the success overlay stays up, so it's never a flash even
+  // when receipt generation (a couple of fast local Payload calls) finishes
+  // instantly — the confetti moment needs to actually be seen.
+  const MIN_SUCCESS_DISPLAY_MS = 2200;
 
   async function handlePay() {
     if (!method) return;
@@ -62,15 +72,35 @@ export default function PaymentPage() {
       setFailed(true);
       return;
     }
-    const record = receipts.createOrder({
-      userId: profile!.id,
-      schoolId: profile!.schoolId,
-      items: cart.items,
-      totalAmount: cart.total,
-      paymentMethod: method,
-    });
-    cart.clear();
-    router.push(`/receipts/${record.receipt.id}`);
+    setPaidAmount(cart.total);
+    setPaidMethod(method);
+    setPaidItemCount(cart.count);
+    setShowSuccess(true);
+    try {
+      const [receiptId] = await Promise.all([
+        (async () => {
+          const order = await createOrder({
+            userId: profile!.id,
+            schoolId: profile!.schoolId,
+            items: cart.items,
+            totalAmount: cart.total,
+            paymentMethod: method,
+          });
+          await Promise.all(
+            order.items.filter((item) => item.kind === "program").map((item) => decrementProgramSeats(item.refId)),
+          );
+          const receipt = await createReceiptForOrder(order);
+          cart.clear();
+          return receipt.id;
+        })(),
+        new Promise((resolve) => setTimeout(resolve, MIN_SUCCESS_DISPLAY_MS)),
+      ]);
+      router.push(`/receipts/${receiptId}`);
+    } catch {
+      setShowSuccess(false);
+      setIsProcessing(false);
+      setFailed(true);
+    }
   }
 
   return (
@@ -135,6 +165,18 @@ export default function PaymentPage() {
           {isProcessing ? t.payment.processing : failed ? t.payment.tryAgain : t.payment.payNow}
         </Button>
       </div>
+
+      {showSuccess ? (
+        <PaymentSuccessOverlay
+          title={t.payment.successTitle}
+          description={t.payment.successDescription}
+          amountLabel={formatCurrencyINR(paidAmount, language)}
+          methodRowLabel={t.payment.methodLabel}
+          paymentMethodLabel={methodLabels[paidMethod]}
+          itemsRowLabel={t.payment.itemsLabel}
+          itemsLabel={formatTemplate(t.essentials.itemsCount, { n: paidItemCount })}
+        />
+      ) : null}
     </>
   );
 }

@@ -1,59 +1,68 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, ScanLine } from "lucide-react";
-import { useState } from "react";
+import { AlertTriangle, CheckCircle2, ScanLine, Search } from "lucide-react";
+import { useEffect, useState, type FormEvent } from "react";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { StatusBadge, toBadgeStatus } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { groupItemsByKind } from "@/lib/cart-items";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { deriveReceiptTitle, groupItemsByKind } from "@/lib/cart-items";
+import { getReceiptByCode, getSchools, markReceiptRedeemed } from "@/lib/data-source";
 import { cn } from "@/lib/utils";
-import { useReceipts, type ReceiptRecord } from "@/store/receipts-store";
+import type { ReceiptRecord } from "@/types";
 
-type ScanResult =
-  | { kind: "success"; record: ReceiptRecord; markedAs: "collected" | "checked-in" }
-  | { kind: "already-redeemed"; record: ReceiptRecord }
-  | { kind: "invalid" };
+type LookupResult =
+  | { kind: "invalid" }
+  | { kind: "found"; record: ReceiptRecord; justRedeemed?: boolean };
 
-const SCHOOL_ID = "school-niraj";
+/** A program-only order is a "ticket" (check in at a gate); anything else is "collected" at the counter. */
+function isTicketRecord(record: ReceiptRecord): boolean {
+  const grouped = groupItemsByKind(record.order.items);
+  return grouped.programs.length === record.order.items.length && grouped.programs.length > 0;
+}
 
 export default function ScannerPage() {
-  const receipts = useReceipts();
-  const [selectedId, setSelectedId] = useState("");
-  const [result, setResult] = useState<ScanResult | null>(null);
+  const [schoolId, setSchoolId] = useState("");
+  const [code, setCode] = useState("");
+  const [lookup, setLookup] = useState<LookupResult | null>(null);
+  const [isRedeeming, setIsRedeeming] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const schoolRecords = receipts.getBySchool(SCHOOL_ID);
-  const scannableRecords = schoolRecords.filter((record) => record.receipt.redemptionStatus === "ready");
+  useEffect(() => {
+    getSchools().then((schools) => {
+      if (schools.length > 0) setSchoolId(schools[0].id);
+    });
+  }, []);
 
-  function handleScan() {
-    if (!selectedId) {
-      setResult({ kind: "invalid" });
-      return;
-    }
-    const existing = receipts.getById(selectedId);
-    if (!existing) {
-      setResult({ kind: "invalid" });
-      return;
-    }
-    if (existing.receipt.redemptionStatus !== "ready") {
-      setResult({ kind: "already-redeemed", record: existing });
-      return;
-    }
-    const grouped = groupItemsByKind(existing.order.items);
-    const isTicket = grouped.programs.length === existing.order.items.length && grouped.programs.length > 0;
-    const markedAs = isTicket ? "checked-in" : "collected";
-    const updated = receipts.markRedeemed(selectedId, markedAs);
-    if (!updated) {
-      setResult({ kind: "invalid" });
-      return;
-    }
-    setResult({ kind: "success", record: updated, markedAs });
+  async function handleLookup(event: FormEvent) {
+    event.preventDefault();
+    if (!code.trim() || !schoolId) return;
+    const record = await getReceiptByCode(schoolId, code);
+    setLookup(record ? { kind: "found", record } : { kind: "invalid" });
+  }
+
+  async function handleRedeem() {
+    if (lookup?.kind !== "found") return;
+    const markedAs = isTicketRecord(lookup.record) ? "checked-in" : "collected";
+    setIsRedeeming(true);
+    const updated = await markReceiptRedeemed(lookup.record.receipt.id, markedAs);
+    setIsRedeeming(false);
+    setConfirmOpen(false);
+    if (!updated) return;
+    setLookup({ kind: "found", record: updated, justRedeemed: true });
+    toast.success(`Marked ${markedAs === "checked-in" ? "attended" : "collected"}`);
   }
 
   return (
@@ -62,15 +71,15 @@ export default function ScannerPage() {
         <h1 className="font-heading text-2xl font-bold text-ink">Receipt / QR Scanner</h1>
         <p className="text-sm text-sub">
           Verify a parent&apos;s receipt at the counter or event gate. Real camera
-          scanning isn&apos;t needed for this preview — select a demo receipt below
-          the way a scanned QR code would resolve to one.
+          scanning isn&apos;t wired up yet — type or paste the receipt code shown
+          on the parent&apos;s ticket instead.
         </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Viewfinder</CardTitle>
+            <CardTitle>Look Up Receipt</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="relative flex aspect-square w-full max-w-xs items-center justify-center overflow-hidden rounded-2xl bg-ink">
@@ -91,29 +100,26 @@ export default function ScannerPage() {
               }
             `}</style>
 
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-ink">Demo: pick the receipt this QR would resolve to</p>
-              <Select value={selectedId} onValueChange={setSelectedId}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a receipt" />
-                </SelectTrigger>
-                <SelectContent>
-                  {scannableRecords.map((record) => (
-                    <SelectItem key={record.receipt.id} value={record.receipt.id}>
-                      {record.receipt.id} — ₹{record.order.totalAmount}
-                    </SelectItem>
-                  ))}
-                  {scannableRecords.length === 0 ? (
-                    <SelectItem value="none" disabled>
-                      No unredeemed receipts right now
-                    </SelectItem>
-                  ) : null}
-                </SelectContent>
-              </Select>
-            </div>
-            <Button className="w-full" onClick={handleScan} disabled={!selectedId}>
-              Scan
-            </Button>
+            <form className="space-y-2" onSubmit={handleLookup}>
+              <Label htmlFor="receipt-code">Receipt code</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="receipt-code"
+                  value={code}
+                  onChange={(e) => {
+                    setCode(e.target.value.toUpperCase());
+                    setLookup(null);
+                  }}
+                  placeholder="e.g. K7H4X9RT"
+                  className="font-mono tracking-widest uppercase"
+                  autoComplete="off"
+                />
+                <Button type="submit" disabled={!code.trim() || !schoolId} className="gap-1.5">
+                  <Search className="size-4" />
+                  Look Up
+                </Button>
+              </div>
+            </form>
           </CardContent>
         </Card>
 
@@ -122,17 +128,21 @@ export default function ScannerPage() {
             <CardTitle>Result</CardTitle>
           </CardHeader>
           <CardContent>
-            {result === null ? (
-              <p className="text-sm text-sub">Scan a receipt to see the result here.</p>
-            ) : result.kind === "invalid" ? (
+            {lookup === null ? (
+              <p className="text-sm text-sub">Look up a receipt code to see the result here.</p>
+            ) : lookup.kind === "invalid" ? (
               <div className="flex items-start gap-3 rounded-xl border border-section-pay bg-section-pay-bg p-4">
                 <AlertTriangle className="mt-0.5 size-5 shrink-0 text-section-pay" />
                 <div>
                   <p className="font-medium text-section-pay">Invalid receipt</p>
-                  <p className="text-sm text-section-pay">This QR code doesn&apos;t match any known receipt.</p>
+                  <p className="text-sm text-section-pay">This code doesn&apos;t match any known receipt.</p>
                 </div>
               </div>
-            ) : result.kind === "already-redeemed" ? (
+            ) : lookup.justRedeemed ? (
+              <div className="space-y-3">
+                <ReceiptSummary record={lookup.record} justRedeemed />
+              </div>
+            ) : lookup.record.receipt.redemptionStatus !== "ready" ? (
               <div className="space-y-3">
                 <div className="flex items-start gap-3 rounded-xl border border-section-programs bg-section-programs-bg p-4">
                   <AlertTriangle className="mt-0.5 size-5 shrink-0 text-section-programs" />
@@ -140,59 +150,97 @@ export default function ScannerPage() {
                     <p className="font-medium text-section-programs">Already redeemed</p>
                     <p className="text-sm text-section-programs">
                       This receipt was already marked{" "}
-                      {result.record.receipt.redemptionStatus === "checked-in" ? "checked in" : "collected"} on{" "}
-                      {result.record.receipt.redeemedAt
-                        ? new Date(result.record.receipt.redeemedAt).toLocaleString()
+                      {lookup.record.receipt.redemptionStatus === "checked-in" ? "attended" : "collected"} on{" "}
+                      {lookup.record.receipt.redeemedAt
+                        ? new Date(lookup.record.receipt.redeemedAt).toLocaleString()
                         : ""}
                       .
                     </p>
                   </div>
                 </div>
-                <ReceiptSummary record={result.record} />
+                <ReceiptSummary record={lookup.record} justRedeemed={false} />
               </div>
             ) : (
               <div className="space-y-3">
-                <div
-                  className={cn(
-                    "flex items-start gap-3 rounded-xl border p-4",
-                    "border-section-essentials bg-section-essentials-bg",
-                  )}
-                >
-                  <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-section-essentials" />
-                  <div>
-                    <p className="font-medium text-section-essentials">
-                      Marked {result.markedAs === "checked-in" ? "checked in" : "collected"}
-                    </p>
-                    <p className="text-sm text-section-essentials">Receipt verified successfully.</p>
-                  </div>
-                </div>
-                <ReceiptSummary record={result.record} />
+                <ReceiptSummary record={lookup.record} justRedeemed={false} />
+                <Button className="w-full" onClick={() => setConfirmOpen(true)} disabled={isRedeeming}>
+                  Mark {isTicketRecord(lookup.record) ? "Attended" : "Collected"}
+                </Button>
               </div>
             )}
           </CardContent>
         </Card>
       </div>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Mark {lookup?.kind === "found" && isTicketRecord(lookup.record) ? "attended" : "collected"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This confirms the parent has {lookup?.kind === "found" && isTicketRecord(lookup.record) ? "checked in for the program" : "collected their items"} against
+              receipt {lookup?.kind === "found" ? lookup.record.receipt.qrPayload : ""}. This can&apos;t be
+              undone from here — a staff member would need to fix it via /admin.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRedeem} disabled={isRedeeming}>
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 
-function ReceiptSummary({ record }: { record: ReceiptRecord }) {
+const RECEIPT_TITLE_LABELS = {
+  books: "Books",
+  uniform: "Uniform",
+  stationery: "Stationery",
+  receiptWord: "Receipt",
+  programmeReceiptWord: "Programme Receipt",
+};
+
+function ReceiptSummary({ record, justRedeemed }: { record: ReceiptRecord; justRedeemed: boolean }) {
+  const title = deriveReceiptTitle(record.order.items, RECEIPT_TITLE_LABELS);
   return (
-    <div className="space-y-1 rounded-xl border border-line p-4 text-sm">
+    <div className="space-y-2 rounded-xl border border-line p-4 text-sm">
+      {justRedeemed ? (
+        <div className={cn("flex items-center gap-2 rounded-lg p-2", "bg-section-essentials-bg text-section-essentials")}>
+          <CheckCircle2 className="size-4 shrink-0" />
+          <span className="font-medium">
+            Marked {record.receipt.redemptionStatus === "checked-in" ? "attended" : "collected"}
+          </span>
+        </div>
+      ) : null}
       <div className="flex items-center justify-between">
-        <span className="font-medium text-ink">{record.receipt.id}</span>
+        <span className="font-medium text-ink">{title}</span>
         <StatusBadge status={toBadgeStatus(record.receipt.redemptionStatus)} />
       </div>
-      <p className="text-sub">Order total: ₹{record.order.totalAmount}</p>
+      <div className="flex items-center justify-between">
+        <span className="font-mono tracking-widest text-ink">{record.receipt.qrPayload}</span>
+        <span className="text-xs text-sub">{new Date(record.receipt.issuedAt).toLocaleString()}</span>
+      </div>
       <p className="text-sub">Payment method: {record.order.paymentMethod.toUpperCase()}</p>
-      <ul className="mt-1 space-y-0.5 text-sub">
+      <ul className="mt-1 divide-y divide-line">
         {record.order.items.map((item) => (
-          <li key={item.id}>
-            {item.label}
-            {item.meta ? ` — ${item.meta}` : ""}
+          <li key={item.id} className="flex items-center justify-between gap-3 py-1.5">
+            <div>
+              <p className="text-ink">{item.label}</p>
+              {item.meta ? <p className="text-xs text-sub">{item.meta}</p> : null}
+              {item.quantity > 1 ? <p className="text-xs text-sub">Qty {item.quantity}</p> : null}
+            </div>
+            <span className="shrink-0 font-medium text-ink">₹{item.unitPrice * item.quantity}</span>
           </li>
         ))}
       </ul>
+      <div className="flex items-center justify-between border-t border-line pt-2 font-medium text-ink">
+        <span>Total</span>
+        <span>₹{record.order.totalAmount}</span>
+      </div>
     </div>
   );
 }

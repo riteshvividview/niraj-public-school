@@ -22,6 +22,17 @@ export const UniformItems: CollectionConfig = {
     },
     { name: "description", type: "text" },
     { name: "imageUrl", type: "text" },
+    // Unset = unisex item. Set when a school's real uniform bundle differs
+    // by gender (see getUniformItemsByClass — unset matches every student
+    // until their profile records a gender).
+    {
+      name: "gender",
+      type: "select",
+      options: [
+        { label: "Male", value: "male" },
+        { label: "Female", value: "female" },
+      ],
+    },
     {
       name: "sizeOptions",
       type: "array",

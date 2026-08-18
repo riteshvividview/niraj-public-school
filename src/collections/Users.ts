@@ -59,5 +59,53 @@ export const Users: CollectionConfig = {
         { label: "Telugu", value: "te" },
       ],
     },
+    // Roster/academic attributes below are all optional — populated from a
+    // school's real class-list import (section, academic language, stream,
+    // elective) or filled in later by staff (gender, since none of the
+    // school's roster exports include it). Unset means "not recorded yet",
+    // not "not applicable" — see getBooksByClass/getUniformItemsByClass,
+    // which treat an unset student attribute as matching every variant.
+    { name: "section", type: "text" },
+    {
+      name: "gender",
+      type: "select",
+      options: [
+        { label: "Male", value: "male" },
+        { label: "Female", value: "female" },
+      ],
+    },
+    {
+      name: "academicLanguage",
+      type: "select",
+      options: [
+        { label: "Hindi", value: "hindi" },
+        { label: "Telugu", value: "telugu" },
+      ],
+    },
+    {
+      name: "languageLevel",
+      type: "select",
+      options: [
+        { label: "First Language", value: "first" },
+        { label: "Second Language", value: "second" },
+      ],
+    },
+    {
+      name: "stream",
+      type: "select",
+      options: [
+        { label: "Science", value: "science" },
+        { label: "Economics", value: "economics" },
+      ],
+    },
+    {
+      name: "elective",
+      type: "select",
+      options: [
+        { label: "ENA", value: "ena" },
+        { label: "Robotics & AI", value: "roboticsAI" },
+        { label: "Home Science", value: "homeScience" },
+      ],
+    },
   ],
 };

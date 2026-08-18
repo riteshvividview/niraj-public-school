@@ -15,40 +15,26 @@ export const MOCK_SCHOOL: School = {
   updatedAt: SEED_TIMESTAMP,
 };
 
-export const MOCK_CLASS_LEVELS: ClassLevel[] = [
+// Real classes with data from the school's own roster/price-sheet exports
+// (see School Testing Requirements/) — labeled "Class N" (the school's own
+// convention). More grades are added here as the school provides data for
+// them; no placeholder/demo grades.
+export const CLASS_LEVELS: ClassLevel[] = [
   {
-    id: "class-1",
+    id: "class-2",
     schoolId: MOCK_SCHOOL.id,
-    label: "Grade 1",
+    label: "Class 2",
     board: "CBSE",
-    order: 1,
+    order: 2,
     createdAt: SEED_TIMESTAMP,
     updatedAt: SEED_TIMESTAMP,
   },
   {
-    id: "class-3",
+    id: "class-8",
     schoolId: MOCK_SCHOOL.id,
-    label: "Grade 3",
+    label: "Class 8",
     board: "CBSE",
-    order: 3,
-    createdAt: SEED_TIMESTAMP,
-    updatedAt: SEED_TIMESTAMP,
-  },
-  {
-    id: "class-6",
-    schoolId: MOCK_SCHOOL.id,
-    label: "Grade 6",
-    board: "CBSE",
-    order: 6,
-    createdAt: SEED_TIMESTAMP,
-    updatedAt: SEED_TIMESTAMP,
-  },
-  {
-    id: "class-9",
-    schoolId: MOCK_SCHOOL.id,
-    label: "Grade 9",
-    board: "CBSE",
-    order: 9,
+    order: 8,
     createdAt: SEED_TIMESTAMP,
     updatedAt: SEED_TIMESTAMP,
   },

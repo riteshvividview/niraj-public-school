@@ -23,8 +23,13 @@ export default function BooksPage() {
 
   useEffect(() => {
     if (!profile) return;
-    getBooksByClass(profile.schoolId, profile.classLevelId).then((result) => {
+    getBooksByClass(profile.schoolId, profile.classLevelId, {
+      language: profile.academicLanguage,
+      stream: profile.stream,
+      elective: profile.elective,
+    }).then((result) => {
       setBooks(result);
+      cart.reconcileKind("book", result.map((book) => lineId("book", book.id)));
       result.forEach((book) => cart.ensureDefault(bookToCartItem(book)));
     });
     // cart is a stable context value keyed by store snapshot identity; only

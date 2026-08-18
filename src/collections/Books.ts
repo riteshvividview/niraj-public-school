@@ -17,5 +17,34 @@ export const Books: CollectionConfig = {
     { name: "author", type: "text" },
     { name: "price", type: "number", required: true },
     { name: "coverImageUrl", type: "text" },
+    // Optional variant fields — unset means "applies to every student in
+    // this class". Some grades' book fee varies by academic language and/or
+    // stream/elective (see the school's real price sheet); grades without
+    // that variation just leave these unset on their one book row per class.
+    {
+      name: "language",
+      type: "select",
+      options: [
+        { label: "Hindi", value: "hindi" },
+        { label: "Telugu", value: "telugu" },
+      ],
+    },
+    {
+      name: "stream",
+      type: "select",
+      options: [
+        { label: "Science", value: "science" },
+        { label: "Economics", value: "economics" },
+      ],
+    },
+    {
+      name: "elective",
+      type: "select",
+      options: [
+        { label: "ENA", value: "ena" },
+        { label: "Robotics & AI", value: "roboticsAI" },
+        { label: "Home Science", value: "homeScience" },
+      ],
+    },
   ],
 };

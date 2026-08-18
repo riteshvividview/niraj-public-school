@@ -2,6 +2,119 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* Payment success overlay — SVG "iris" badge draw-in, used by PaymentSuccessOverlay. */
+@keyframes success-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes success-iris-burst {
+  0% {
+    transform: scale(0);
+    opacity: 0.9;
+  }
+  60% {
+    opacity: 0.45;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+@keyframes success-badge-pop {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  55% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+  80% {
+    transform: scale(0.96);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes success-ring-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes success-check-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes success-card-in {
+  0% {
+    transform: translateY(28px) scale(0.92);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+@keyframes success-sparkle {
+  0%,
+  100% {
+    transform: scale(0.85) rotate(0deg);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.15) rotate(12deg);
+    opacity: 1;
+  }
+}
+@keyframes success-dot-bounce {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+
+.animate-success-backdrop-in {
+  animation: success-backdrop-in 0.35s ease-out both;
+}
+.animate-success-iris-burst {
+  animation: success-iris-burst 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+}
+.animate-success-badge-pop {
+  animation: success-badge-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
+}
+.animate-success-ring-draw {
+  animation: success-ring-draw 0.6s ease-out 0.15s both;
+}
+.animate-success-check-draw {
+  animation: success-check-draw 0.35s ease-out 0.55s both;
+}
+.animate-success-card-in {
+  animation: success-card-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.animate-success-sparkle {
+  animation: success-sparkle 1.8s ease-in-out infinite;
+}
+.animate-success-dot-bounce {
+  animation: success-dot-bounce 1.2s ease-in-out infinite;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

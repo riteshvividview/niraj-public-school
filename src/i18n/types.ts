@@ -67,6 +67,8 @@ export interface Dictionary {
       registerNumberPlaceholder: string;
       passwordLabel: string;
       passwordPlaceholder: string;
+      showPasswordLabel: string;
+      hidePasswordLabel: string;
       submit: string;
       invalidCredentials: string;
       /** Shown below the form — no self-registration, so this points students at staff instead. */
@@ -104,6 +106,7 @@ export interface Dictionary {
     sizePlaceholder: string;
     sizeConfirmed: string;
     sizeNotConfirmed: string;
+    sizeUnselectOption: string;
     notNeeded: string;
     booksSubtitle: string;
     stationerySubtitle: string;
@@ -148,14 +151,23 @@ export interface Dictionary {
     failureDescription: string;
     tryAgain: string;
     devFailureToggle: string;
+    successTitle: string;
+    successDescription: string;
+    itemsLabel: string;
   };
 
   receiptsPage: {
     title: string;
-    detailTitle: string;
-    ticketTitle: string;
     emptyTitle: string;
     emptyDescription: string;
+    receiptCodeLabel: string;
+    /** Short nouns used to compose a per-order title — see deriveReceiptTitle in src/lib/cart-items.ts. */
+    titleBooks: string;
+    titleUniform: string;
+    titleStationery: string;
+    titleReceiptWord: string;
+    titleProgrammeReceiptWord: string;
+    paidAtLabel: string;
   };
 
   programsPage: {
@@ -171,22 +183,23 @@ export interface Dictionary {
     clearFilters: string;
     noResultsTitle: string;
     noResultsDescription: string;
-    categories: {
-      workshop: string;
-      sports: string;
-      camp: string;
-      annualDay: string;
-      exhibition: string;
-      extraClass: string;
-    };
     venueLabel: string;
     dateLabel: string;
     feeLabel: string;
     seatsLabel: string;
+    /** e.g. "{n} seats available" — shown only when the program has a seat cap. */
+    seatsAvailableTemplate: string;
+    eligibleGradesLabel: string;
     contactLabel: string;
     enrollAndPay: string;
     fullTitle: string;
     fullDescription: string;
+    notEligibleTitle: string;
+    notEligibleDescription: string;
+    registeredTitle: string;
+    registeredDescription: string;
+    registeredBadge: string;
+    viewReceiptLabel: string;
     alreadyInCart: string;
     viewCart: string;
   };

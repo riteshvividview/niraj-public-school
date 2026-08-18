@@ -3,8 +3,6 @@
 import { createContext, useContext, useMemo, useSyncExternalStore, type ReactNode } from "react";
 import type { CartItem } from "@/types";
 
-const STORAGE_KEY = "nps-cart";
-
 /**
  * Shared cart state for essentials (Phase 5) and, later, program enrollments
  * (Phase 7) — both are just CartItem lines. Phase 6 builds checkout directly
@@ -16,6 +14,12 @@ const STORAGE_KEY = "nps-cart";
  * (tracked separately in `excludedIds`, so a removal sticks across remounts
  * instead of being silently re-added). Uniform items are never defaulted —
  * they only enter the cart once a size is confirmed via `setIncluded()`.
+ *
+ * Storage is keyed per logged-in user (`nps-cart-<userId>`), not one shared
+ * browser-wide key — otherwise switching accounts on the same browser leaks
+ * one student's cart into another's. `setActiveCartUser` (called from
+ * AuthProvider whenever the session's profile changes) switches which key
+ * getSnapshot/persist read and write.
  */
 interface CartState {
   items: CartItem[];
@@ -30,9 +34,24 @@ type Listener = () => void;
 const listeners = new Set<Listener>();
 let cachedState: CartState = { items: [], excludedIds: [] };
 let hasReadStorage = false;
+let activeUserId: string | null = null;
+
+function storageKey(userId: string): string {
+  return `nps-cart-${userId}`;
+}
+
+/** Switches whose cart is active — resets the cached snapshot so the next read pulls the new user's own storage key. */
+export function setActiveCartUser(userId: string | null) {
+  if (userId === activeUserId) return;
+  activeUserId = userId;
+  cachedState = { items: [], excludedIds: [] };
+  hasReadStorage = false;
+  listeners.forEach((listener) => listener());
+}
 
 function readStoredState(): CartState {
-  const raw = window.localStorage.getItem(STORAGE_KEY);
+  if (!activeUserId) return { items: [], excludedIds: [] };
+  const raw = window.localStorage.getItem(storageKey(activeUserId));
   if (!raw) return { items: [], excludedIds: [] };
   try {
     const parsed = JSON.parse(raw) as Partial<CartState>;
@@ -64,7 +83,9 @@ function getServerSnapshot(): CartState {
 function persist(next: CartState) {
   cachedState = next;
   hasReadStorage = true;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  if (activeUserId) {
+    window.localStorage.setItem(storageKey(activeUserId), JSON.stringify(next));
+  }
   listeners.forEach((listener) => listener());
 }
 
@@ -80,12 +101,37 @@ function setIncluded(item: CartItem, included: boolean) {
   }
 }
 
+/** Removes a line from the cart by id and marks it excluded, without needing the full CartItem — used to undo a uniform size selection. */
+function removeItem(id: string) {
+  const current = getSnapshot();
+  const withoutItem = current.items.filter((existing) => existing.id !== id);
+  const withoutExcluded = current.excludedIds.filter((existingId) => existingId !== id);
+  persist({ items: withoutItem, excludedIds: [...withoutExcluded, id] });
+}
+
 function ensureDefault(item: CartItem) {
   const current = getSnapshot();
   const alreadyDecided =
     current.excludedIds.includes(item.id) || current.items.some((existing) => existing.id === item.id);
   if (alreadyDecided) return;
   persist({ items: [...current.items, item], excludedIds: current.excludedIds });
+}
+
+/**
+ * Drops any cart lines of `kind` that aren't in `validIds` — the catalogue a
+ * student sees can narrow over time (e.g. staff fills in their language/
+ * stream/elective after it was unset, or changes their class/gender), and
+ * without this, a book/uniform item that was auto-included or selected
+ * under an earlier, broader view stays in the cart forever even once it's
+ * no longer part of what they're shown. Called by each essentials page
+ * right after it fetches the current catalogue list, before ensureDefault.
+ */
+function reconcileKind(kind: CartItem["kind"], validIds: string[]) {
+  const current = getSnapshot();
+  const validSet = new Set(validIds);
+  const items = current.items.filter((item) => item.kind !== kind || validSet.has(item.id));
+  if (items.length === current.items.length) return;
+  persist({ items, excludedIds: current.excludedIds });
 }
 
 function clearCart() {
@@ -110,7 +156,9 @@ interface CartContextValue {
   isIncluded: (id: string) => boolean;
   getItem: (id: string) => CartItem | undefined;
   setIncluded: (item: CartItem, included: boolean) => void;
+  remove: (id: string) => void;
   ensureDefault: (item: CartItem) => void;
+  reconcileKind: (kind: CartItem["kind"], validIds: string[]) => void;
   clear: () => void;
 }
 
@@ -130,7 +178,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       isIncluded: (id) => state.items.some((item) => item.id === id),
       getItem: (id) => state.items.find((item) => item.id === id),
       setIncluded,
+      remove: removeItem,
       ensureDefault,
+      reconcileKind,
       clear: clearCart,
     };
   }, [state, isReady]);

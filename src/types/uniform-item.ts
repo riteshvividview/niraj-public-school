@@ -1,3 +1,5 @@
+import type { Gender } from "./user-profile";
+
 export interface UniformSizeOption {
   size: string;
   /** Price in INR for this size (kept per-size since larger sizes can cost more). */
@@ -14,6 +16,8 @@ export interface UniformItem {
   description?: string;
   imageUrl: string | null;
   sizeOptions: UniformSizeOption[];
+  /** Unset = unisex item. See getUniformItemsByClass. */
+  gender?: Gender;
   createdAt: string;
   updatedAt: string;
 }

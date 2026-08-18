@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { DM_Sans } from "next/font/google";
+import { Toaster } from "@/components/ui/sonner";
 import { LanguageProvider } from "@/i18n/context";
 import { AuthProvider } from "@/store/auth-store";
 import { CartProvider } from "@/store/cart-store";
 import { ConsoleAuthProvider } from "@/store/console-auth-store";
-import { ReceiptsProvider } from "@/store/receipts-store";
 import { ThemeProvider } from "@/store/theme-store";
 import "./globals.css";
 
@@ -53,13 +53,12 @@ export default function RootLayout({
           <LanguageProvider>
             <AuthProvider>
               <ConsoleAuthProvider>
-                <CartProvider>
-                  <ReceiptsProvider>{children}</ReceiptsProvider>
-                </CartProvider>
+                <CartProvider>{children}</CartProvider>
               </ConsoleAuthProvider>
             </AuthProvider>
           </LanguageProvider>
         </ThemeProvider>
+        <Toaster position="top-center" />
       </body>
     </html>
   );

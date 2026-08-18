@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { toast } from "sonner";
+import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { StatusBadge, toBadgeStatus } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,13 +16,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -32,21 +27,15 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   createProgram,
   deleteProgram,
+  getClassLevelsBySchool,
   getPrograms,
   getSchools,
   setProgramStatus,
   updateProgram,
 } from "@/lib/data-source";
-import type { Program, ProgramCategory } from "@/types";
+import type { ClassLevel, Program } from "@/types";
 
-const CATEGORIES: ProgramCategory[] = [
-  "workshop",
-  "sports",
-  "camp",
-  "annual-day",
-  "exhibition",
-  "extra-class",
-];
+const SUGGESTED_CATEGORIES = ["Workshop", "Sports", "Camp", "Annual Day", "Exhibition", "Extra Class"];
 
 function ProgramForm({
   schoolId,
@@ -58,52 +47,61 @@ function ProgramForm({
   onDone: () => void;
 }) {
   const [title, setTitle] = useState(editing?.title ?? "");
-  const [category, setCategory] = useState<ProgramCategory>(
-    editing?.category ?? "workshop",
-  );
+  const [category, setCategory] = useState(editing?.category ?? "");
   const [description, setDescription] = useState(editing?.description ?? "");
   const [venue, setVenue] = useState(editing?.venue ?? "");
   const [date, setDate] = useState(editing?.date ?? "");
   const [fee, setFee] = useState(editing ? String(editing.fee) : "");
   const [seatsTotal, setSeatsTotal] = useState(
-    editing ? String(editing.seatsTotal) : "",
+    editing?.seatsTotal !== undefined ? String(editing.seatsTotal) : "",
   );
   const [contactPhone, setContactPhone] = useState(editing?.contactPhone ?? "");
+  const [classLevels, setClassLevels] = useState<ClassLevel[]>([]);
+  const [eligibleClassLevelIds, setEligibleClassLevelIds] = useState<string[]>(
+    editing?.eligibleClassLevelIds ?? [],
+  );
+
+  useEffect(() => {
+    getClassLevelsBySchool(schoolId).then(setClassLevels);
+  }, [schoolId]);
+
+  function toggleClassLevel(id: string) {
+    setEligibleClassLevelIds((current) =>
+      current.includes(id) ? current.filter((existing) => existing !== id) : [...current, id],
+    );
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     const feeNum = Number(fee);
-    const seatsNum = Number(seatsTotal);
-    if (
-      !title.trim() ||
-      !venue.trim() ||
-      !date ||
-      !contactPhone.trim() ||
-      !seatsNum
-    )
-      return;
+    if (!title.trim() || !category.trim() || !date || !contactPhone.trim()) return;
+    const seatsNum = seatsTotal ? Number(seatsTotal) : undefined;
     if (editing) {
       await updateProgram(editing.id, {
         title: title.trim(),
-        category,
+        category: category.trim(),
         description: description.trim(),
-        venue: venue.trim(),
+        venue: venue.trim() || undefined,
         date,
         fee: feeNum,
         contactPhone: contactPhone.trim(),
+        eligibleClassLevelIds,
       });
+      toast.success("Program updated");
     } else {
       await createProgram({
         schoolId,
         title: title.trim(),
-        category,
+        category: category.trim(),
         description: description.trim(),
-        venue: venue.trim(),
+        venue: venue.trim() || undefined,
         date,
         fee: feeNum,
         seatsTotal: seatsNum,
         contactPhone: contactPhone.trim(),
+        eligibleClassLevelIds,
       });
+      toast.success("Program created");
     }
     onDone();
   }
@@ -120,25 +118,20 @@ function ProgramForm({
         />
       </div>
       <div className="space-y-2">
-        <Label>Category</Label>
-        <Select
+        <Label htmlFor="program-category">Category</Label>
+        <Input
+          id="program-category"
+          list="program-categories"
           value={category}
-          onValueChange={(v) => setCategory(v as ProgramCategory)}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {CATEGORIES.map((c) => (
-              <SelectItem key={c} value={c}>
-                {c
-                  .split("-")
-                  .map((w) => w[0].toUpperCase() + w.slice(1))
-                  .join(" ")}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          onChange={(e) => setCategory(e.target.value)}
+          placeholder="e.g. Workshop, or type your own"
+          required
+        />
+        <datalist id="program-categories">
+          {SUGGESTED_CATEGORIES.map((c) => (
+            <option key={c} value={c} />
+          ))}
+        </datalist>
       </div>
       <div className="space-y-2">
         <Label htmlFor="program-description">Description</Label>
@@ -149,14 +142,13 @@ function ProgramForm({
           rows={3}
         />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="program-venue">Venue</Label>
+          <Label htmlFor="program-venue">Venue (optional)</Label>
           <Input
             id="program-venue"
             value={venue}
             onChange={(e) => setVenue(e.target.value)}
-            required
           />
         </div>
         <div className="space-y-2">
@@ -181,7 +173,7 @@ function ProgramForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="program-seats">Total seats</Label>
+          <Label htmlFor="program-seats">Total seats (optional)</Label>
           <Input
             id="program-seats"
             type="number"
@@ -189,7 +181,7 @@ function ProgramForm({
             value={seatsTotal}
             disabled={Boolean(editing)}
             onChange={(e) => setSeatsTotal(e.target.value)}
-            required
+            placeholder="Leave blank for unlimited"
           />
         </div>
       </div>
@@ -201,6 +193,24 @@ function ProgramForm({
           onChange={(e) => setContactPhone(e.target.value)}
           required
         />
+      </div>
+      <div className="space-y-2">
+        <Label>Eligible grades</Label>
+        <p className="text-xs text-sub">Leave all unchecked to open this to every grade.</p>
+        <div className="flex flex-wrap gap-x-4 gap-y-2 rounded-lg border border-line p-3">
+          {classLevels.map((level) => (
+            <label key={level.id} className="flex items-center gap-2 text-sm text-ink">
+              <input
+                type="checkbox"
+                checked={eligibleClassLevelIds.includes(level.id)}
+                onChange={() => toggleClassLevel(level.id)}
+                className="size-4 rounded border-input"
+              />
+              {level.label}
+            </label>
+          ))}
+          {classLevels.length === 0 ? <p className="text-sm text-sub">No classes yet.</p> : null}
+        </div>
       </div>
       {editing ? (
         <p className="text-xs text-sub">
@@ -232,7 +242,7 @@ function ProgramDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
             {editing ? "Edit Program" : "Create Program"}
@@ -259,6 +269,7 @@ export default function ProgramManagerPage() {
   const [programs, setPrograms] = useState<Program[] | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Program | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Program | null>(null);
 
   useEffect(() => {
     getSchools().then((schools) => {
@@ -271,17 +282,21 @@ export default function ProgramManagerPage() {
     getPrograms({ schoolId }).then(setPrograms);
   }, [schoolId]);
 
-  async function handleDelete(id: string) {
-    if (
-      !window.confirm("Delete this program? This can't be undone in this demo.")
-    )
-      return;
-    await deleteProgram(id);
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    await deleteProgram(deleteTarget.id);
+    setDeleteTarget(null);
+    toast.success("Program deleted");
     refresh();
   }
 
   async function handleCloseRegistration(id: string) {
     await setProgramStatus(id, "closed");
+    toast.success("Registration closed");
     refresh();
   }
 
@@ -330,7 +345,9 @@ export default function ProgramManagerPage() {
                     <TableCell>{program.title}</TableCell>
                     <TableCell>{program.date}</TableCell>
                     <TableCell>
-                      {program.seatsAvailable} / {program.seatsTotal}
+                      {program.seatsTotal !== undefined
+                        ? `${program.seatsAvailable} / ${program.seatsTotal}`
+                        : "Unlimited"}
                     </TableCell>
                     <TableCell>₹{program.fee}</TableCell>
                     <TableCell>
@@ -359,7 +376,7 @@ export default function ProgramManagerPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDelete(program.id)}
+                        onClick={() => setDeleteTarget(program)}
                       >
                         Delete
                       </Button>
@@ -385,6 +402,13 @@ export default function ProgramManagerPage() {
         schoolId={schoolId}
         editing={editing}
         onSaved={refresh}
+      />
+      <ConfirmDeleteDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete this program?"
+        description={`"${deleteTarget?.title}" will be permanently removed, including its enrollment data. This can't be undone.`}
+        onConfirm={handleDelete}
       />
     </div>
   );

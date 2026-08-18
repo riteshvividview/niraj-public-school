@@ -1,10 +1,10 @@
 import type { Payload } from "payload";
-import { MOCK_BOOKS } from "@/lib/mock/books";
+import { ALL_BOOKS } from "@/lib/mock/books";
 import { MOCK_PROGRAMS } from "@/lib/mock/programs";
-import { MOCK_CLASS_LEVELS, MOCK_SCHOOL } from "@/lib/mock/school";
-import { MOCK_STATIONERY_ITEMS } from "@/lib/mock/stationery";
+import { CLASS_LEVELS, MOCK_SCHOOL } from "@/lib/mock/school";
+import { ALL_STATIONERY_ITEMS } from "@/lib/mock/stationery";
 import { MOCK_TIMETABLES } from "@/lib/mock/timetable";
-import { MOCK_UNIFORM_ITEMS } from "@/lib/mock/uniform";
+import { ALL_UNIFORM_ITEMS } from "@/lib/mock/uniform";
 import { MOCK_USER_PASSWORD, MOCK_USERS } from "@/lib/mock/users";
 
 /**
@@ -28,7 +28,7 @@ export async function seedPayload(payload: Payload): Promise<{ schoolId: string 
   });
 
   const classLevelIdByMockId = new Map<string, string>();
-  for (const level of MOCK_CLASS_LEVELS) {
+  for (const level of CLASS_LEVELS) {
     const doc = await payload.create({
       collection: "class-levels",
       data: { school: school.id, label: level.label, board: level.board, order: level.order },
@@ -36,7 +36,7 @@ export async function seedPayload(payload: Payload): Promise<{ schoolId: string 
     classLevelIdByMockId.set(level.id, String(doc.id));
   }
 
-  for (const book of MOCK_BOOKS) {
+  for (const book of ALL_BOOKS) {
     await payload.create({
       collection: "books",
       data: {
@@ -47,11 +47,14 @@ export async function seedPayload(payload: Payload): Promise<{ schoolId: string 
         author: book.author,
         price: book.price,
         coverImageUrl: book.coverImageUrl ?? undefined,
+        language: book.language,
+        stream: book.stream,
+        elective: book.elective,
       },
     });
   }
 
-  for (const item of MOCK_UNIFORM_ITEMS) {
+  for (const item of ALL_UNIFORM_ITEMS) {
     await payload.create({
       collection: "uniform-items",
       data: {
@@ -62,11 +65,12 @@ export async function seedPayload(payload: Payload): Promise<{ schoolId: string 
         description: item.description,
         sizeOptions: item.sizeOptions,
         imageUrl: item.imageUrl ?? undefined,
+        gender: item.gender,
       },
     });
   }
 
-  for (const item of MOCK_STATIONERY_ITEMS) {
+  for (const item of ALL_STATIONERY_ITEMS) {
     await payload.create({
       collection: "stationery-items",
       data: {
@@ -123,6 +127,12 @@ export async function seedPayload(payload: Payload): Promise<{ schoolId: string 
         school: school.id,
         classLevel: classLevelIdByMockId.get(user.classLevelId),
         preferredLanguage: user.preferredLanguage,
+        section: user.section,
+        gender: user.gender,
+        academicLanguage: user.academicLanguage,
+        languageLevel: user.languageLevel,
+        stream: user.stream,
+        elective: user.elective,
       },
     });
   }

@@ -15,39 +15,43 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTranslation } from "@/i18n/context";
-import { getPrograms } from "@/lib/data-source";
-import { kebabToCamel } from "@/lib/utils";
-import type { Dictionary } from "@/i18n/types";
-import type { Program, ProgramCategory } from "@/types";
-
-const CATEGORIES: ProgramCategory[] = [
-  "workshop",
-  "sports",
-  "camp",
-  "annual-day",
-  "exhibition",
-  "extra-class",
-];
+import { registeredProgramIds as computeRegisteredProgramIds } from "@/lib/cart-items";
+import { getPrograms, getReceiptsByUser, isProgramEligibleForClass } from "@/lib/data-source";
+import { useAuth } from "@/store/auth-store";
+import type { Program } from "@/types";
 
 const FEE_BRACKETS = [500, 1000, 2000, 5000];
 
 type SortOption = "date" | "fee-asc" | "fee-desc";
 
-function categoryLabel(category: ProgramCategory, categories: Dictionary["programsPage"]["categories"]) {
-  return categories[kebabToCamel(category) as keyof typeof categories];
-}
-
 const ALL = "all";
 
 export default function ProgramsFeedPage() {
   const { t } = useTranslation();
+  const { profile } = useAuth();
 
   const [programs, setPrograms] = useState<Program[] | null>(null);
+  const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
+  const [registeredProgramIds, setRegisteredProgramIds] = useState<Set<string>>(new Set());
 
   const [categoryFilter, setCategoryFilter] = useState<string>(ALL);
   const [dateFrom, setDateFrom] = useState("");
   const [maxFee, setMaxFee] = useState<string>(ALL);
   const [sortBy, setSortBy] = useState<SortOption>("date");
+
+  // Category is free text now (see Programs.ts) — the filter's option list
+  // is derived from whatever categories actually exist, fetched once
+  // unfiltered, rather than a fixed preset list.
+  useEffect(() => {
+    getPrograms({}).then((all) => {
+      setCategoryOptions(Array.from(new Set(all.map((program) => program.category))).sort());
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!profile) return;
+    getReceiptsByUser(profile.id).then((records) => setRegisteredProgramIds(computeRegisteredProgramIds(records)));
+  }, [profile]);
 
   useEffect(() => {
     // Guard against out-of-order responses: if the filters change again
@@ -55,7 +59,7 @@ export default function ProgramsFeedPage() {
     // overwrite whatever the latest filter selection fetched.
     let cancelled = false;
     getPrograms({
-      category: categoryFilter === ALL ? undefined : (categoryFilter as ProgramCategory),
+      category: categoryFilter === ALL ? undefined : categoryFilter,
       dateFrom: dateFrom || undefined,
       maxFee: maxFee === ALL ? undefined : Number(maxFee),
     }).then((result) => {
@@ -68,12 +72,15 @@ export default function ProgramsFeedPage() {
 
   const sortedPrograms = useMemo(() => {
     if (!programs) return null;
-    const copy = [...programs];
+    const eligible = profile
+      ? programs.filter((program) => isProgramEligibleForClass(program, profile.classLevelId))
+      : programs;
+    const copy = [...eligible];
     if (sortBy === "date") copy.sort((a, b) => a.date.localeCompare(b.date));
     else if (sortBy === "fee-asc") copy.sort((a, b) => a.fee - b.fee);
     else copy.sort((a, b) => b.fee - a.fee);
     return copy;
-  }, [programs, sortBy]);
+  }, [programs, sortBy, profile]);
 
   const hasActiveFilters = categoryFilter !== ALL || dateFrom !== "" || maxFee !== ALL;
 
@@ -96,9 +103,9 @@ export default function ProgramsFeedPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={ALL}>{t.programsPage.filterAllCategories}</SelectItem>
-                {CATEGORIES.map((category) => (
+                {categoryOptions.map((category) => (
                   <SelectItem key={category} value={category}>
-                    {categoryLabel(category, t.programsPage.categories)}
+                    {category}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -180,6 +187,7 @@ export default function ProgramsFeedPage() {
                 fee={program.fee}
                 seatsAvailable={program.seatsAvailable}
                 status={program.status}
+                registered={registeredProgramIds.has(program.id)}
                 href={`/programs/${program.id}`}
               />
             ))}

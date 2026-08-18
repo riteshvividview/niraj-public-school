@@ -1,4 +1,13 @@
-import type { LanguageCode, UserProfile, UserRole } from "@/types";
+import type {
+  AcademicLanguage,
+  Elective,
+  Gender,
+  LanguageCode,
+  LanguageLevel,
+  Stream,
+  UserProfile,
+  UserRole,
+} from "@/types";
 import {
   payloadCreate,
   payloadDelete,
@@ -21,6 +30,12 @@ interface PayloadUserDoc {
   school: string;
   classLevel: string;
   preferredLanguage: LanguageCode;
+  section?: string | null;
+  gender?: Gender | null;
+  academicLanguage?: AcademicLanguage | null;
+  languageLevel?: LanguageLevel | null;
+  stream?: Stream | null;
+  elective?: Elective | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -48,6 +63,12 @@ async function toUserProfile(doc: PayloadUserDoc): Promise<UserProfile> {
     schoolId: doc.school,
     classLevelId: doc.classLevel,
     preferredLanguage: doc.preferredLanguage,
+    section: doc.section ?? undefined,
+    gender: doc.gender ?? undefined,
+    academicLanguage: doc.academicLanguage ?? undefined,
+    languageLevel: doc.languageLevel ?? undefined,
+    stream: doc.stream ?? undefined,
+    elective: doc.elective ?? undefined,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };
@@ -89,6 +110,12 @@ export interface CreateStudentInput {
   schoolId: string;
   classLevelId: string;
   preferredLanguage?: LanguageCode;
+  section?: string;
+  gender?: Gender;
+  academicLanguage?: AcademicLanguage;
+  languageLevel?: LanguageLevel;
+  stream?: Stream;
+  elective?: Elective;
 }
 
 /**
@@ -116,6 +143,12 @@ export async function createStudent(input: CreateStudentInput): Promise<UserProf
       school: input.schoolId,
       classLevel: input.classLevelId,
       preferredLanguage: input.preferredLanguage ?? "en",
+      section: input.section,
+      gender: input.gender,
+      academicLanguage: input.academicLanguage,
+      languageLevel: input.languageLevel,
+      stream: input.stream,
+      elective: input.elective,
     });
     return toUserProfile(doc);
   } catch (error) {
@@ -167,6 +200,12 @@ export interface UpdateStudentInput {
   mobileNumber?: string;
   classLevelId?: string;
   preferredLanguage?: LanguageCode;
+  section?: string;
+  gender?: Gender;
+  academicLanguage?: AcademicLanguage;
+  languageLevel?: LanguageLevel;
+  stream?: Stream;
+  elective?: Elective;
 }
 
 export async function updateStudent(id: string, input: UpdateStudentInput): Promise<UserProfile> {
@@ -175,6 +214,12 @@ export async function updateStudent(id: string, input: UpdateStudentInput): Prom
     mobileNumber: input.mobileNumber,
     classLevel: input.classLevelId,
     preferredLanguage: input.preferredLanguage,
+    section: input.section,
+    gender: input.gender,
+    academicLanguage: input.academicLanguage,
+    languageLevel: input.languageLevel,
+    stream: input.stream,
+    elective: input.elective,
   });
   return toUserProfile(doc);
 }

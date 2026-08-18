@@ -2,6 +2,7 @@
 
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -99,6 +100,7 @@ export default function TimetableManagerPage() {
     setPeriods(cleanPeriods);
     setIsSaving(false);
     setSavedMessage(true);
+    toast.success("Timetable saved");
   }
 
   const selectedClassLabel = classLevels.find((level) => level.id === classLevelId)?.label ?? "";

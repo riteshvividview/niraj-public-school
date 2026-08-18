@@ -25,6 +25,7 @@ export default function StationeryPage() {
     if (!profile) return;
     getStationeryItemsByClass(profile.schoolId, profile.classLevelId).then((result) => {
       setItems(result);
+      cart.reconcileKind("stationery", result.map((item) => lineId("stationery", item.id)));
       result.forEach((item) => cart.ensureDefault(stationeryToCartItem(item)));
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -9,9 +9,9 @@ export default function ConsoleDashboardLayout({
 }) {
   return (
     <RequireConsoleAuth>
-      <div className="flex min-h-dvh bg-background">
+      <div className="flex h-dvh bg-background">
         <ConsoleSidebar />
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
           <ConsoleMobileNav />
           <main className="min-w-0 flex-1 p-4 md:p-8">{children}</main>
         </div>

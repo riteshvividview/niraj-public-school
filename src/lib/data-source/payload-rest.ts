@@ -52,8 +52,8 @@ export async function payloadFind<T>(
   return data.docs;
 }
 
-export async function payloadFindById<T>(collection: string, id: string): Promise<T | null> {
-  const res = await fetch(`${API_BASE}/${collection}/${id}?depth=0`, { cache: "no-store" });
+export async function payloadFindById<T>(collection: string, id: string, depth = 0): Promise<T | null> {
+  const res = await fetch(`${API_BASE}/${collection}/${id}?depth=${depth}`, { cache: "no-store" });
   if (!res.ok) return null;
   return (await res.json()) as T;
 }

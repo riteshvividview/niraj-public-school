@@ -5,6 +5,7 @@ import {
   CalendarClock,
   LayoutDashboard,
   LogOut,
+  Receipt,
   ScanLine,
   Table2,
   Users,
@@ -21,6 +22,7 @@ const NAV_ITEMS = [
   { href: "/console/students", label: "Students", icon: Users },
   { href: "/console/timetable", label: "Timetable Manager", icon: Table2 },
   { href: "/console/scan", label: "Receipt / QR Scanner", icon: ScanLine },
+  { href: "/console/payments", label: "Payments", icon: Receipt },
   {
     href: "/console/reports",
     label: "Reports Dashboard",

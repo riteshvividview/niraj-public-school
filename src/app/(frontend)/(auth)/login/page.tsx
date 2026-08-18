@@ -1,6 +1,6 @@
 "use client";
 
-import { IdCard, Info, Loader2, Lock } from "lucide-react";
+import { Eye, EyeOff, IdCard, Info, Loader2, Lock } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ function LoginForm() {
 
   const [registerNumber, setRegisterNumber] = useState(searchParams.get("registerNumber") ?? "");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -73,7 +74,7 @@ function LoginForm() {
             <Lock className="pointer-events-none absolute top-1/2 left-3.5 size-[18px] -translate-y-1/2 text-sub" />
             <Input
               id="password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               autoComplete="current-password"
               placeholder={t.auth.login.passwordPlaceholder}
               value={password}
@@ -82,9 +83,17 @@ function LoginForm() {
                 setError(null);
               }}
               aria-invalid={error ? true : undefined}
-              className={cn("h-11 pl-10 text-sm sm:h-12 sm:text-base", error && "border-destructive")}
+              className={cn("h-11 pr-10 pl-10 text-sm sm:h-12 sm:text-base", error && "border-destructive")}
               required
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={showPassword ? t.auth.login.hidePasswordLabel : t.auth.login.showPasswordLabel}
+              className="absolute top-1/2 right-3.5 -translate-y-1/2 text-sub transition-colors hover:text-ink"
+            >
+              {showPassword ? <EyeOff className="size-[18px]" /> : <Eye className="size-[18px]" />}
+            </button>
           </div>
         </div>
 

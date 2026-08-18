@@ -1,6 +1,11 @@
 import type { LanguageCode } from "./language";
 
 export type UserRole = "parent" | "student";
+export type Gender = "male" | "female";
+export type AcademicLanguage = "hindi" | "telugu";
+export type LanguageLevel = "first" | "second";
+export type Stream = "science" | "economics";
+export type Elective = "ena" | "roboticsAI" | "homeScience";
 
 /**
  * Mirrors the Payload `users` collection (a real `auth: true` collection —
@@ -20,6 +25,13 @@ export interface UserProfile {
   schoolId: string;
   classLevelId: string;
   preferredLanguage: LanguageCode;
+  /** Roster/academic attributes — see Users.ts's collection comment. All optional: not every grade/import provides them. */
+  section?: string;
+  gender?: Gender;
+  academicLanguage?: AcademicLanguage;
+  languageLevel?: LanguageLevel;
+  stream?: Stream;
+  elective?: Elective;
   createdAt: string;
   updatedAt: string;
 }

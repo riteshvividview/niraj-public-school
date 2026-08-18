@@ -1,5 +1,5 @@
 import { lineId } from "@/store/cart-store";
-import type { Book, CartItem, StationeryItem, UniformItem } from "@/types";
+import type { Book, CartItem, ReceiptRecord, StationeryItem, UniformItem } from "@/types";
 
 /**
  * Book/StationeryItem/UniformItem -> CartItem mappers, shared by the
@@ -74,16 +74,58 @@ export function buildPriceSummaryLines(
     .map((group) => ({ label: group.label, amount: subtotal(group.items) }));
 }
 
-/** Short human-readable lines for a ReceiptCard — one line per uniform/program item, one summary line for books/stationery. */
-export function summarizeOrderItems(
-  items: CartItem[],
-  labels: { books: string; stationery: string },
-): string[] {
+export interface ReceiptTitleLabels {
+  /** Short nouns for composing a title, e.g. "Books" — distinct from essentials.uniform ("Uniform & Kit"), which reads awkwardly once joined with "&". */
+  books: string;
+  uniform: string;
+  stationery: string;
+  /** "Receipt" */
+  receiptWord: string;
+  /** "Programme Receipt" */
+  programmeReceiptWord: string;
+}
+
+function joinWithAnd(parts: string[]): string {
+  if (parts.length <= 1) return parts[0] ?? "";
+  if (parts.length === 2) return `${parts[0]} & ${parts[1]}`;
+  return `${parts.slice(0, -1).join(", ")} & ${parts[parts.length - 1]}`;
+}
+
+/**
+ * A receipt's title reflects what's actually in the order, not the generic
+ * school name — "Books Receipt", "Books & Uniform Receipt", or for an
+ * order that's purely a program enrollment, "Programme Receipt — <title>"
+ * (using the single program's own name; falls back to the plain word for
+ * the rare multi-program order).
+ */
+export function deriveReceiptTitle(items: CartItem[], labels: ReceiptTitleLabels): string {
   const grouped = groupItemsByKind(items);
-  const lines: string[] = [];
-  if (grouped.books.length > 0) lines.push(`${labels.books} (${grouped.books.length})`);
-  grouped.uniform.forEach((item) => lines.push(`${item.label} — ${item.meta ?? ""}`));
-  if (grouped.stationery.length > 0) lines.push(`${labels.stationery} (${grouped.stationery.length})`);
-  grouped.programs.forEach((item) => lines.push(item.label));
-  return lines;
+  const essentialParts = [
+    grouped.books.length > 0 && labels.books,
+    grouped.uniform.length > 0 && labels.uniform,
+    grouped.stationery.length > 0 && labels.stationery,
+  ].filter((part): part is string => Boolean(part));
+  const hasPrograms = grouped.programs.length > 0;
+
+  if (hasPrograms && essentialParts.length === 0) {
+    return grouped.programs.length === 1
+      ? `${labels.programmeReceiptWord} — ${grouped.programs[0].label}`
+      : labels.programmeReceiptWord;
+  }
+
+  const essentialsTitle = joinWithAnd(essentialParts);
+  return hasPrograms
+    ? `${essentialsTitle} & ${labels.programmeReceiptWord}`
+    : `${essentialsTitle} ${labels.receiptWord}`;
+}
+
+/** Program ids a student already has a receipt for (any redemption status) — used to show "Registered" instead of letting them enroll twice. */
+export function registeredProgramIds(records: ReceiptRecord[]): Set<string> {
+  const ids = new Set<string>();
+  records.forEach((record) =>
+    record.order.items.forEach((item) => {
+      if (item.kind === "program") ids.add(item.refId);
+    }),
+  );
+  return ids;
 }

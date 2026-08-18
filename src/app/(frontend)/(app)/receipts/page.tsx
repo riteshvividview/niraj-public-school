@@ -7,22 +7,31 @@ import { AppHeader } from "@/components/shared/app-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatusBadge, toBadgeStatus } from "@/components/shared/status-badge";
 import { useTranslation } from "@/i18n/context";
-import { getSchoolById } from "@/lib/data-source";
-import { formatCurrencyINR, formatDate } from "@/lib/format";
+import { deriveReceiptTitle } from "@/lib/cart-items";
+import { getReceiptsByUser } from "@/lib/data-source";
+import { formatCurrencyINR, formatDate, formatTime } from "@/lib/format";
 import { useAuth } from "@/store/auth-store";
-import { useReceipts, type ReceiptRecord } from "@/store/receipts-store";
-import type { School } from "@/types";
+import type { ReceiptRecord } from "@/types";
 
-function ReceiptRow({ record, schoolName }: { record: ReceiptRecord; schoolName: string }) {
-  const { language } = useTranslation();
+function ReceiptRow({ record }: { record: ReceiptRecord }) {
+  const { t, language } = useTranslation();
+  const title = deriveReceiptTitle(record.order.items, {
+    books: t.receiptsPage.titleBooks,
+    uniform: t.receiptsPage.titleUniform,
+    stationery: t.receiptsPage.titleStationery,
+    receiptWord: t.receiptsPage.titleReceiptWord,
+    programmeReceiptWord: t.receiptsPage.titleProgrammeReceiptWord,
+  });
   return (
     <Link
       href={`/receipts/${record.receipt.id}`}
       className="mb-2.5 flex items-center gap-3 rounded-lg border border-line/60 bg-card p-4 transition-colors hover:bg-muted/50 last:mb-0"
     >
       <div className="min-w-0 flex-1">
-        <p className="truncate font-medium text-ink">{schoolName}</p>
-        <p className="text-sm text-sub">{formatDate(record.receipt.issuedAt, language)}</p>
+        <p className="truncate font-medium text-ink">{title}</p>
+        <p className="text-sm text-sub">
+          {formatDate(record.receipt.issuedAt, language)}, {formatTime(record.receipt.issuedAt, language)}
+        </p>
       </div>
       <div className="flex flex-col items-end gap-1">
         <span className="font-heading text-sm font-bold text-ink">
@@ -38,32 +47,27 @@ function ReceiptRow({ record, schoolName }: { record: ReceiptRecord; schoolName:
 export default function ReceiptsListPage() {
   const { t } = useTranslation();
   const { profile } = useAuth();
-  const receipts = useReceipts();
-  const [school, setSchool] = useState<School | null>(null);
+  const [records, setRecords] = useState<ReceiptRecord[] | null>(null);
 
   useEffect(() => {
     if (!profile) return;
-    getSchoolById(profile.schoolId).then(setSchool);
+    getReceiptsByUser(profile.id).then(setRecords);
   }, [profile]);
 
   if (!profile) return null;
-
-  const records = receipts.getForUser(profile.id);
 
   return (
     <>
       <AppHeader title={t.receiptsPage.title} showAvatar />
       <div className="w-full p-4 pb-8 sm:p-6 lg:p-8">
-        {records.length === 0 ? (
+        {records === null ? null : records.length === 0 ? (
           <EmptyState
             icon={ReceiptIcon}
             title={t.receiptsPage.emptyTitle}
             description={t.receiptsPage.emptyDescription}
           />
         ) : (
-          records.map((record) => (
-            <ReceiptRow key={record.receipt.id} record={record} schoolName={school?.name ?? ""} />
-          ))
+          records.map((record) => <ReceiptRow key={record.receipt.id} record={record} />)
         )}
       </div>
     </>

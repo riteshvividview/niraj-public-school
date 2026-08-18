@@ -182,19 +182,41 @@ export default function ComponentGalleryPage() {
           <h2 className="text-lg font-semibold text-ink">ReceiptCard</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <ReceiptCard
+              title="Books & Uniform Receipt"
               schoolName="Niraj Public School"
-              summaryLines={["Grade 6 Book Set", "Uniform & Kit (Size 32)"]}
+              items={[
+                { id: "1", kind: "book", refId: "b1", label: "Grade 6 Book Set", unitPrice: 2320, quantity: 1 },
+                {
+                  id: "2",
+                  kind: "uniform",
+                  refId: "u1",
+                  label: "Uniform & Kit",
+                  meta: "Size 32",
+                  unitPrice: 700,
+                  quantity: 1,
+                },
+              ]}
               amount={3020}
               date="2026-06-12"
-              qrValue="receipt-demo-001"
+              qrValue="K7H4X9RT"
               status="ready"
             />
             <ReceiptCard
+              title="Programme Receipt — Summer Robotics Camp"
               schoolName="Niraj Public School"
-              summaryLines={["Summer Robotics Camp — Ticket"]}
+              items={[
+                {
+                  id: "3",
+                  kind: "program",
+                  refId: "p1",
+                  label: "Summer Robotics Camp",
+                  unitPrice: 2500,
+                  quantity: 1,
+                },
+              ]}
               amount={2500}
               date="2026-05-01"
-              qrValue="receipt-demo-002"
+              qrValue="M3PQ7WZL"
               status="checkedIn"
               onDownload={() => {}}
               onShare={() => {}}

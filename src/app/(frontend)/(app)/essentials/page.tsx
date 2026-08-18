@@ -49,13 +49,22 @@ export default function EssentialsHubPage() {
 
   useEffect(() => {
     if (!profile) return;
-    getBooksByClass(profile.schoolId, profile.classLevelId).then((result) => {
+    getBooksByClass(profile.schoolId, profile.classLevelId, {
+      language: profile.academicLanguage,
+      stream: profile.stream,
+      elective: profile.elective,
+    }).then((result) => {
       setBooks(result);
+      cart.reconcileKind("book", result.map((book) => lineId("book", book.id)));
       result.forEach((book) => cart.ensureDefault(bookToCartItem(book)));
     });
-    getUniformItemsByClass(profile.schoolId, profile.classLevelId).then(setUniformItems);
+    getUniformItemsByClass(profile.schoolId, profile.classLevelId, profile.gender).then((result) => {
+      setUniformItems(result);
+      cart.reconcileKind("uniform", result.map((item) => lineId("uniform", item.id)));
+    });
     getStationeryItemsByClass(profile.schoolId, profile.classLevelId).then((result) => {
       setStationeryItems(result);
+      cart.reconcileKind("stationery", result.map((item) => lineId("stationery", item.id)));
       result.forEach((item) => cart.ensureDefault(stationeryToCartItem(item)));
     });
     // Only re-seed when the logged-in profile changes, not on every cart update.

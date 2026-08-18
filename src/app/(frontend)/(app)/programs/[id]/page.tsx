@@ -1,36 +1,64 @@
 "use client";
 
-import { Calendar, MapPin, Phone, Users } from "lucide-react";
+import { Calendar, GraduationCap, MapPin, Phone, Users } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/shared/app-header";
 import { StatusBadge, toBadgeStatus } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatTemplate } from "@/i18n/format";
 import { useTranslation } from "@/i18n/context";
-import { getProgramById } from "@/lib/data-source";
+import { getClassLevelsBySchool, getProgramById, getReceiptsByUser, isProgramEligibleForClass } from "@/lib/data-source";
 import { formatCurrencyINR, formatDate } from "@/lib/format";
-import { kebabToCamel } from "@/lib/utils";
+import { useAuth } from "@/store/auth-store";
 import { lineId, useCart } from "@/store/cart-store";
-import type { CartItem, Program } from "@/types";
+import type { CartItem, ClassLevel, Program } from "@/types";
 
 export default function ProgramDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { t, language } = useTranslation();
+  const { profile } = useAuth();
   const cart = useCart();
 
   const [program, setProgram] = useState<Program | null | undefined>(undefined);
+  const [classLevels, setClassLevels] = useState<ClassLevel[]>([]);
+  const [existingReceiptId, setExistingReceiptId] = useState<string | null>(null);
 
   useEffect(() => {
     getProgramById(params.id).then(setProgram);
   }, [params.id]);
+
+  // Already-registered check: any existing receipt (of any redemption
+  // status — ready/collected/checked-in all mean "still enrolled") whose
+  // order includes this program. Only staff removing/cancelling that
+  // receipt via /admin frees the student to register again — there's no
+  // self-service cancel, by design (see the request this implements).
+  useEffect(() => {
+    if (!profile || !params.id) return;
+    let cancelled = false;
+    getReceiptsByUser(profile.id).then((records) => {
+      if (cancelled) return;
+      const match = records.find((record) =>
+        record.order.items.some((item) => item.kind === "program" && item.refId === params.id),
+      );
+      setExistingReceiptId(match?.receipt.id ?? null);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [profile, params.id]);
 
   useEffect(() => {
     if (program === null) {
       router.replace("/programs");
     }
   }, [program, router]);
+
+  useEffect(() => {
+    if (program) getClassLevelsBySchool(program.schoolId).then(setClassLevels);
+  }, [program]);
 
   if (program === undefined || program === null) {
     return (
@@ -47,6 +75,11 @@ export default function ProgramDetailPage() {
   const id = lineId("program", program.id);
   const inCart = cart.isIncluded(id);
   const isFull = program.status === "full";
+  const isEligible = !profile || isProgramEligibleForClass(program, profile.classLevelId);
+
+  const eligibleGradeLabels = program.eligibleClassLevelIds
+    ?.map((classLevelId) => classLevels.find((level) => level.id === classLevelId)?.label)
+    .filter((label): label is string => Boolean(label));
 
   function handleEnroll() {
     const cartItem: CartItem = {
@@ -62,11 +95,6 @@ export default function ProgramDetailPage() {
     router.push("/cart");
   }
 
-  const categoryLabel =
-    t.programsPage.categories[
-      kebabToCamel(program.category) as keyof typeof t.programsPage.categories
-    ];
-
   return (
     <>
       <AppHeader title={program.title} backHref="/programs" showAvatar />
@@ -74,7 +102,7 @@ export default function ProgramDetailPage() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="font-heading text-xl font-semibold text-ink">{program.title}</h1>
-            <p className="mt-1 text-xs font-medium text-brand">{categoryLabel}</p>
+            <p className="mt-1 text-xs font-medium text-brand">{program.category}</p>
           </div>
           <StatusBadge status={toBadgeStatus(program.status)} />
         </div>
@@ -89,22 +117,35 @@ export default function ProgramDetailPage() {
               <p className="text-sm font-medium text-ink">{formatDate(program.date, language)}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 py-3">
-            <MapPin className="size-4 shrink-0 text-sub" />
-            <div>
-              <p className="text-xs text-sub">{t.programsPage.venueLabel}</p>
-              <p className="text-sm font-medium text-ink">{program.venue}</p>
+          {program.venue ? (
+            <div className="flex items-center gap-3 py-3">
+              <MapPin className="size-4 shrink-0 text-sub" />
+              <div>
+                <p className="text-xs text-sub">{t.programsPage.venueLabel}</p>
+                <p className="text-sm font-medium text-ink">{program.venue}</p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-3 py-3">
-            <Users className="size-4 shrink-0 text-sub" />
-            <div>
-              <p className="text-xs text-sub">{t.programsPage.seatsLabel}</p>
-              <p className="text-sm font-medium text-ink">
-                {program.seatsAvailable} / {program.seatsTotal}
-              </p>
+          ) : null}
+          {program.seatsTotal !== undefined ? (
+            <div className="flex items-center gap-3 py-3">
+              <Users className="size-4 shrink-0 text-sub" />
+              <div>
+                <p className="text-xs text-sub">{t.programsPage.seatsLabel}</p>
+                <p className="text-sm font-medium text-ink">
+                  {formatTemplate(t.programsPage.seatsAvailableTemplate, { n: program.seatsAvailable ?? 0 })}
+                </p>
+              </div>
             </div>
-          </div>
+          ) : null}
+          {eligibleGradeLabels?.length ? (
+            <div className="flex items-center gap-3 py-3">
+              <GraduationCap className="size-4 shrink-0 text-sub" />
+              <div>
+                <p className="text-xs text-sub">{t.programsPage.eligibleGradesLabel}</p>
+                <p className="text-sm font-medium text-ink">{eligibleGradeLabels.join(", ")}</p>
+              </div>
+            </div>
+          ) : null}
           <div className="flex items-center gap-3 py-3">
             <Phone className="size-4 shrink-0 text-sub" />
             <div>
@@ -121,7 +162,22 @@ export default function ProgramDetailPage() {
           </span>
         </div>
 
-        {isFull ? (
+        {existingReceiptId ? (
+          <div className="space-y-2 text-center">
+            <div className="rounded-lg border border-section-essentials/30 bg-section-essentials-bg p-4">
+              <p className="font-medium text-section-essentials">{t.programsPage.registeredTitle}</p>
+              <p className="mt-1 text-sm text-section-essentials">{t.programsPage.registeredDescription}</p>
+            </div>
+            <Button className="w-full" variant="outline" onClick={() => router.push(`/receipts/${existingReceiptId}`)}>
+              {t.programsPage.viewReceiptLabel}
+            </Button>
+          </div>
+        ) : !isEligible ? (
+          <div className="rounded-lg border border-section-pay/30 bg-section-pay-bg p-4 text-center">
+            <p className="font-medium text-section-pay">{t.programsPage.notEligibleTitle}</p>
+            <p className="mt-1 text-sm text-section-pay">{t.programsPage.notEligibleDescription}</p>
+          </div>
+        ) : isFull ? (
           <div className="rounded-lg border border-section-pay/30 bg-section-pay-bg p-4 text-center">
             <p className="font-medium text-section-pay">{t.programsPage.fullTitle}</p>
             <p className="mt-1 text-sm text-section-pay">{t.programsPage.fullDescription}</p>

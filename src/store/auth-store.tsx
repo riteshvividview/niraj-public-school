@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { getCurrentUser, logoutUser } from "@/lib/data-source";
+import { setActiveCartUser } from "@/store/cart-store";
 import type { UserProfile } from "@/types";
 
 /**
@@ -49,6 +50,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, []);
+
+  // Cart storage is keyed per user (see cart-store.tsx) — switch it whenever
+  // the signed-in profile changes, so two accounts on the same browser never
+  // share cart state.
+  useEffect(() => {
+    setActiveCartUser(profile?.id ?? null);
+  }, [profile?.id]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

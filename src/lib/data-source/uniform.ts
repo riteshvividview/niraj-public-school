@@ -1,5 +1,4 @@
-import { sizesFor } from "@/lib/mock/uniform";
-import type { UniformItem, UniformSizeOption } from "@/types";
+import type { Gender, UniformItem, UniformSizeOption } from "@/types";
 import { payloadCreate, payloadDelete, payloadFind, payloadFindById, payloadUpdate } from "./payload-rest";
 
 interface PayloadUniformDoc {
@@ -11,6 +10,7 @@ interface PayloadUniformDoc {
   description?: string | null;
   imageUrl?: string | null;
   sizeOptions: UniformSizeOption[];
+  gender?: Gender | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -25,20 +25,30 @@ function toUniformItem(doc: PayloadUniformDoc): UniformItem {
     description: doc.description ?? undefined,
     imageUrl: doc.imageUrl ?? null,
     sizeOptions: doc.sizeOptions,
+    gender: doc.gender ?? undefined,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };
 }
 
+/**
+ * `studentGender` unset (a student whose profile doesn't record it yet, or
+ * a school with no gendered bundles) shows every item — same
+ * unset-matches-everyone rule as getBooksByClass — rather than showing
+ * nothing until staff fills gender in.
+ */
 export async function getUniformItemsByClass(
   schoolId: string,
   classLevelId: string,
+  studentGender?: Gender,
 ): Promise<UniformItem[]> {
   const docs = await payloadFind<PayloadUniformDoc>("uniform-items", {
     school: schoolId,
     classLevel: classLevelId,
   });
-  return docs.map(toUniformItem);
+  return docs
+    .filter((doc) => doc.gender == null || studentGender == null || doc.gender === studentGender)
+    .map(toUniformItem);
 }
 
 export async function getUniformItemById(id: string): Promise<UniformItem | null> {
@@ -52,8 +62,9 @@ export interface UniformItemInput {
   name: string;
   category: "uniform" | "kit";
   description?: string;
-  /** Price for the smallest size — the console only collects a single base price; per-size pricing stays generated the same way the seed data is. */
-  basePrice: number;
+  /** One row per size a student can pick (label is free text — "Standard", "S", "32", etc.), each with its own price. */
+  sizeOptions: UniformSizeOption[];
+  gender?: Gender;
 }
 
 /** Console — Catalogue Manager. */
@@ -64,7 +75,8 @@ export async function createUniformItem(input: UniformItemInput): Promise<Unifor
     name: input.name,
     category: input.category,
     description: input.description,
-    sizeOptions: sizesFor(input.classLevelId, input.basePrice),
+    sizeOptions: input.sizeOptions,
+    gender: input.gender,
   });
   return toUniformItem(doc);
 }
@@ -73,17 +85,12 @@ export async function updateUniformItem(
   id: string,
   patch: Partial<Omit<UniformItemInput, "schoolId" | "classLevelId">>,
 ): Promise<UniformItem | null> {
-  const { basePrice, ...rest } = patch;
-  let sizeOptions: UniformSizeOption[] | undefined;
-  if (basePrice !== undefined) {
-    const existing = await getUniformItemById(id);
-    if (existing) sizeOptions = sizesFor(existing.classLevelId, basePrice);
-  }
   const doc = await payloadUpdate<PayloadUniformDoc>("uniform-items", id, {
-    ...(rest.name !== undefined ? { name: rest.name } : {}),
-    ...(rest.category !== undefined ? { category: rest.category } : {}),
-    ...(rest.description !== undefined ? { description: rest.description } : {}),
-    ...(sizeOptions ? { sizeOptions } : {}),
+    ...(patch.name !== undefined ? { name: patch.name } : {}),
+    ...(patch.category !== undefined ? { category: patch.category } : {}),
+    ...(patch.description !== undefined ? { description: patch.description } : {}),
+    ...(patch.sizeOptions !== undefined ? { sizeOptions: patch.sizeOptions } : {}),
+    ...(patch.gender !== undefined ? { gender: patch.gender } : {}),
   });
   return doc ? toUniformItem(doc) : null;
 }

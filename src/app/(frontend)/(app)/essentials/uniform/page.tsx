@@ -30,6 +30,8 @@ import { lineId, useCart } from "@/store/cart-store";
 import type { UniformItem } from "@/types";
 import { EssentialsReviewBar } from "../_components/review-bar";
 
+const UNSELECT_VALUE = "__unselect__";
+
 const SIZE_GUIDE_ROWS = [
   { size: "18", age: "3–4 yrs", height: "95–105" },
   { size: "20", age: "4–5 yrs", height: "105–110" },
@@ -95,7 +97,11 @@ export default function UniformPage() {
 
   useEffect(() => {
     if (!profile) return;
-    getUniformItemsByClass(profile.schoolId, profile.classLevelId).then(setItems);
+    getUniformItemsByClass(profile.schoolId, profile.classLevelId, profile.gender).then((result) => {
+      setItems(result);
+      cart.reconcileKind("uniform", result.map((item) => lineId("uniform", item.id)));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile]);
 
   if (!profile) return null;
@@ -144,18 +150,25 @@ export default function UniformPage() {
                       <Select
                         value={selectedSize}
                         onValueChange={(size) => {
+                          if (size === UNSELECT_VALUE) {
+                            cart.remove(id);
+                            return;
+                          }
                           const option = item.sizeOptions.find((o) => o.size === size);
                           if (!option) return;
                           cart.setIncluded(uniformToCartItem(item, size, option.price), true);
                         }}
                       >
                         <SelectTrigger
-                          className="w-24"
+                          className="w-32"
                           aria-label={`${t.essentials.chooseSizeLabel}: ${item.name}`}
                         >
                           <SelectValue placeholder={t.essentials.sizePlaceholder} />
                         </SelectTrigger>
                         <SelectContent>
+                          {confirmed ? (
+                            <SelectItem value={UNSELECT_VALUE}>{t.essentials.sizeUnselectOption}</SelectItem>
+                          ) : null}
                           {item.sizeOptions.map((option) => (
                             <SelectItem key={option.size} value={option.size}>
                               {option.size}

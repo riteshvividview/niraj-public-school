@@ -6,21 +6,23 @@ import { AppHeader } from "@/components/shared/app-header";
 import { ReceiptCard } from "@/components/shared/receipt-card";
 import { toBadgeStatus } from "@/components/shared/status-badge";
 import { useTranslation } from "@/i18n/context";
-import { groupItemsByKind, summarizeOrderItems } from "@/lib/cart-items";
-import { getProgramById, getSchoolById } from "@/lib/data-source";
-import { useReceipts } from "@/store/receipts-store";
-import type { School } from "@/types";
+import { deriveReceiptTitle, groupItemsByKind } from "@/lib/cart-items";
+import { getProgramById, getReceiptById, getSchoolById } from "@/lib/data-source";
+import type { ReceiptRecord, School } from "@/types";
 
 export default function ReceiptDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { t } = useTranslation();
-  const receipts = useReceipts();
+  const [record, setRecord] = useState<ReceiptRecord | null | undefined>(undefined);
   const [school, setSchool] = useState<School | null>(null);
   const [venue, setVenue] = useState<string | undefined>(undefined);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const record = receipts.getById(params.id);
+  useEffect(() => {
+    getReceiptById(params.id).then(setRecord);
+  }, [params.id]);
+
   const grouped = record ? groupItemsByKind(record.order.items) : null;
   const isTicket = Boolean(grouped && grouped.programs.length === record!.order.items.length && grouped.programs.length > 0);
 
@@ -35,34 +37,34 @@ export default function ReceiptDetailPage() {
   }, [isTicket, grouped]);
 
   useEffect(() => {
-    if (receipts.isReady && !record) {
+    if (record === null) {
       router.replace("/receipts");
     }
-  }, [receipts.isReady, record, router]);
+  }, [record, router]);
 
   if (!record) return null;
-
-  const summaryLines = summarizeOrderItems(record.order.items, {
-    books: t.essentials.books,
-    stationery: t.essentials.stationery,
-  });
 
   async function handleDownload() {
     if (!cardRef.current) return;
     const { default: html2canvas } = await import("html2canvas");
     const canvas = await html2canvas(cardRef.current, { backgroundColor: "#ffffff" });
     const link = document.createElement("a");
-    link.download = `${record!.receipt.id}.png`;
+    link.download = `${record!.receipt.qrPayload}.png`;
     link.href = canvas.toDataURL("image/png");
     link.click();
   }
 
-  const pageTitle = isTicket ? t.receiptsPage.ticketTitle : t.receiptsPage.detailTitle;
-
+  const receiptTitle = deriveReceiptTitle(record.order.items, {
+    books: t.receiptsPage.titleBooks,
+    uniform: t.receiptsPage.titleUniform,
+    stationery: t.receiptsPage.titleStationery,
+    receiptWord: t.receiptsPage.titleReceiptWord,
+    programmeReceiptWord: t.receiptsPage.titleProgrammeReceiptWord,
+  });
   async function handleShare() {
     const shareData = {
-      title: pageTitle,
-      text: `${school?.name ?? ""} — ${pageTitle} ${record!.receipt.id}`,
+      title: receiptTitle,
+      text: `${school?.name ?? ""} — ${receiptTitle} ${record!.receipt.qrPayload}`,
       url: window.location.href,
     };
     if (navigator.share) {
@@ -78,12 +80,13 @@ export default function ReceiptDetailPage() {
 
   return (
     <>
-      <AppHeader title={pageTitle} backHref="/receipts" />
+      <AppHeader title={receiptTitle} backHref="/receipts" />
       <div className="w-full space-y-4 p-4 pb-8 sm:p-6 lg:p-8">
         <div ref={cardRef}>
           <ReceiptCard
+            title={receiptTitle}
             schoolName={school?.name ?? ""}
-            summaryLines={summaryLines}
+            items={record.order.items}
             amount={record.order.totalAmount}
             date={record.receipt.issuedAt}
             qrValue={record.receipt.qrPayload}
