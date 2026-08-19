@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertTriangle, CheckCircle2, ScanLine, Search } from "lucide-react";
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -19,7 +19,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { deriveReceiptTitle, groupItemsByKind } from "@/lib/cart-items";
-import { getReceiptByCode, getSchools, markReceiptRedeemed } from "@/lib/data-source";
+import { getReceiptByCode, markReceiptRedeemed } from "@/lib/data-source";
+import { useConsoleSchoolId } from "@/lib/hooks/console-data";
 import { cn } from "@/lib/utils";
 import type { ReceiptRecord } from "@/types";
 
@@ -34,17 +35,11 @@ function isTicketRecord(record: ReceiptRecord): boolean {
 }
 
 export default function ScannerPage() {
-  const [schoolId, setSchoolId] = useState("");
+  const schoolId = useConsoleSchoolId();
   const [code, setCode] = useState("");
   const [lookup, setLookup] = useState<LookupResult | null>(null);
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-
-  useEffect(() => {
-    getSchools().then((schools) => {
-      if (schools.length > 0) setSchoolId(schools[0].id);
-    });
-  }, []);
 
   async function handleLookup(event: FormEvent) {
     event.preventDefault();

@@ -13,6 +13,7 @@ import {
   payloadDelete,
   payloadFind,
   payloadFindById,
+  payloadFindPage,
   payloadLogin,
   payloadLogout,
   payloadMe,
@@ -24,11 +25,11 @@ interface PayloadUserDoc {
   id: string;
   name: string;
   username: string;
-  avatar?: string | null;
+  avatar?: string | PayloadMediaDoc | null;
   mobileNumber?: string | null;
   role: UserRole;
-  school: string;
-  classLevel: string;
+  school: string | { id: string };
+  classLevel: string | { id: string };
   preferredLanguage: LanguageCode;
   section?: string | null;
   gender?: Gender | null;
@@ -46,22 +47,38 @@ interface PayloadMediaDoc {
 }
 
 /**
- * `avatar` comes back as a plain media-doc id (depth=0, same as every other
- * relationship field — see payload-rest.ts). A second lookup resolves it to
- * an actual URL; this is why toUserProfile is async, unlike the other
- * data-source mappers in this folder.
+ * At depth=0 (the default — see payload-rest.ts), `avatar` comes back as a
+ * plain media-doc id and needs a second lookup to resolve a URL. Callers
+ * that already fetched with depth=1 (e.g. getStudentsBySchool, to avoid an
+ * N+1 of one media lookup per student) get `avatar` back pre-populated as a
+ * full media doc, so this only makes the extra request when it's actually
+ * needed — which is also why toUserProfile stays async either way.
  */
+async function resolveAvatarUrl(avatar: PayloadUserDoc["avatar"]): Promise<string | undefined> {
+  if (!avatar) return undefined;
+  if (typeof avatar === "string") {
+    const media = await payloadFindById<PayloadMediaDoc>("media", avatar);
+    return media?.url ?? undefined;
+  }
+  return avatar.url ?? undefined;
+}
+
+/** A relationship field is a plain id string at depth=0, or a populated object at depth=1+. */
+function relationId(value: string | { id: string }): string {
+  return typeof value === "string" ? value : value.id;
+}
+
 async function toUserProfile(doc: PayloadUserDoc): Promise<UserProfile> {
-  const avatarUrl = doc.avatar ? await payloadFindById<PayloadMediaDoc>("media", doc.avatar) : null;
+  const avatarUrl = await resolveAvatarUrl(doc.avatar);
   return {
     id: doc.id,
     name: doc.name,
     registerNumber: doc.username,
-    avatarUrl: avatarUrl?.url ?? undefined,
+    avatarUrl,
     mobileNumber: doc.mobileNumber ?? undefined,
     role: doc.role,
-    schoolId: doc.school,
-    classLevelId: doc.classLevel,
+    schoolId: relationId(doc.school),
+    classLevelId: relationId(doc.classLevel),
     preferredLanguage: doc.preferredLanguage,
     section: doc.section ?? undefined,
     gender: doc.gender ?? undefined,
@@ -188,11 +205,88 @@ export async function bulkCreateStudents(inputs: CreateStudentInput[]): Promise<
   return results;
 }
 
-/** Console "Students" list — every portal account at this school (staff-created only, no self-registration). */
+/**
+ * Console "Students" list — every portal account at this school
+ * (staff-created only, no self-registration). Fetched at depth=1 so each
+ * student's avatar comes back pre-populated instead of triggering a
+ * separate media lookup per student (see resolveAvatarUrl).
+ */
 export async function getStudentsBySchool(schoolId: string): Promise<UserProfile[]> {
-  const docs = await payloadFind<PayloadUserDoc>("users", { school: schoolId });
+  const docs = await payloadFind<PayloadUserDoc>("users", { school: schoolId }, { depth: 1 });
   const sorted = [...docs].sort((a, b) => a.name.localeCompare(b.name));
   return Promise.all(sorted.map(toUserProfile));
+}
+
+export interface StudentPageFilters {
+  search?: string;
+  classLevelId?: string;
+  section?: string;
+  gender?: Gender;
+  firstLanguage?: AcademicLanguage;
+  secondLanguage?: AcademicLanguage;
+  stream?: Stream;
+  elective?: Elective;
+}
+
+export interface StudentsPage {
+  students: UserProfile[];
+  totalCount: number;
+  totalPages: number;
+  page: number;
+}
+
+/**
+ * Console "Students" list, paginated + filtered server-side — the search box
+ * and every filter dropdown become Payload `where` clauses instead of
+ * fetching the whole roster and filtering it in the browser, so a roster of
+ * any size only ever transfers one page at a time.
+ */
+export async function getStudentsPageBySchool(
+  schoolId: string,
+  filters: StudentPageFilters,
+  page: number,
+  pageSize = 20,
+): Promise<StudentsPage> {
+  const and: Record<string, unknown>[] = [{ school: { equals: schoolId } }];
+  const search = filters.search?.trim();
+  if (search) {
+    and.push({ or: [{ name: { contains: search } }, { username: { contains: search } }] });
+  }
+  if (filters.classLevelId) and.push({ classLevel: { equals: filters.classLevelId } });
+  if (filters.section) and.push({ section: { equals: filters.section } });
+  if (filters.gender) and.push({ gender: { equals: filters.gender } });
+  if (filters.firstLanguage) {
+    and.push({ academicLanguage: { equals: filters.firstLanguage } }, { languageLevel: { equals: "first" } });
+  }
+  if (filters.secondLanguage) {
+    and.push({ academicLanguage: { equals: filters.secondLanguage } }, { languageLevel: { equals: "second" } });
+  }
+  if (filters.stream) and.push({ stream: { equals: filters.stream } });
+  if (filters.elective) and.push({ elective: { equals: filters.elective } });
+
+  const result = await payloadFindPage<PayloadUserDoc>("users", {
+    where: { and },
+    page,
+    limit: pageSize,
+    sort: "name",
+    depth: 1,
+  });
+  const students = await Promise.all(result.docs.map(toUserProfile));
+  return { students, totalCount: result.totalDocs, totalPages: result.totalPages, page: result.page };
+}
+
+/**
+ * Populates the Students list's Section filter dropdown without fetching
+ * full student records — `select` restricts the response to just the one
+ * field, so this stays cheap even as the roster grows.
+ */
+export async function getStudentSectionsBySchool(schoolId: string): Promise<string[]> {
+  const docs = await payloadFind<{ section?: string | null }>(
+    "users",
+    { school: schoolId },
+    { "select[section]": "true", limit: 1000 },
+  );
+  return Array.from(new Set(docs.map((d) => d.section).filter((s): s is string => Boolean(s)))).sort();
 }
 
 export interface UpdateStudentInput {

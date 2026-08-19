@@ -1,5 +1,6 @@
+import { groupItemsByKind } from "@/lib/cart-items";
 import type { Order, PaymentRecord, Receipt, ReceiptRecord, RedemptionStatus } from "@/types";
-import { payloadCreate, payloadFind, payloadFindById, payloadUpdate } from "./payload-rest";
+import { payloadCreate, payloadFind, payloadFindById, payloadFindPage, payloadUpdate } from "./payload-rest";
 
 interface PayloadOrderDoc {
   id: string;
@@ -47,20 +48,24 @@ function userId(user: string | PayloadUserRef): string {
   return typeof user === "string" ? user : user.id;
 }
 
+function toOrderItems(items: PayloadOrderDoc["items"]): Order["items"] {
+  return items.map((item) => ({
+    id: `${item.kind}-${item.refId}`,
+    kind: item.kind as Order["items"][number]["kind"],
+    refId: item.refId,
+    label: item.label,
+    meta: item.meta ?? undefined,
+    unitPrice: item.unitPrice,
+    quantity: item.quantity,
+  }));
+}
+
 function toOrder(doc: PayloadOrderDoc): Order {
   return {
     id: doc.id,
     userId: doc.user,
     schoolId: doc.school,
-    items: doc.items.map((item) => ({
-      id: `${item.kind}-${item.refId}`,
-      kind: item.kind as Order["items"][number]["kind"],
-      refId: item.refId,
-      label: item.label,
-      meta: item.meta ?? undefined,
-      unitPrice: item.unitPrice,
-      quantity: item.quantity,
-    })),
+    items: toOrderItems(doc.items),
     totalAmount: doc.totalAmount,
     paymentMethod: doc.paymentMethod,
     status: doc.status,
@@ -163,6 +168,130 @@ export async function getPaymentsBySchool(schoolId: string): Promise<PaymentReco
     });
   }
   return records.sort((a, b) => b.receipt.issuedAt.localeCompare(a.receipt.issuedAt));
+}
+
+export interface PaymentPageFilters {
+  search?: string;
+  classLevelId?: string;
+  redemptionStatus?: RedemptionStatus;
+  paymentMethod?: Order["paymentMethod"];
+  fromDate?: string;
+  toDate?: string;
+}
+
+export interface PaymentsPage {
+  records: PaymentRecord[];
+  totalCount: number;
+  totalPages: number;
+  page: number;
+}
+
+/**
+ * Console — Payments page, paginated + filtered server-side. `search` and
+ * every filter become a Payload `where` clause — including dot-path queries
+ * through the `order` and `user` relations (confirmed working against this
+ * project's Payload REST API) — so a growing receipts collection only ever
+ * transfers one page at a time instead of the whole ledger.
+ */
+export async function getPaymentsPageBySchool(
+  schoolId: string,
+  filters: PaymentPageFilters,
+  page: number,
+  pageSize = 20,
+): Promise<PaymentsPage> {
+  const and: Record<string, unknown>[] = [{ school: { equals: schoolId } }];
+  const search = filters.search?.trim();
+  if (search) {
+    and.push({
+      or: [
+        { "user.name": { contains: search } },
+        { "user.username": { contains: search } },
+        { qrPayload: { contains: search.toUpperCase() } },
+      ],
+    });
+  }
+  if (filters.classLevelId) and.push({ "user.classLevel": { equals: filters.classLevelId } });
+  if (filters.redemptionStatus) and.push({ redemptionStatus: { equals: filters.redemptionStatus } });
+  if (filters.paymentMethod) and.push({ "order.paymentMethod": { equals: filters.paymentMethod } });
+  if (filters.fromDate) and.push({ issuedAt: { greater_than_equal: `${filters.fromDate}T00:00:00.000Z` } });
+  if (filters.toDate) and.push({ issuedAt: { less_than_equal: `${filters.toDate}T23:59:59.999Z` } });
+
+  const result = await payloadFindPage<PayloadReceiptDoc>("receipts", {
+    where: { and },
+    page,
+    limit: pageSize,
+    sort: "-issuedAt",
+    depth: 1,
+  });
+  const records: PaymentRecord[] = [];
+  for (const doc of result.docs) {
+    const record = toReceiptRecord(doc);
+    if (!record || typeof doc.user === "string") continue;
+    records.push({
+      ...record,
+      studentName: doc.user.name,
+      registerNumber: doc.user.username,
+      classLevelId: doc.user.classLevel,
+      section: doc.user.section ?? undefined,
+    });
+  }
+  return { records, totalCount: result.totalDocs, totalPages: result.totalPages, page: result.page };
+}
+
+export interface ReceiptStats {
+  totalOrders: number;
+  redeemed: number;
+  pending: number;
+  totalRevenue: number;
+  categoryRevenue: { books: number; uniform: number; stationery: number; programs: number };
+}
+
+interface PayloadStatsReceiptDoc {
+  order: { totalAmount: number; items: PayloadOrderDoc["items"] };
+}
+
+/**
+ * Console — Reports Dashboard. The redeemed/pending counts come from
+ * Payload's `totalDocs` on two limit=1 queries (cheap — no document bodies
+ * transferred), and the revenue figures come from a single `select`-trimmed
+ * query that only pulls each receipt's `order` field, not the rest of the
+ * receipt or its populated user — a school's all-time receipt count is
+ * expected to stay in the low thousands, so one bounded, field-trimmed
+ * fetch is the right tradeoff here (unlike Students/Payments, this page
+ * doesn't need per-row detail, only a sum).
+ */
+export async function getReceiptStatsBySchool(schoolId: string): Promise<ReceiptStats> {
+  const [totalPage, redeemedPage, revenueDocs] = await Promise.all([
+    payloadFindPage<PayloadReceiptDoc>("receipts", { where: { school: { equals: schoolId } }, limit: 1 }),
+    payloadFindPage<PayloadReceiptDoc>("receipts", {
+      where: { and: [{ school: { equals: schoolId } }, { redemptionStatus: { not_equals: "ready" } }] },
+      limit: 1,
+    }),
+    payloadFind<PayloadStatsReceiptDoc>(
+      "receipts",
+      { school: schoolId },
+      { depth: 1, limit: 5000, "select[order]": "true" },
+    ),
+  ]);
+
+  const categoryRevenue = { books: 0, uniform: 0, stationery: 0, programs: 0 };
+  let totalRevenue = 0;
+  revenueDocs.forEach((doc) => {
+    totalRevenue += doc.order.totalAmount;
+    const grouped = groupItemsByKind(toOrderItems(doc.order.items));
+    categoryRevenue.books += grouped.books.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
+    categoryRevenue.uniform += grouped.uniform.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
+    categoryRevenue.stationery += grouped.stationery.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
+    categoryRevenue.programs += grouped.programs.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
+  });
+
+  return {
+    totalOrders: totalPage.totalDocs,
+    redeemed: redeemedPage.totalDocs,
+    pending: totalPage.totalDocs - redeemedPage.totalDocs,
+    totalRevenue,
+    categoryRevenue,
+  };
 }
 
 export async function getReceiptById(id: string): Promise<ReceiptRecord | null> {

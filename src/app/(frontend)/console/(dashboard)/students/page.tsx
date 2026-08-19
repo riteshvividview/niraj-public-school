@@ -3,6 +3,7 @@
 import {
   AlertCircle,
   CheckCircle2,
+  ChevronLeft,
   ChevronRight,
   Download,
   Loader2,
@@ -10,14 +11,9 @@ import {
   Upload,
 } from "lucide-react";
 import Link from "next/link";
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type FormEvent,
-} from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
+import useSWR, { preload, useSWRConfig } from "swr";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -61,12 +57,18 @@ import {
 import {
   bulkCreateStudents,
   createStudent,
-  getClassLevelsBySchool,
-  getSchools,
-  getStudentsBySchool,
+  getStudentSectionsBySchool,
+  getStudentsPageBySchool,
   type BulkCreateResult,
   type CreateStudentInput,
+  type StudentPageFilters,
 } from "@/lib/data-source";
+import {
+  classLevelsCacheUpdater,
+  useClassLevels,
+  useConsoleSchoolId,
+} from "@/lib/hooks/console-data";
+import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import {
   deriveLanguage,
   ELECTIVE_OPTIONS,
@@ -680,11 +682,18 @@ function StudentFilterBar({
 }
 
 function StudentRow({ student, classLabel }: { student: UserProfile; classLabel: string }) {
+  const { mutate } = useSWRConfig();
   const firstLang = firstLanguageOf(student);
   const secondLang = secondLanguageOf(student);
   return (
     <Link
       href={`/console/students/${student.id}`}
+      onClick={() => {
+        // We already have this student's full profile right here in the list
+        // row — hand it to the detail page's cache so it can render instantly
+        // instead of showing a loading skeleton while it re-fetches the same data.
+        mutate(["console:student", student.id], student, { revalidate: false });
+      }}
       className="flex items-center gap-3 rounded-xl border border-line/60 bg-card p-3.5 transition-colors hover:border-brand/40 hover:bg-muted/40"
     >
       <UserAvatar name={student.name} avatarUrl={student.avatarUrl} size="sm" />
@@ -731,62 +740,76 @@ function StudentRow({ student, classLabel }: { student: UserProfile; classLabel:
   );
 }
 
+const PAGE_SIZE = 20;
+
 export default function StudentsManagerPage() {
-  const [schoolId, setSchoolId] = useState("");
-  const [classLevels, setClassLevels] = useState<ClassLevel[]>([]);
-  const [students, setStudents] = useState<UserProfile[] | null>(null);
+  const schoolId = useConsoleSchoolId();
+  const { classLevels, mutateClassLevels } = useClassLevels(schoolId);
   const [filters, setFilters] = useState<StudentFilters>(EMPTY_FILTERS);
+  const debouncedSearch = useDebouncedValue(filters.search, 300);
+  const [page, setPage] = useState(1);
+
+  const queryFilters: StudentPageFilters = {
+    search: debouncedSearch.trim() || undefined,
+    classLevelId: filters.classLevelId !== ALL_VALUE ? filters.classLevelId : undefined,
+    section: filters.section !== ALL_VALUE ? filters.section : undefined,
+    gender: filters.gender !== ALL_VALUE ? (filters.gender as UserProfile["gender"]) : undefined,
+    firstLanguage: filters.firstLanguage !== ALL_VALUE ? (filters.firstLanguage as AcademicLanguage) : undefined,
+    secondLanguage: filters.secondLanguage !== ALL_VALUE ? (filters.secondLanguage as AcademicLanguage) : undefined,
+    stream: filters.stream !== ALL_VALUE ? (filters.stream as Stream) : undefined,
+    elective: filters.elective !== ALL_VALUE ? (filters.elective as Elective) : undefined,
+  };
+
+  // Reset to page 1 whenever the effective query changes — an in-render
+  // state adjustment (not an effect) so it can't fire an extra render cycle.
+  const filtersKey = JSON.stringify(queryFilters);
+  const [seenFiltersKey, setSeenFiltersKey] = useState(filtersKey);
+  if (filtersKey !== seenFiltersKey) {
+    setSeenFiltersKey(filtersKey);
+    setPage(1);
+  }
+  const effectivePage = filtersKey === seenFiltersKey ? page : 1;
+
+  const {
+    data: pageData,
+    isValidating: studentsValidating,
+    mutate: mutateStudents,
+  } = useSWR(
+    schoolId ? ["console:students", schoolId, filtersKey, effectivePage] : null,
+    () => getStudentsPageBySchool(schoolId, queryFilters, effectivePage, PAGE_SIZE),
+    { keepPreviousData: true },
+  );
+  const { data: sections = [] } = useSWR(
+    schoolId ? ["console:student-sections", schoolId] : null,
+    () => getStudentSectionsBySchool(schoolId),
+  );
+
+  // Warm the cache for the next page in the background so hitting "Next"
+  // usually shows data immediately instead of waiting on a fresh request.
+  useEffect(() => {
+    if (!schoolId || !pageData || effectivePage >= pageData.totalPages) return;
+    const nextPage = effectivePage + 1;
+    preload(["console:students", schoolId, filtersKey, nextPage], () =>
+      getStudentsPageBySchool(schoolId, queryFilters, nextPage, PAGE_SIZE),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [schoolId, filtersKey, effectivePage, pageData?.totalPages]);
 
   const [addOpen, setAddOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
 
-  useEffect(() => {
-    getSchools().then((schools) => {
-      if (schools.length > 0) setSchoolId(schools[0].id);
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!schoolId) return;
-    getClassLevelsBySchool(schoolId).then(setClassLevels);
-  }, [schoolId]);
-
-  const refresh = useCallback(() => {
-    if (!schoolId) return;
-    setStudents(null);
-    getStudentsBySchool(schoolId).then(setStudents);
-  }, [schoolId]);
-
-  useEffect(() => {
-    if (!schoolId) return;
-    getStudentsBySchool(schoolId).then(setStudents);
-  }, [schoolId]);
+  const onClassLevelsChange = classLevelsCacheUpdater(mutateClassLevels);
 
   const classLabelById = new Map(
     classLevels.map((level) => [level.id, level.label]),
   );
 
-  const sections = Array.from(
-    new Set((students ?? []).map((s) => s.section).filter((s): s is string => Boolean(s))),
-  ).sort();
-
-  const filteredStudents = (students ?? []).filter((student) => {
-    const search = filters.search.trim().toLowerCase();
-    if (
-      search &&
-      !student.name.toLowerCase().includes(search) &&
-      !student.registerNumber.toLowerCase().includes(search)
-    )
-      return false;
-    if (filters.classLevelId !== ALL_VALUE && student.classLevelId !== filters.classLevelId) return false;
-    if (filters.section !== ALL_VALUE && student.section !== filters.section) return false;
-    if (filters.gender !== ALL_VALUE && student.gender !== filters.gender) return false;
-    if (filters.firstLanguage !== ALL_VALUE && firstLanguageOf(student) !== filters.firstLanguage) return false;
-    if (filters.secondLanguage !== ALL_VALUE && secondLanguageOf(student) !== filters.secondLanguage) return false;
-    if (filters.stream !== ALL_VALUE && student.stream !== filters.stream) return false;
-    if (filters.elective !== ALL_VALUE && student.elective !== filters.elective) return false;
-    return true;
-  });
+  const students = pageData?.students ?? null;
+  const totalCount = pageData?.totalCount ?? 0;
+  const totalPages = pageData?.totalPages ?? 1;
+  const hasActiveFilters =
+    filters.search.trim() !== "" ||
+    Object.entries(filters).some(([key, value]) => key !== "search" && value !== ALL_VALUE);
 
   return (
     <div className="space-y-6">
@@ -833,20 +856,24 @@ export default function StudentsManagerPage() {
           />
           {students !== null ? (
             <p className="text-sm text-sub">
-              {filteredStudents.length} of {students.length} students
+              {totalCount === 0
+                ? "0 students"
+                : `${(effectivePage - 1) * PAGE_SIZE + 1}–${Math.min(effectivePage * PAGE_SIZE, totalCount)} of ${totalCount} students`}
             </p>
           ) : null}
           {students === null ? (
             <ConsoleListSkeleton />
-          ) : filteredStudents.length === 0 ? (
+          ) : students.length === 0 ? (
             <p className="rounded-xl border border-line/60 py-10 text-center text-sm text-sub">
-              {students.length === 0
+              {!hasActiveFilters
                 ? "No students yet — add one or bulk-upload a class list."
                 : "No students match these filters."}
             </p>
           ) : (
-            <div className="space-y-2">
-              {filteredStudents.map((student) => (
+            <div
+              className={`space-y-2 transition-opacity ${studentsValidating ? "opacity-60" : ""}`}
+            >
+              {students.map((student) => (
                 <StudentRow
                   key={student.id}
                   student={student}
@@ -855,6 +882,33 @@ export default function StudentsManagerPage() {
               ))}
             </div>
           )}
+          {students !== null && totalPages > 1 ? (
+            <div className="flex items-center justify-between gap-3 pt-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                disabled={effectivePage <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                <ChevronLeft className="size-4" />
+                Previous
+              </Button>
+              <p className="text-xs text-sub">
+                Page {effectivePage} of {totalPages}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                disabled={effectivePage >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              >
+                Next
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
@@ -867,10 +921,10 @@ export default function StudentsManagerPage() {
             <AddStudentForm
               schoolId={schoolId}
               classLevels={classLevels}
-              onClassLevelsChange={setClassLevels}
+              onClassLevelsChange={onClassLevelsChange}
               onDone={() => {
                 setAddOpen(false);
-                refresh();
+                mutateStudents();
               }}
             />
           ) : null}
@@ -888,7 +942,7 @@ export default function StudentsManagerPage() {
               classLevels={classLevels}
               onDone={() => {
                 setBulkOpen(false);
-                refresh();
+                mutateStudents();
               }}
             />
           ) : null}

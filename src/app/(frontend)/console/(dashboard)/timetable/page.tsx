@@ -1,8 +1,9 @@
 "use client";
 
 import { Loader2, Plus, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
+import useSWR from "swr";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,14 +17,9 @@ import {
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  createTimetable,
-  getClassLevelsBySchool,
-  getSchools,
-  getTimetableByClassLevel,
-  updateTimetable,
-} from "@/lib/data-source";
-import type { ClassLevel, Timetable, TimetableNote, TimetablePeriod } from "@/types";
+import { createTimetable, getTimetableByClassLevel, updateTimetable } from "@/lib/data-source";
+import { useClassLevels, useConsoleSchoolId } from "@/lib/hooks/console-data";
+import type { Timetable, TimetableNote, TimetablePeriod } from "@/types";
 
 const DAY_COLUMNS: { key: keyof Omit<TimetablePeriod, "label">; label: string }[] = [
   { key: "monday", label: "Mon" },
@@ -43,40 +39,39 @@ function emptyNote(): TimetableNote {
 }
 
 export default function TimetableManagerPage() {
-  const [schoolId, setSchoolId] = useState("");
-  const [classLevels, setClassLevels] = useState<ClassLevel[]>([]);
+  const schoolId = useConsoleSchoolId();
+  const { classLevels } = useClassLevels(schoolId);
   const [classLevelId, setClassLevelId] = useState("");
+  const effectiveClassLevelId = classLevelId || classLevels[0]?.id || "";
 
+  // revalidateOnFocus disabled here — the fetched timetable seeds locally
+  // editable form state (periods/notes) below, and a background refetch on
+  // tab focus would silently overwrite whatever the user is mid-editing.
+  const { data: timetableData, mutate: mutateTimetable } = useSWR(
+    schoolId && effectiveClassLevelId
+      ? ["console:timetable", schoolId, effectiveClassLevelId]
+      : null,
+    () => getTimetableByClassLevel(schoolId, effectiveClassLevelId),
+    { revalidateOnFocus: false },
+  );
   // undefined = still loading this class's timetable; null = confirmed none exists yet.
-  const [existing, setExisting] = useState<Timetable | null | undefined>(undefined);
+  const existing = timetableData;
   const [periods, setPeriods] = useState<TimetablePeriod[]>([]);
   const [notes, setNotes] = useState<TimetableNote[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState(false);
 
-  useEffect(() => {
-    getSchools().then((schools) => {
-      if (schools.length > 0) setSchoolId(schools[0].id);
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!schoolId) return;
-    getClassLevelsBySchool(schoolId).then((result) => {
-      setClassLevels(result);
-      if (result.length > 0) setClassLevelId(result[0].id);
-    });
-  }, [schoolId]);
-
-  useEffect(() => {
-    if (!schoolId || !classLevelId) return;
-    getTimetableByClassLevel(schoolId, classLevelId).then((timetable) => {
-      setExisting(timetable);
-      setSavedMessage(false);
-      setPeriods(timetable?.periods ?? []);
-      setNotes(timetable?.notes ?? []);
-    });
-  }, [schoolId, classLevelId]);
+  // Seeds the editable periods/notes state from the fetched timetable once
+  // per class switch — an in-render state adjustment (React's recommended
+  // alternative to an effect for "reset state when a prop changes") so it
+  // doesn't re-run and clobber in-progress edits on every SWR revalidation.
+  const [seededFor, setSeededFor] = useState<string | null>(null);
+  if (timetableData !== undefined && seededFor !== effectiveClassLevelId) {
+    setSeededFor(effectiveClassLevelId);
+    setPeriods(timetableData?.periods ?? []);
+    setNotes(timetableData?.notes ?? []);
+    setSavedMessage(false);
+  }
 
   function updatePeriodField(index: number, field: keyof TimetablePeriod, value: string) {
     setPeriods((rows) => rows.map((row, i) => (i === index ? { ...row, [field]: value } : row)));
@@ -92,10 +87,15 @@ export default function TimetableManagerPage() {
     const cleanPeriods = periods.filter((p) => p.label.trim());
     if (existing) {
       const updated = await updateTimetable(existing.id, { periods: cleanPeriods, notes });
-      setExisting(updated);
+      mutateTimetable(updated, { revalidate: false });
     } else {
-      const created = await createTimetable({ schoolId, classLevelId, periods: cleanPeriods, notes });
-      setExisting(created);
+      const created = await createTimetable({
+        schoolId,
+        classLevelId: effectiveClassLevelId,
+        periods: cleanPeriods,
+        notes,
+      });
+      mutateTimetable(created, { revalidate: false });
     }
     setPeriods(cleanPeriods);
     setIsSaving(false);
@@ -103,7 +103,7 @@ export default function TimetableManagerPage() {
     toast.success("Timetable saved");
   }
 
-  const selectedClassLabel = classLevels.find((level) => level.id === classLevelId)?.label ?? "";
+  const selectedClassLabel = classLevels.find((level) => level.id === effectiveClassLevelId)?.label ?? "";
 
   return (
     <div className="space-y-6">
@@ -117,7 +117,7 @@ export default function TimetableManagerPage() {
 
       <div className="max-w-xs space-y-2">
         <Label>Class</Label>
-        <Select value={classLevelId} onValueChange={setClassLevelId}>
+        <Select value={effectiveClassLevelId} onValueChange={setClassLevelId}>
           <SelectTrigger className="w-full">
             <SelectValue />
           </SelectTrigger>
@@ -131,7 +131,7 @@ export default function TimetableManagerPage() {
         </Select>
       </div>
 
-      {schoolId && classLevelId && existing !== undefined ? (
+      {schoolId && effectiveClassLevelId && existing !== undefined ? (
         <>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">

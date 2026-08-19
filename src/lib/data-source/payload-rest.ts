@@ -52,6 +52,68 @@ export async function payloadFind<T>(
   return data.docs;
 }
 
+export interface PayloadPage<T> {
+  docs: T[];
+  totalDocs: number;
+  page: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+
+/** Recursively flattens a Payload `where` clause object into bracket-notation query params, e.g. `{ and: [{ school: { equals: "x" } }] }` -> `where[and][0][school][equals]=x`. */
+function appendWhereParams(search: URLSearchParams, prefix: string, value: unknown): void {
+  if (value === undefined || value === null) return;
+  if (Array.isArray(value)) {
+    value.forEach((item, i) => appendWhereParams(search, `${prefix}[${i}]`, item));
+  } else if (typeof value === "object") {
+    Object.entries(value as Record<string, unknown>).forEach(([key, v]) => {
+      appendWhereParams(search, `${prefix}[${key}]`, v);
+    });
+  } else {
+    search.set(prefix, String(value));
+  }
+}
+
+/**
+ * Paginated + filtered variant of payloadFind, for collections that can grow
+ * large (students, receipts) — server does the filtering (via a Payload
+ * `where` clause, including dot-path relation queries like
+ * `{ "order.paymentMethod": { equals: "upi" } }`) and the paging, so the
+ * client only ever transfers one page of results instead of the whole
+ * collection.
+ */
+export async function payloadFindPage<T>(
+  collection: string,
+  options: {
+    where?: Record<string, unknown>;
+    page?: number;
+    limit?: number;
+    sort?: string;
+    depth?: number;
+  } = {},
+): Promise<PayloadPage<T>> {
+  const search = new URLSearchParams();
+  search.set("depth", String(options.depth ?? 0));
+  search.set("limit", String(options.limit ?? 20));
+  search.set("page", String(options.page ?? 1));
+  if (options.sort) search.set("sort", options.sort);
+  if (options.where) appendWhereParams(search, "where", options.where);
+  const res = await fetch(`${API_BASE}/${collection}?${search.toString()}`, { cache: "no-store" });
+  if (!res.ok) {
+    return { docs: [], totalDocs: 0, page: 1, totalPages: 0, hasNextPage: false, hasPrevPage: false };
+  }
+  const data = (await res.json()) as PayloadPage<T> & PayloadListResponse<T>;
+  return {
+    docs: data.docs,
+    totalDocs: data.totalDocs,
+    page: data.page,
+    totalPages: data.totalPages,
+    hasNextPage: data.hasNextPage,
+    hasPrevPage: data.hasPrevPage,
+  };
+}
+
 export async function payloadFindById<T>(collection: string, id: string, depth = 0): Promise<T | null> {
   const res = await fetch(`${API_BASE}/${collection}/${id}?depth=${depth}`, { cache: "no-store" });
   if (!res.ok) return null;

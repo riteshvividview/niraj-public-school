@@ -3,8 +3,9 @@
 import { ArrowLeft, KeyRound, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
+import useSWR from "swr";
 import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { ConsoleListSkeleton } from "@/components/shared/console-list-skeleton";
 import { StatusBadge, toBadgeStatus } from "@/components/shared/status-badge";
@@ -19,13 +20,9 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { deriveReceiptTitle } from "@/lib/cart-items";
-import {
-  deleteStudent,
-  getClassLevelsBySchool,
-  getReceiptsByUser,
-  getUserProfileById,
-} from "@/lib/data-source";
+import { deleteStudent, getReceiptsByUser, getUserProfileById } from "@/lib/data-source";
 import { formatDate, formatTime } from "@/lib/format";
+import { classLevelsCacheUpdater, useClassLevels } from "@/lib/hooks/console-data";
 import {
   EditStudentForm,
   electiveLabel,
@@ -33,7 +30,7 @@ import {
   ResetPasswordForm,
   secondLanguageOf,
 } from "../_components/student-shared";
-import type { ClassLevel, ReceiptRecord, UserProfile } from "@/types";
+import type { ReceiptRecord } from "@/types";
 
 const RECEIPT_TITLE_LABELS = {
   books: "Books",
@@ -107,29 +104,22 @@ export default function StudentDetailPage() {
   const router = useRouter();
   const studentId = params.id;
 
-  const [student, setStudent] = useState<UserProfile | null | undefined>(undefined);
-  const [classLevels, setClassLevels] = useState<ClassLevel[]>([]);
-  const [receipts, setReceipts] = useState<ReceiptRecord[] | null>(null);
+  const {
+    data: student,
+    mutate: mutateStudent,
+  } = useSWR(["console:student", studentId], () => getUserProfileById(studentId));
+  const { classLevels, mutateClassLevels } = useClassLevels(student?.schoolId ?? "");
+  const { data: receiptsData } = useSWR(["console:student-receipts", studentId], () =>
+    getReceiptsByUser(studentId),
+  );
+  const receipts = receiptsData ?? null;
 
   const [editOpen, setEditOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const refreshStudent = useCallback(() => {
-    getUserProfileById(studentId).then((profile) => {
-      setStudent(profile);
-      if (profile) getClassLevelsBySchool(profile.schoolId).then(setClassLevels);
-    });
-  }, [studentId]);
-
-  useEffect(() => {
-    refreshStudent();
-  }, [refreshStudent]);
-
-  useEffect(() => {
-    getReceiptsByUser(studentId).then(setReceipts);
-  }, [studentId]);
+  const onClassLevelsChange = classLevelsCacheUpdater(mutateClassLevels);
 
   async function handleDelete() {
     setIsDeleting(true);
@@ -262,10 +252,10 @@ export default function StudentDetailPage() {
                 <EditStudentForm
                   student={student}
                   classLevels={classLevels}
-                  onClassLevelsChange={setClassLevels}
+                  onClassLevelsChange={onClassLevelsChange}
                   onDone={() => {
                     setEditOpen(false);
-                    refreshStudent();
+                    mutateStudent();
                   }}
                 />
               ) : null}

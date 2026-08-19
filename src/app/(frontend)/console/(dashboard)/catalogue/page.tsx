@@ -1,8 +1,9 @@
 "use client";
 
 import { Plus, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
+import useSWR from "swr";
 import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,18 +39,16 @@ import {
   deleteStationeryItem,
   deleteUniformItem,
   getBooksByClass,
-  getClassLevelsBySchool,
-  getSchools,
   getStationeryItemsByClass,
   getUniformItemsByClass,
   updateBook,
   updateStationeryItem,
   updateUniformItem,
 } from "@/lib/data-source";
+import { useClassLevels, useConsoleSchoolId } from "@/lib/hooks/console-data";
 import type {
   AcademicLanguage,
   Book,
-  ClassLevel,
   Elective,
   StationeryItem,
   Stream,
@@ -265,18 +264,14 @@ function BooksManager({
   schoolId: string;
   classLevelId: string;
 }) {
-  const [books, setBooks] = useState<Book[] | null>(null);
+  const { data: booksData, mutate: refresh } = useSWR(
+    ["console:books", schoolId, classLevelId],
+    () => getBooksByClass(schoolId, classLevelId),
+  );
+  const books = booksData ?? null;
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Book | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Book | null>(null);
-
-  const refresh = useCallback(() => {
-    getBooksByClass(schoolId, classLevelId).then(setBooks);
-  }, [schoolId, classLevelId]);
-
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
 
   async function handleDelete() {
     if (!deleteTarget) return;
@@ -511,18 +506,14 @@ function StationeryManager({
   schoolId: string;
   classLevelId: string;
 }) {
-  const [items, setItems] = useState<StationeryItem[] | null>(null);
+  const { data: itemsData, mutate: refresh } = useSWR(
+    ["console:stationery", schoolId, classLevelId],
+    () => getStationeryItemsByClass(schoolId, classLevelId),
+  );
+  const items = itemsData ?? null;
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<StationeryItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<StationeryItem | null>(null);
-
-  const refresh = useCallback(() => {
-    getStationeryItemsByClass(schoolId, classLevelId).then(setItems);
-  }, [schoolId, classLevelId]);
-
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
 
   async function handleDelete() {
     if (!deleteTarget) return;
@@ -828,18 +819,14 @@ function UniformManager({
   schoolId: string;
   classLevelId: string;
 }) {
-  const [items, setItems] = useState<UniformItem[] | null>(null);
+  const { data: itemsData, mutate: refresh } = useSWR(
+    ["console:uniform", schoolId, classLevelId],
+    () => getUniformItemsByClass(schoolId, classLevelId),
+  );
+  const items = itemsData ?? null;
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<UniformItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<UniformItem | null>(null);
-
-  const refresh = useCallback(() => {
-    getUniformItemsByClass(schoolId, classLevelId).then(setItems);
-  }, [schoolId, classLevelId]);
-
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
 
   async function handleDelete() {
     if (!deleteTarget) return;
@@ -945,23 +932,10 @@ function UniformManager({
 // --- Page ---------------------------------------------------------------
 
 export default function CatalogueManagerPage() {
-  const [schoolId, setSchoolId] = useState<string>("");
-  const [classLevels, setClassLevels] = useState<ClassLevel[]>([]);
+  const schoolId = useConsoleSchoolId();
+  const { classLevels } = useClassLevels(schoolId);
   const [classLevelId, setClassLevelId] = useState<string>("");
-
-  useEffect(() => {
-    getSchools().then((schools) => {
-      if (schools.length > 0) setSchoolId(schools[0].id);
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!schoolId) return;
-    getClassLevelsBySchool(schoolId).then((result) => {
-      setClassLevels(result);
-      if (result.length > 0) setClassLevelId(result[0].id);
-    });
-  }, [schoolId]);
+  const effectiveClassLevelId = classLevelId || classLevels[0]?.id || "";
 
   return (
     <div className="space-y-6">
@@ -978,7 +952,7 @@ export default function CatalogueManagerPage() {
 
       <div className="max-w-xs space-y-2">
         <Label>Class</Label>
-        <Select value={classLevelId} onValueChange={setClassLevelId}>
+        <Select value={effectiveClassLevelId} onValueChange={setClassLevelId}>
           <SelectTrigger className="w-full">
             <SelectValue />
           </SelectTrigger>
@@ -992,11 +966,11 @@ export default function CatalogueManagerPage() {
         </Select>
       </div>
 
-      {schoolId && classLevelId ? (
+      {schoolId && effectiveClassLevelId ? (
         <div className="space-y-6">
-          <BooksManager schoolId={schoolId} classLevelId={classLevelId} />
-          <UniformManager schoolId={schoolId} classLevelId={classLevelId} />
-          <StationeryManager schoolId={schoolId} classLevelId={classLevelId} />
+          <BooksManager schoolId={schoolId} classLevelId={effectiveClassLevelId} />
+          <UniformManager schoolId={schoolId} classLevelId={effectiveClassLevelId} />
+          <StationeryManager schoolId={schoolId} classLevelId={effectiveClassLevelId} />
         </div>
       ) : null}
     </div>

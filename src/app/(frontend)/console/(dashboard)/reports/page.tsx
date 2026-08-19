@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import useSWR from "swr";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConsoleStatSkeleton } from "@/components/shared/console-list-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
-import { groupItemsByKind } from "@/lib/cart-items";
-import { getReceiptsBySchool, getSchools } from "@/lib/data-source";
-import type { ReceiptRecord } from "@/types";
+import { getReceiptStatsBySchool } from "@/lib/data-source";
+import { useConsoleSchoolId } from "@/lib/hooks/console-data";
 
 function StatTile({ label, value }: { label: string; value: string }) {
   return (
@@ -18,43 +17,10 @@ function StatTile({ label, value }: { label: string; value: string }) {
 }
 
 export default function ReportsPage() {
-  const [records, setRecords] = useState<ReceiptRecord[] | null>(null);
-
-  useEffect(() => {
-    getSchools().then((schools) => {
-      if (schools.length > 0) getReceiptsBySchool(schools[0].id).then(setRecords);
-      else setRecords([]);
-    });
-  }, []);
-
-  const stats = useMemo(() => {
-    const list = records ?? [];
-    const totalRevenue = list.reduce((sum, r) => sum + r.order.totalAmount, 0);
-    const redeemed = list.filter((r) => r.receipt.redemptionStatus !== "ready").length;
-    const pending = list.length - redeemed;
-
-    const categoryRevenue = {
-      books: 0,
-      uniform: 0,
-      stationery: 0,
-      programs: 0,
-    };
-    list.forEach((r) => {
-      const grouped = groupItemsByKind(r.order.items);
-      categoryRevenue.books += grouped.books.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
-      categoryRevenue.uniform += grouped.uniform.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
-      categoryRevenue.stationery += grouped.stationery.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
-      categoryRevenue.programs += grouped.programs.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
-    });
-
-    return {
-      totalRevenue,
-      redeemed,
-      pending,
-      categoryRevenue,
-      totalOrders: list.length,
-    };
-  }, [records]);
+  const schoolId = useConsoleSchoolId();
+  const { data: stats } = useSWR(schoolId ? ["console:receipt-stats", schoolId] : null, () =>
+    getReceiptStatsBySchool(schoolId),
+  );
 
   return (
     <div className="space-y-6">
@@ -66,7 +32,7 @@ export default function ReportsPage() {
         </p>
       </div>
 
-      {records === null ? (
+      {!stats ? (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <ConsoleStatSkeleton />
           <ConsoleStatSkeleton />
@@ -87,7 +53,7 @@ export default function ReportsPage() {
           <CardTitle>Revenue by category</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {records === null ? (
+          {!stats ? (
             <div className="space-y-4">
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-full" />

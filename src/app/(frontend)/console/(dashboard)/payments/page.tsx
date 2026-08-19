@@ -1,7 +1,8 @@
 "use client";
 
-import { Download } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, Download, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import useSWR, { preload } from "swr";
 import { ConsoleListSkeleton } from "@/components/shared/console-list-skeleton";
 import { StatusBadge, toBadgeStatus } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
@@ -16,9 +17,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { deriveReceiptTitle } from "@/lib/cart-items";
-import { getClassLevelsBySchool, getPaymentsBySchool, getSchools } from "@/lib/data-source";
+import { getPaymentsPageBySchool, type PaymentPageFilters } from "@/lib/data-source";
 import { formatDate, formatTime } from "@/lib/format";
-import type { ClassLevel, PaymentRecord } from "@/types";
+import { useClassLevels, useConsoleSchoolId } from "@/lib/hooks/console-data";
+import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
+import type { Order, PaymentRecord, RedemptionStatus } from "@/types";
 
 const RECEIPT_TITLE_LABELS = {
   books: "Books",
@@ -50,13 +53,6 @@ const EMPTY_FILTERS: PaymentFilters = {
 
 function toCsv(rows: string[][]): string {
   return rows.map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(",")).join("\n");
-}
-
-function matchesDateRange(isoDate: string, fromDate: string, toDate: string): boolean {
-  const day = isoDate.slice(0, 10);
-  if (fromDate && day < fromDate) return false;
-  if (toDate && day > toDate) return false;
-  return true;
 }
 
 function PaymentCard({ record, classLabel }: { record: PaymentRecord; classLabel: string }) {
@@ -123,52 +119,60 @@ function PaymentCard({ record, classLabel }: { record: PaymentRecord; classLabel
   );
 }
 
+const PAGE_SIZE = 20;
+
 export default function PaymentsPage() {
-  const [schoolId, setSchoolId] = useState("");
-  const [classLevels, setClassLevels] = useState<ClassLevel[]>([]);
-  const [records, setRecords] = useState<PaymentRecord[] | null>(null);
+  const schoolId = useConsoleSchoolId();
+  const { classLevels } = useClassLevels(schoolId);
   const [filters, setFilters] = useState<PaymentFilters>(EMPTY_FILTERS);
+  const debouncedSearch = useDebouncedValue(filters.search, 300);
+  const [page, setPage] = useState(1);
+  const [isExporting, setIsExporting] = useState(false);
 
-  useEffect(() => {
-    getSchools().then((schools) => {
-      if (schools.length > 0) setSchoolId(schools[0].id);
-      else setRecords([]);
-    });
-  }, []);
+  const queryFilters: PaymentPageFilters = {
+    search: debouncedSearch.trim() || undefined,
+    classLevelId: filters.classLevelId !== ALL_VALUE ? filters.classLevelId : undefined,
+    redemptionStatus: filters.redemptionStatus !== ALL_VALUE ? (filters.redemptionStatus as RedemptionStatus) : undefined,
+    paymentMethod: filters.paymentMethod !== ALL_VALUE ? (filters.paymentMethod as Order["paymentMethod"]) : undefined,
+    fromDate: filters.fromDate || undefined,
+    toDate: filters.toDate || undefined,
+  };
 
+  // Reset to page 1 whenever the effective query changes — an in-render
+  // state adjustment (not an effect) so it can't fire an extra render cycle.
+  const filtersKey = JSON.stringify(queryFilters);
+  const [seenFiltersKey, setSeenFiltersKey] = useState(filtersKey);
+  if (filtersKey !== seenFiltersKey) {
+    setSeenFiltersKey(filtersKey);
+    setPage(1);
+  }
+  const effectivePage = filtersKey === seenFiltersKey ? page : 1;
+
+  const { data: pageData, isValidating: paymentsValidating } = useSWR(
+    schoolId ? ["console:payments", schoolId, filtersKey, effectivePage] : null,
+    () => getPaymentsPageBySchool(schoolId, queryFilters, effectivePage, PAGE_SIZE),
+    { keepPreviousData: true },
+  );
+  const records = pageData?.records ?? null;
+  const totalCount = pageData?.totalCount ?? 0;
+  const totalPages = pageData?.totalPages ?? 1;
+
+  // Warm the cache for the next page in the background so hitting "Next"
+  // usually shows data immediately instead of waiting on a fresh request.
   useEffect(() => {
-    if (!schoolId) return;
-    getClassLevelsBySchool(schoolId).then(setClassLevels);
-    getPaymentsBySchool(schoolId).then(setRecords);
-  }, [schoolId]);
+    if (!schoolId || !pageData || effectivePage >= pageData.totalPages) return;
+    const nextPage = effectivePage + 1;
+    preload(["console:payments", schoolId, filtersKey, nextPage], () =>
+      getPaymentsPageBySchool(schoolId, queryFilters, nextPage, PAGE_SIZE),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [schoolId, filtersKey, effectivePage, pageData?.totalPages]);
 
   const classLabelById = new Map(classLevels.map((level) => [level.id, level.label]));
 
   function set<K extends keyof PaymentFilters>(key: K, value: PaymentFilters[K]) {
     setFilters((f) => ({ ...f, [key]: value }));
   }
-
-  const filteredRecords = (records ?? []).filter((record) => {
-    const search = filters.search.trim().toLowerCase();
-    if (
-      search &&
-      !record.studentName.toLowerCase().includes(search) &&
-      !record.registerNumber.toLowerCase().includes(search) &&
-      !record.receipt.qrPayload.toLowerCase().includes(search)
-    )
-      return false;
-    if (filters.classLevelId !== ALL_VALUE && record.classLevelId !== filters.classLevelId) return false;
-    if (filters.redemptionStatus !== ALL_VALUE && record.receipt.redemptionStatus !== filters.redemptionStatus)
-      return false;
-    if (filters.paymentMethod !== ALL_VALUE && record.order.paymentMethod !== filters.paymentMethod) return false;
-    if (!matchesDateRange(record.receipt.issuedAt, filters.fromDate, filters.toDate)) return false;
-    return true;
-  });
-
-  const totalAmount = useMemo(
-    () => filteredRecords.reduce((sum, r) => sum + r.order.totalAmount, 0),
-    [filteredRecords],
-  );
 
   const hasActiveFilters =
     filters.search.trim() !== "" ||
@@ -178,71 +182,79 @@ export default function PaymentsPage() {
     filters.fromDate !== "" ||
     filters.toDate !== "";
 
-  function handleExport() {
-    const rows: string[][] = [
-      [
-        "Receipt Code",
-        "Receipt Title",
-        "Student Name",
-        "Register Number",
-        "Class",
-        "Section",
-        "Item Name",
-        "Item Kind",
-        "Item Meta",
-        "Quantity",
-        "Unit Price",
-        "Line Total",
-        "Order Total",
-        "Payment Method",
-        "Order Status",
-        "Redemption Status",
-        "Issued Date",
-        "Issued Time",
-        "Redeemed Date",
-        "Redeemed Time",
-        "Order ID",
-        "Receipt ID",
-      ],
-    ];
-    filteredRecords.forEach((record) => {
-      const title = deriveReceiptTitle(record.order.items, RECEIPT_TITLE_LABELS);
-      const classLabel = classLabelById.get(record.classLevelId) ?? "";
-      record.order.items.forEach((item) => {
-        rows.push([
-          record.receipt.qrPayload,
-          title,
-          record.studentName,
-          record.registerNumber,
-          classLabel,
-          record.section ?? "",
-          item.label,
-          item.kind,
-          item.meta ?? "",
-          String(item.quantity),
-          String(item.unitPrice),
-          String(item.unitPrice * item.quantity),
-          String(record.order.totalAmount),
-          record.order.paymentMethod,
-          record.order.status,
-          record.receipt.redemptionStatus,
-          formatDate(record.receipt.issuedAt),
-          formatTime(record.receipt.issuedAt),
-          record.receipt.redeemedAt ? formatDate(record.receipt.redeemedAt) : "",
-          record.receipt.redeemedAt ? formatTime(record.receipt.redeemedAt) : "",
-          record.order.id,
-          record.receipt.id,
-        ]);
+  /** Exports every record matching the current filters, not just the visible page — a separate on-demand fetch, since the visible list is paginated. */
+  async function handleExport() {
+    setIsExporting(true);
+    try {
+      const { records: allRecords } = await getPaymentsPageBySchool(schoolId, queryFilters, 1, 5000);
+      const rows: string[][] = [
+        [
+          "Receipt Code",
+          "Receipt Title",
+          "Student Name",
+          "Register Number",
+          "Class",
+          "Section",
+          "Item Name",
+          "Item Kind",
+          "Item Meta",
+          "Quantity",
+          "Unit Price",
+          "Line Total",
+          "Order Total",
+          "Payment Method",
+          "Order Status",
+          "Redemption Status",
+          "Issued Date",
+          "Issued Time",
+          "Redeemed Date",
+          "Redeemed Time",
+          "Order ID",
+          "Receipt ID",
+        ],
+      ];
+      allRecords.forEach((record) => {
+        const title = deriveReceiptTitle(record.order.items, RECEIPT_TITLE_LABELS);
+        const classLabel = classLabelById.get(record.classLevelId) ?? "";
+        record.order.items.forEach((item) => {
+          rows.push([
+            record.receipt.qrPayload,
+            title,
+            record.studentName,
+            record.registerNumber,
+            classLabel,
+            record.section ?? "",
+            item.label,
+            item.kind,
+            item.meta ?? "",
+            String(item.quantity),
+            String(item.unitPrice),
+            String(item.unitPrice * item.quantity),
+            String(record.order.totalAmount),
+            record.order.paymentMethod,
+            record.order.status,
+            record.receipt.redemptionStatus,
+            formatDate(record.receipt.issuedAt),
+            formatTime(record.receipt.issuedAt),
+            record.receipt.redeemedAt ? formatDate(record.receipt.redeemedAt) : "",
+            record.receipt.redeemedAt ? formatTime(record.receipt.redeemedAt) : "",
+            record.order.id,
+            record.receipt.id,
+          ]);
+        });
       });
-    });
-    const blob = new Blob([toCsv(rows)], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    const suffix = filters.fromDate || filters.toDate ? `-${filters.fromDate || "start"}-to-${filters.toDate || "now"}` : "";
-    link.download = `payments${suffix}-${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+      const blob = new Blob([toCsv(rows)], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      const suffix =
+        filters.fromDate || filters.toDate ? `-${filters.fromDate || "start"}-to-${filters.toDate || "now"}` : "";
+      link.download = `payments${suffix}-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setIsExporting(false);
+    }
   }
 
   return (
@@ -255,8 +267,8 @@ export default function PaymentsPage() {
             collection / check-in status.
           </p>
         </div>
-        <Button variant="outline" className="gap-2" disabled={!filteredRecords.length} onClick={handleExport}>
-          <Download className="size-4" />
+        <Button variant="outline" className="gap-2" disabled={!totalCount || isExporting} onClick={handleExport}>
+          {isExporting ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
           Export CSV
         </Button>
       </div>
@@ -353,19 +365,23 @@ export default function PaymentsPage() {
 
           {records !== null ? (
             <p className="text-sm text-sub">
-              {filteredRecords.length} of {records.length} payments · ₹{totalAmount.toLocaleString("en-IN")}
+              {totalCount === 0
+                ? "0 payments"
+                : `${(effectivePage - 1) * PAGE_SIZE + 1}–${Math.min(effectivePage * PAGE_SIZE, totalCount)} of ${totalCount} payments`}
             </p>
           ) : null}
 
           {records === null ? (
             <ConsoleListSkeleton />
-          ) : filteredRecords.length === 0 ? (
+          ) : records.length === 0 ? (
             <p className="rounded-xl border border-line/60 py-10 text-center text-sm text-sub">
-              {records.length === 0 ? "No payments recorded yet." : "No payments match these filters."}
+              {!hasActiveFilters ? "No payments recorded yet." : "No payments match these filters."}
             </p>
           ) : (
-            <div className="space-y-2">
-              {filteredRecords.map((record) => (
+            <div
+              className={`space-y-2 transition-opacity ${paymentsValidating ? "opacity-60" : ""}`}
+            >
+              {records.map((record) => (
                 <PaymentCard
                   key={record.receipt.id}
                   record={record}
@@ -374,6 +390,33 @@ export default function PaymentsPage() {
               ))}
             </div>
           )}
+          {records !== null && totalPages > 1 ? (
+            <div className="flex items-center justify-between gap-3 pt-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                disabled={effectivePage <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                <ChevronLeft className="size-4" />
+                Previous
+              </Button>
+              <p className="text-xs text-sub">
+                Page {effectivePage} of {totalPages}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                disabled={effectivePage >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              >
+                Next
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
     </div>

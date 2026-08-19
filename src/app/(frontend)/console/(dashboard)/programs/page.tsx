@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
+import useSWR from "swr";
 import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { StatusBadge, toBadgeStatus } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
@@ -27,13 +28,12 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   createProgram,
   deleteProgram,
-  getClassLevelsBySchool,
   getPrograms,
-  getSchools,
   setProgramStatus,
   updateProgram,
 } from "@/lib/data-source";
-import type { ClassLevel, Program } from "@/types";
+import { useClassLevels, useConsoleSchoolId } from "@/lib/hooks/console-data";
+import type { Program } from "@/types";
 
 const SUGGESTED_CATEGORIES = ["Workshop", "Sports", "Camp", "Annual Day", "Exhibition", "Extra Class"];
 
@@ -56,14 +56,10 @@ function ProgramForm({
     editing?.seatsTotal !== undefined ? String(editing.seatsTotal) : "",
   );
   const [contactPhone, setContactPhone] = useState(editing?.contactPhone ?? "");
-  const [classLevels, setClassLevels] = useState<ClassLevel[]>([]);
+  const { classLevels } = useClassLevels(schoolId);
   const [eligibleClassLevelIds, setEligibleClassLevelIds] = useState<string[]>(
     editing?.eligibleClassLevelIds ?? [],
   );
-
-  useEffect(() => {
-    getClassLevelsBySchool(schoolId).then(setClassLevels);
-  }, [schoolId]);
 
   function toggleClassLevel(id: string) {
     setEligibleClassLevelIds((current) =>
@@ -265,26 +261,15 @@ function ProgramDialog({
 }
 
 export default function ProgramManagerPage() {
-  const [schoolId, setSchoolId] = useState<string>("");
-  const [programs, setPrograms] = useState<Program[] | null>(null);
+  const schoolId = useConsoleSchoolId();
+  const { data: programsData, mutate: refresh } = useSWR(
+    schoolId ? ["console:programs", schoolId] : null,
+    () => getPrograms({ schoolId }),
+  );
+  const programs = programsData ?? null;
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Program | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Program | null>(null);
-
-  useEffect(() => {
-    getSchools().then((schools) => {
-      if (schools.length > 0) setSchoolId(schools[0].id);
-    });
-  }, []);
-
-  const refresh = useCallback(() => {
-    if (!schoolId) return;
-    getPrograms({ schoolId }).then(setPrograms);
-  }, [schoolId]);
-
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
 
   async function handleDelete() {
     if (!deleteTarget) return;
