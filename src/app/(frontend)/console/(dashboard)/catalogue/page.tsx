@@ -144,7 +144,7 @@ function BookForm({
       </div>
       <div className="grid grid-cols-3 gap-3">
         <div className="space-y-2">
-          <Label>Language</Label>
+          <Label>2nd Language</Label>
           <Select
             value={language || NONE_VALUE}
             onValueChange={(v) => setLanguage(v === NONE_VALUE ? "" : (v as AcademicLanguage))}
@@ -302,7 +302,7 @@ function BooksManager({
               <TableRow>
                 <TableHead>Title</TableHead>
                 <TableHead>Subject</TableHead>
-                <TableHead>Language</TableHead>
+                <TableHead>2nd Language</TableHead>
                 <TableHead>Specialization 1</TableHead>
                 <TableHead>Specialization 2</TableHead>
                 <TableHead>Price</TableHead>
