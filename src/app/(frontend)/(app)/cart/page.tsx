@@ -66,7 +66,7 @@ export default function CartPage() {
 
   return (
     <>
-      <AppHeader title={t.cart.title} backHref="/essentials" showAvatar />
+      <AppHeader title={t.cart.title} backHref="/essentials" showAvatar hideCart />
       <div className="w-full space-y-4 p-4 pb-8 sm:space-y-5 sm:p-6 lg:p-8">
         {cart.count === 0 ? (
           <EmptyState

@@ -12,8 +12,14 @@ export interface ReceiptCardProps {
   /** Derived from what's actually in the order, e.g. "Books & Uniform Receipt" — see deriveReceiptTitle. */
   title: string;
   schoolName: string;
-  /** Every purchased line, shown itemized (name, meta, quantity, price). */
-  items: CartItem[];
+  /**
+   * Every purchased line, shown itemized (name, meta, quantity, price).
+   * Once persisted, order lines also carry `collectedAt` (null until
+   * marked collected at the counter) — shown as a small per-item
+   * collected/pending tag for non-program items when present, so a parent
+   * can see exactly what's already been picked up.
+   */
+  items: (CartItem & { collectedAt?: string | null })[];
   amount: number;
   date: string;
   /** Encoded into the QR code and shown as readable text — the receipt's short human code (see qrPayload). */
@@ -99,6 +105,11 @@ export function ReceiptCard({
                 {item.quantity > 1 ? (
                   <p className="text-xs text-sub">
                     {item.quantity} × {formatCurrencyINR(item.unitPrice, language)}
+                  </p>
+                ) : null}
+                {item.kind !== "program" && item.collectedAt !== undefined ? (
+                  <p className={cn("text-xs font-medium", item.collectedAt ? "text-section-essentials" : "text-sub")}>
+                    {item.collectedAt ? t.common.collected : t.common.pendingCollection}
                   </p>
                 ) : null}
               </div>

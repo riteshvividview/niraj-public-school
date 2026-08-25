@@ -187,6 +187,7 @@ export function EditStudentForm({
 }) {
   const [name, setName] = useState(student.name);
   const [mobileNumber, setMobileNumber] = useState(student.mobileNumber ?? "");
+  const [email, setEmail] = useState(student.email ?? "");
   const [classLevelId, setClassLevelId] = useState(student.classLevelId);
   const [section, setSection] = useState(student.section ?? "");
   const [gender, setGender] = useState<UserProfile["gender"] | "">(student.gender ?? "");
@@ -210,6 +211,7 @@ export function EditStudentForm({
       await updateStudent(student.id, {
         name: name.trim(),
         mobileNumber: mobileNumber.trim() || undefined,
+        email: email.trim() || undefined,
         classLevelId,
         section: section.trim() || undefined,
         gender: gender || undefined,
@@ -279,9 +281,21 @@ export function EditStudentForm({
         elective={elective}
         setElective={setElective}
       />
-      <div className="space-y-2">
-        <Label htmlFor="edit-mobile">Mobile number (optional)</Label>
-        <Input id="edit-mobile" value={mobileNumber} onChange={(e) => setMobileNumber(e.target.value)} />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="edit-mobile">Mobile number (optional)</Label>
+          <Input id="edit-mobile" value={mobileNumber} onChange={(e) => setMobileNumber(e.target.value)} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="edit-email">Email (optional)</Label>
+          <Input
+            id="edit-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="For order/OTP notifications"
+          />
+        </div>
       </div>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <DialogFooter>

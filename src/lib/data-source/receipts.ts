@@ -2,18 +2,22 @@ import { groupItemsByKind } from "@/lib/cart-items";
 import type { Order, PaymentRecord, Receipt, ReceiptRecord, RedemptionStatus } from "@/types";
 import { payloadCreate, payloadFind, payloadFindById, payloadFindPage, payloadUpdate } from "./payload-rest";
 
+interface PayloadOrderItem {
+  id: string;
+  kind: string;
+  refId: string;
+  label: string;
+  meta?: string | null;
+  unitPrice: number;
+  quantity: number;
+  collectedAt?: string | null;
+}
+
 interface PayloadOrderDoc {
   id: string;
   user: string;
   school: string;
-  items: {
-    kind: string;
-    refId: string;
-    label: string;
-    meta?: string | null;
-    unitPrice: number;
-    quantity: number;
-  }[];
+  items: PayloadOrderItem[];
   totalAmount: number;
   paymentMethod: Order["paymentMethod"];
   status: Order["status"];
@@ -50,13 +54,14 @@ function userId(user: string | PayloadUserRef): string {
 
 function toOrderItems(items: PayloadOrderDoc["items"]): Order["items"] {
   return items.map((item) => ({
-    id: `${item.kind}-${item.refId}`,
+    id: item.id,
     kind: item.kind as Order["items"][number]["kind"],
     refId: item.refId,
     label: item.label,
     meta: item.meta ?? undefined,
     unitPrice: item.unitPrice,
     quantity: item.quantity,
+    collectedAt: item.collectedAt ?? null,
   }));
 }
 

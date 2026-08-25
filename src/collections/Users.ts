@@ -36,6 +36,17 @@ export const Users: CollectionConfig = {
     { name: "name", type: "text", required: true },
     { name: "avatar", type: "upload", relationTo: "media" },
     { name: "mobileNumber", type: "text" },
+    // Contact address for notifications (order ready/collected, OTP) —
+    // distinct from the `username` auth field above, which stays the
+    // register number. Never used for login.
+    { name: "email", type: "email" },
+    // Change-password OTP state. Field-level read access is closed since
+    // the collection's own read access is wide open (see header comment)
+    // — only the OTP request/verify/reset routes (Local API, server-side)
+    // ever touch these.
+    { name: "otpCodeHash", type: "text", access: { read: () => false } },
+    { name: "otpExpiresAt", type: "date", access: { read: () => false } },
+    { name: "otpVerifiedAt", type: "date", access: { read: () => false } },
     {
       name: "role",
       type: "select",

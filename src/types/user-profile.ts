@@ -21,6 +21,8 @@ export interface UserProfile {
   registerNumber: string;
   avatarUrl?: string;
   mobileNumber?: string;
+  /** Contact address for notifications (order ready/collected, OTP) — never used for login. */
+  email?: string;
   role: UserRole;
   schoolId: string;
   classLevelId: string;

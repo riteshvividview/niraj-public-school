@@ -1,6 +1,6 @@
 import type { Order } from "./order";
 
-export type RedemptionStatus = "ready" | "collected" | "checked-in";
+export type RedemptionStatus = "ready" | "partially-collected" | "collected" | "checked-in";
 
 /** Mirrors the Payload `receipts` collection. */
 export interface Receipt {

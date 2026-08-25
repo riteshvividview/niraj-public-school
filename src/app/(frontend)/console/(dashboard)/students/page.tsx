@@ -98,6 +98,7 @@ function AddStudentForm({
   const [registerNumber, setRegisterNumber] = useState("");
   const [password, setPassword] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
+  const [email, setEmail] = useState("");
   const [classLevelId, setClassLevelId] = useState(classLevels[0]?.id ?? "");
   const [section, setSection] = useState("");
   const [gender, setGender] = useState<UserProfile["gender"] | "">("");
@@ -120,6 +121,7 @@ function AddStudentForm({
         registerNumber: registerNumber.trim(),
         password,
         mobileNumber: mobileNumber.trim() || undefined,
+        email: email.trim() || undefined,
         role: "student",
         schoolId,
         classLevelId,
@@ -213,6 +215,16 @@ function AddStudentForm({
             id="student-mobile"
             value={mobileNumber}
             onChange={(e) => setMobileNumber(e.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="student-email">Email (optional)</Label>
+          <Input
+            id="student-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="For order/OTP notifications"
           />
         </div>
       </div>
@@ -341,6 +353,7 @@ function BulkUploadForm({
             ? row.password
             : row.registerNumber,
         mobileNumber: row.mobileNumber,
+        email: row.email,
         role: "student",
         schoolId,
         classLevelId: row.classLevelId!,

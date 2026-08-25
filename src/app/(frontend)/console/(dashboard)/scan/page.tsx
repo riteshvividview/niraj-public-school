@@ -16,23 +16,30 @@ import {
 import { StatusBadge, toBadgeStatus } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { deriveReceiptTitle, groupItemsByKind } from "@/lib/cart-items";
-import { getReceiptByCode, markReceiptRedeemed } from "@/lib/data-source";
+import { getReceiptByCode, markReceiptRedeemed, updateOrderItemsCollected } from "@/lib/data-source";
 import { useConsoleSchoolId } from "@/lib/hooks/console-data";
 import { cn } from "@/lib/utils";
-import type { ReceiptRecord } from "@/types";
+import type { OrderItem, ReceiptRecord } from "@/types";
 
 type LookupResult =
   | { kind: "invalid" }
-  | { kind: "found"; record: ReceiptRecord; justRedeemed?: boolean };
+  | { kind: "found"; record: ReceiptRecord };
 
-/** A program-only order is a "ticket" (check in at a gate); anything else is "collected" at the counter. */
+/** A program-only order is a "ticket" (check in at a gate); anything else is collected item-by-item at the counter. */
 function isTicketRecord(record: ReceiptRecord): boolean {
   const grouped = groupItemsByKind(record.order.items);
   return grouped.programs.length === record.order.items.length && grouped.programs.length > 0;
 }
+
+const CATEGORY_LABELS: Record<"books" | "uniform" | "programs", string> = {
+  books: "Books",
+  uniform: "Uniform & Kit",
+  programs: "Programs",
+};
 
 export default function ScannerPage() {
   const schoolId = useConsoleSchoolId();
@@ -40,24 +47,47 @@ export default function ScannerPage() {
   const [lookup, setLookup] = useState<LookupResult | null>(null);
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  async function handleLookup(event: FormEvent) {
-    event.preventDefault();
-    if (!code.trim() || !schoolId) return;
+  async function refreshLookup() {
+    if (!schoolId) return;
     const record = await getReceiptByCode(schoolId, code);
     setLookup(record ? { kind: "found", record } : { kind: "invalid" });
   }
 
-  async function handleRedeem() {
+  async function handleLookup(event: FormEvent) {
+    event.preventDefault();
+    if (!code.trim() || !schoolId) return;
+    await refreshLookup();
+  }
+
+  /** Whole-receipt program check-in — unchanged from before per-item tracking existed. */
+  async function handleCheckIn() {
     if (lookup?.kind !== "found") return;
-    const markedAs = isTicketRecord(lookup.record) ? "checked-in" : "collected";
     setIsRedeeming(true);
-    const updated = await markReceiptRedeemed(lookup.record.receipt.id, markedAs);
+    const updated = await markReceiptRedeemed(lookup.record.receipt.id, "checked-in");
     setIsRedeeming(false);
     setConfirmOpen(false);
     if (!updated) return;
-    setLookup({ kind: "found", record: updated, justRedeemed: true });
-    toast.success(`Marked ${markedAs === "checked-in" ? "attended" : "collected"}`);
+    setLookup({ kind: "found", record: updated });
+    toast.success("Marked attended");
+  }
+
+  /**
+   * Saves every pending per-item toggle in one call — see CollectionControls,
+   * which batches checkbox changes locally so this fires once per "Save
+   * changes" click, not once per click on an item.
+   */
+  async function handleSaveCollection(changes: Record<string, boolean>) {
+    if (lookup?.kind !== "found") return;
+    setIsSaving(true);
+    try {
+      await updateOrderItemsCollected(lookup.record.order.id, changes);
+      await refreshLookup();
+      toast.success("Collection status updated");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -133,34 +163,34 @@ export default function ScannerPage() {
                   <p className="text-sm text-section-pay">This code doesn&apos;t match any known receipt.</p>
                 </div>
               </div>
-            ) : lookup.justRedeemed ? (
-              <div className="space-y-3">
-                <ReceiptSummary record={lookup.record} justRedeemed />
-              </div>
-            ) : lookup.record.receipt.redemptionStatus !== "ready" ? (
-              <div className="space-y-3">
-                <div className="flex items-start gap-3 rounded-xl border border-section-programs bg-section-programs-bg p-4">
-                  <AlertTriangle className="mt-0.5 size-5 shrink-0 text-section-programs" />
-                  <div>
-                    <p className="font-medium text-section-programs">Already redeemed</p>
-                    <p className="text-sm text-section-programs">
-                      This receipt was already marked{" "}
-                      {lookup.record.receipt.redemptionStatus === "checked-in" ? "attended" : "collected"} on{" "}
-                      {lookup.record.receipt.redeemedAt
-                        ? new Date(lookup.record.receipt.redeemedAt).toLocaleString()
-                        : ""}
-                      .
-                    </p>
+            ) : isTicketRecord(lookup.record) ? (
+              // Program check-in — unchanged whole-receipt flow.
+              lookup.record.receipt.redemptionStatus === "checked-in" ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 rounded-lg bg-section-essentials-bg p-2 text-section-essentials">
+                    <CheckCircle2 className="size-4 shrink-0" />
+                    <span className="font-medium">Marked attended</span>
                   </div>
+                  <ReceiptSummary record={lookup.record} />
                 </div>
-                <ReceiptSummary record={lookup.record} justRedeemed={false} />
-              </div>
+              ) : (
+                <div className="space-y-3">
+                  <ReceiptSummary record={lookup.record} />
+                  <Button className="w-full" onClick={() => setConfirmOpen(true)} disabled={isRedeeming}>
+                    Mark Attended
+                  </Button>
+                </div>
+              )
             ) : (
+              // Books/Uniform receipt — per-item / per-category collection.
               <div className="space-y-3">
-                <ReceiptSummary record={lookup.record} justRedeemed={false} />
-                <Button className="w-full" onClick={() => setConfirmOpen(true)} disabled={isRedeeming}>
-                  Mark {isTicketRecord(lookup.record) ? "Attended" : "Collected"}
-                </Button>
+                <ReceiptSummary record={lookup.record} />
+                <CollectionControls
+                  key={lookup.record.order.id + lookup.record.order.updatedAt}
+                  record={lookup.record}
+                  isSaving={isSaving}
+                  onSave={handleSaveCollection}
+                />
               </div>
             )}
           </CardContent>
@@ -170,18 +200,171 @@ export default function ScannerPage() {
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Mark {lookup?.kind === "found" && isTicketRecord(lookup.record) ? "attended" : "collected"}?
-            </AlertDialogTitle>
+            <AlertDialogTitle>Mark attended?</AlertDialogTitle>
             <AlertDialogDescription>
-              This confirms the parent has {lookup?.kind === "found" && isTicketRecord(lookup.record) ? "checked in for the program" : "collected their items"} against
-              receipt {lookup?.kind === "found" ? lookup.record.receipt.qrPayload : ""}. This can&apos;t be
-              undone from here — a staff member would need to fix it via /admin.
+              This confirms the parent has checked in for the program against receipt{" "}
+              {lookup?.kind === "found" ? lookup.record.receipt.qrPayload : ""}. This can&apos;t be undone
+              from here — a staff member would need to fix it via /admin.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRedeem} disabled={isRedeeming}>
+            <AlertDialogAction onClick={handleCheckIn} disabled={isRedeeming}>
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+/**
+ * Per-item collected/uncollected checkboxes plus one "Mark all collected"
+ * button per category (Books / Uniform & Kit). Every toggle only changes
+ * local state — nothing is written until "Save changes" is clicked, which
+ * sends every pending change in a single request rather than one per
+ * click. Un-checking an already-collected item (a staff correction, e.g.
+ * "payment showed successful but didn't actually go through") asks for
+ * confirmation before the toggle is even staged, since it's a reversal.
+ */
+function CollectionControls({
+  record,
+  isSaving,
+  onSave,
+}: {
+  record: ReceiptRecord;
+  isSaving: boolean;
+  onSave: (changes: Record<string, boolean>) => void;
+}) {
+  const grouped = groupItemsByKind(record.order.items) as Record<"books" | "uniform" | "programs", OrderItem[]>;
+  const categories = (["books", "uniform"] as const).filter((key) => grouped[key].length > 0);
+  const [pending, setPending] = useState<Record<string, boolean>>({});
+  const [uncollectTarget, setUncollectTarget] = useState<OrderItem | null>(null);
+
+  if (categories.length === 0) return null;
+
+  function isCollected(item: OrderItem): boolean {
+    return item.id in pending ? pending[item.id] : Boolean(item.collectedAt);
+  }
+
+  function setPendingFor(item: OrderItem, collected: boolean) {
+    setPending((prev) => {
+      const next = { ...prev };
+      // Persisted state matches the request again — nothing to save for this row.
+      if (collected === Boolean(item.collectedAt)) {
+        delete next[item.id];
+      } else {
+        next[item.id] = collected;
+      }
+      return next;
+    });
+  }
+
+  function handleToggle(item: OrderItem, checked: boolean) {
+    if (!checked && isCollected(item) && item.collectedAt) {
+      // Reversing an already-persisted collection — confirm first.
+      setUncollectTarget(item);
+      return;
+    }
+    setPendingFor(item, checked);
+  }
+
+  const changedCount = Object.keys(pending).length;
+
+  return (
+    <div className="space-y-4">
+      {categories.map((category) => {
+        const items = grouped[category];
+        const stillUncollected = items.filter((item) => !isCollected(item));
+        return (
+          <div key={category} className="space-y-2 rounded-xl border border-line p-3">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-semibold text-ink">{CATEGORY_LABELS[category]}</span>
+              {stillUncollected.length > 0 ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => stillUncollected.forEach((item) => setPendingFor(item, true))}
+                >
+                  Mark all {CATEGORY_LABELS[category].toLowerCase()} collected
+                </Button>
+              ) : (
+                <span className="flex items-center gap-1 text-xs font-medium text-section-essentials">
+                  <CheckCircle2 className="size-3.5" /> All collected
+                </span>
+              )}
+            </div>
+            <ul className="divide-y divide-line">
+              {items.map((item) => {
+                const collected = isCollected(item);
+                const isDirty = item.id in pending;
+                return (
+                  <li key={item.id} className="flex items-center gap-3 py-2 text-sm">
+                    <Checkbox
+                      checked={collected}
+                      onCheckedChange={(checked) => handleToggle(item, checked === true)}
+                      aria-label={`Mark ${item.label} collected`}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-ink">{item.label}</p>
+                      {item.meta ? <p className="truncate text-xs text-sub">{item.meta}</p> : null}
+                    </div>
+                    <span
+                      className={cn(
+                        "shrink-0 text-xs font-medium",
+                        isDirty ? "text-section-programs" : collected ? "text-section-essentials" : "text-sub",
+                      )}
+                    >
+                      {isDirty
+                        ? collected
+                          ? "Will mark collected"
+                          : "Will mark uncollected"
+                        : collected
+                          ? `Collected ${item.collectedAt ? new Date(item.collectedAt).toLocaleDateString() : ""}`
+                          : "Not collected"}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        );
+      })}
+
+      {changedCount > 0 ? (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-line bg-muted/50 p-3">
+          <span className="text-sm text-sub">
+            {changedCount} pending change{changedCount === 1 ? "" : "s"}
+          </span>
+          <div className="flex gap-2">
+            <Button size="sm" variant="ghost" disabled={isSaving} onClick={() => setPending({})}>
+              Discard
+            </Button>
+            <Button size="sm" disabled={isSaving} onClick={() => onSave(pending)}>
+              Save changes
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      <AlertDialog open={uncollectTarget !== null} onOpenChange={(open) => !open && setUncollectTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Mark &quot;{uncollectTarget?.label}&quot; as uncollected?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Use this only to correct a mistake (e.g. it was marked collected but the parent never actually
+              picked it up). This won&apos;t take effect until you click &quot;Save changes&quot;.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (uncollectTarget) setPendingFor(uncollectTarget, false);
+                setUncollectTarget(null);
+              }}
+            >
               Confirm
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -198,18 +381,10 @@ const RECEIPT_TITLE_LABELS = {
   programmeReceiptWord: "Programme Receipt",
 };
 
-function ReceiptSummary({ record, justRedeemed }: { record: ReceiptRecord; justRedeemed: boolean }) {
+function ReceiptSummary({ record }: { record: ReceiptRecord }) {
   const title = deriveReceiptTitle(record.order.items, RECEIPT_TITLE_LABELS);
   return (
     <div className="space-y-2 rounded-xl border border-line p-4 text-sm">
-      {justRedeemed ? (
-        <div className={cn("flex items-center gap-2 rounded-lg p-2", "bg-section-essentials-bg text-section-essentials")}>
-          <CheckCircle2 className="size-4 shrink-0" />
-          <span className="font-medium">
-            Marked {record.receipt.redemptionStatus === "checked-in" ? "attended" : "collected"}
-          </span>
-        </div>
-      ) : null}
       <div className="flex items-center justify-between">
         <span className="font-medium text-ink">{title}</span>
         <StatusBadge status={toBadgeStatus(record.receipt.redemptionStatus)} />

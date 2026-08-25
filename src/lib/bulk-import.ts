@@ -19,6 +19,7 @@ export interface ParsedStudentRow {
   className?: string;
   password?: string;
   mobileNumber?: string;
+  email?: string;
   section?: string;
   academicLanguage?: string;
   stream?: string;
@@ -47,6 +48,7 @@ const COLUMN_ALIASES: Record<keyof ParsedStudentRow, string[]> = {
   className: ["class", "classname", "class name", "grade", "classlevel", "class level"],
   password: ["password", "pass", "pin"],
   mobileNumber: ["mobile", "mobilenumber", "mobile number", "phone", "phonenumber", "phone number"],
+  email: ["email", "email address", "e-mail", "emailid", "email id"],
   section: ["section"],
   academicLanguage: ["ii language", "i language", "language", "first language", "second language"],
   stream: ["optional 1", "stream", "group"],
@@ -64,6 +66,7 @@ export const SAMPLE_HEADERS: Record<keyof ParsedStudentRow, string> = {
   elective: "Optional 2",
   password: "Password",
   mobileNumber: "Mobile Number",
+  email: "Email",
 };
 
 /** Shown in the Bulk Upload dialog's column guidance — kept as a `keyof ParsedStudentRow` list so it can't drift from the fields the parser actually reads. */
@@ -75,6 +78,7 @@ export const OPTIONAL_FIELDS: (keyof ParsedStudentRow)[] = [
   "elective",
   "password",
   "mobileNumber",
+  "email",
 ];
 
 /**
@@ -95,11 +99,23 @@ export function downloadSampleWorkbook(): void {
     SAMPLE_HEADERS.elective,
     SAMPLE_HEADERS.password,
     SAMPLE_HEADERS.mobileNumber,
+    SAMPLE_HEADERS.email,
   ];
   const rows = [
     headers,
-    ["AADVIKA GURALLA", "26NPS0018", "Class 2", "B", "I Lang Hindi", "", "", "", ""],
-    ["ABHAY PHANIKIRAN YERI", "25NPS0084", "Class 8", "A", "II Lang Hindi", "Science", "ENA", "", "9876543210"],
+    ["AADVIKA GURALLA", "26NPS0018", "Class 2", "B", "I Lang Hindi", "", "", "", "", ""],
+    [
+      "ABHAY PHANIKIRAN YERI",
+      "25NPS0084",
+      "Class 8",
+      "A",
+      "II Lang Hindi",
+      "Science",
+      "ENA",
+      "",
+      "9876543210",
+      "parent.abhay@example.com",
+    ],
   ];
   const sheet = XLSX.utils.aoa_to_sheet(rows);
   sheet["!cols"] = headers.map((h) => ({ wch: Math.max(h.length + 2, 14) }));
@@ -165,6 +181,7 @@ function rowsToStudents(rows: Record<string, unknown>[]): ParsedStudentRow[] {
     className: findValue(row, "className"),
     password: findValue(row, "password"),
     mobileNumber: findValue(row, "mobileNumber"),
+    email: findValue(row, "email"),
     section: findValue(row, "section"),
     academicLanguage: findValue(row, "academicLanguage"),
     stream: findValue(row, "stream"),

@@ -33,6 +33,7 @@ export interface Dictionary {
     failed: string;
     refunded: string;
     ready: string;
+    partiallyCollected: string;
     collected: string;
     checkedIn: string;
     cancelled: string;
@@ -52,6 +53,8 @@ export interface Dictionary {
     back: string;
     change: string;
     next: string;
+    collected: string;
+    pendingCollection: string;
   };
 
   auth: {
@@ -208,6 +211,23 @@ export interface Dictionary {
     logout: string;
     changePhoto: string;
     avatarUploadError: string;
+    changePasswordLabel: string;
+    changePasswordNoEmail: string;
+    /** Template with "{email}" placeholder. */
+    changePasswordEmailNotice: string;
+    sendOtpLabel: string;
+    otpLabel: string;
+    otpPlaceholder: string;
+    verifyOtpLabel: string;
+    otpInvalid: string;
+    otpSent: string;
+    otpCooldown: string;
+    newPasswordLabel: string;
+    confirmPasswordLabel: string;
+    passwordMismatch: string;
+    passwordTooShort: string;
+    updatePasswordLabel: string;
+    passwordUpdated: string;
   };
 
   help: {

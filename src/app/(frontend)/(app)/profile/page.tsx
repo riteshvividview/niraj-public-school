@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, ChevronRight, HelpCircle, Loader2, LogOut } from "lucide-react";
+import { Camera, ChevronRight, HelpCircle, KeyRound, Loader2, LogOut } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { AppHeader } from "@/components/shared/app-header";
@@ -10,6 +10,7 @@ import { useTranslation } from "@/i18n/context";
 import { getClassLevelById, updateUserAvatar } from "@/lib/data-source";
 import { useAuth } from "@/store/auth-store";
 import type { ClassLevel } from "@/types";
+import { ChangePasswordDialog } from "./_components/change-password-dialog";
 
 function ProfileRow({ label, value }: { label: string; value: string }) {
   return (
@@ -92,6 +93,7 @@ export default function ProfilePage() {
   const { t } = useTranslation();
   const { profile, logout } = useAuth();
   const [classLevel, setClassLevel] = useState<ClassLevel | null>(null);
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
 
   useEffect(() => {
     if (!profile) return;
@@ -121,6 +123,16 @@ export default function ProfilePage() {
           </div>
         </section>
 
+        <button
+          type="button"
+          onClick={() => setChangePasswordOpen(true)}
+          className="flex w-full items-center gap-3 rounded-lg border border-line/60 bg-card p-4 text-left transition-colors hover:bg-muted/50 sm:p-5"
+        >
+          <KeyRound className="size-5 text-sub" />
+          <span className="flex-1 text-sm font-medium text-ink">{t.profile.changePasswordLabel}</span>
+          <ChevronRight className="size-4 text-sub" />
+        </button>
+
         <Link
           href="/help"
           className="flex items-center gap-3 rounded-lg border border-line/60 bg-card p-4 transition-colors hover:bg-muted/50 sm:p-5"
@@ -135,6 +147,12 @@ export default function ProfilePage() {
           {t.profile.logout}
         </Button>
       </div>
+
+      <ChangePasswordDialog
+        email={profile.email}
+        open={changePasswordOpen}
+        onOpenChange={setChangePasswordOpen}
+      />
     </>
   );
 }

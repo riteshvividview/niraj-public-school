@@ -27,6 +27,7 @@ interface PayloadUserDoc {
   username: string;
   avatar?: string | PayloadMediaDoc | null;
   mobileNumber?: string | null;
+  email?: string | null;
   role: UserRole;
   school: string | { id: string };
   classLevel: string | { id: string };
@@ -76,6 +77,7 @@ async function toUserProfile(doc: PayloadUserDoc): Promise<UserProfile> {
     registerNumber: doc.username,
     avatarUrl,
     mobileNumber: doc.mobileNumber ?? undefined,
+    email: doc.email ?? undefined,
     role: doc.role,
     schoolId: relationId(doc.school),
     classLevelId: relationId(doc.classLevel),
@@ -123,6 +125,7 @@ export interface CreateStudentInput {
   registerNumber: string;
   password: string;
   mobileNumber?: string;
+  email?: string;
   role: UserRole;
   schoolId: string;
   classLevelId: string;
@@ -156,6 +159,7 @@ export async function createStudent(input: CreateStudentInput): Promise<UserProf
       username: input.registerNumber,
       password: input.password,
       mobileNumber: input.mobileNumber,
+      email: input.email,
       role: input.role,
       school: input.schoolId,
       classLevel: input.classLevelId,
@@ -292,6 +296,7 @@ export async function getStudentSectionsBySchool(schoolId: string): Promise<stri
 export interface UpdateStudentInput {
   name?: string;
   mobileNumber?: string;
+  email?: string;
   classLevelId?: string;
   preferredLanguage?: LanguageCode;
   section?: string;
@@ -306,6 +311,7 @@ export async function updateStudent(id: string, input: UpdateStudentInput): Prom
   const doc = await payloadUpdate<PayloadUserDoc>("users", id, {
     name: input.name,
     mobileNumber: input.mobileNumber,
+    email: input.email,
     classLevel: input.classLevelId,
     preferredLanguage: input.preferredLanguage,
     section: input.section,

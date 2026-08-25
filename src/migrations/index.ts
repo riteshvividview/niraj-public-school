@@ -40,6 +40,6 @@ export const migrations = [
   {
     up: migration_20260818_121832_program_eligibility_and_optional_fields.up,
     down: migration_20260818_121832_program_eligibility_and_optional_fields.down,
-    name: '20260818_121832_program_eligibility_and_optional_fields'
+    name: '20260818_121832_program_eligibility_and_optional_fields',
   },
 ];

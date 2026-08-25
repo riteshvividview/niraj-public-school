@@ -216,6 +216,7 @@ export default function StudentDetailPage() {
                   />
                   <InfoRow label="Specialization 2" value={electiveLabel(student.elective)} />
                   <InfoRow label="Mobile Number" value={student.mobileNumber ?? "—"} />
+                  <InfoRow label="Email" value={student.email ?? "—"} />
                 </div>
               </CardContent>
             </Card>

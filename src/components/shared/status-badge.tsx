@@ -17,6 +17,7 @@ const STATUS_STYLES: Record<BadgeStatus, string> = {
   failed: "bg-section-pay-bg text-section-pay",
   refunded: "bg-section-console-bg text-section-console",
   ready: "bg-section-workspace-bg text-section-workspace",
+  partiallyCollected: "bg-section-programs-bg text-section-programs",
   collected: "bg-section-essentials-bg text-section-essentials",
   checkedIn: "bg-section-essentials-bg text-section-essentials",
   cancelled: "bg-section-pay-bg text-section-pay",

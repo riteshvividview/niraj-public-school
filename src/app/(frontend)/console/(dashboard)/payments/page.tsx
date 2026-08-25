@@ -314,6 +314,7 @@ export default function PaymentsPage() {
                 <SelectContent>
                   <SelectItem value={ALL_VALUE}>All</SelectItem>
                   <SelectItem value="ready">Ready</SelectItem>
+                  <SelectItem value="partially-collected">Partially Collected</SelectItem>
                   <SelectItem value="collected">Collected</SelectItem>
                   <SelectItem value="checked-in">Checked In</SelectItem>
                 </SelectContent>

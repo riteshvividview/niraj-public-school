@@ -1,18 +1,23 @@
 import type { CartItem, Order, OrderStatus, PaymentMethod } from "@/types";
-import { payloadCreate, payloadFind } from "./payload-rest";
+import { payloadCreate, payloadFind, payloadFindById, payloadUpdate } from "./payload-rest";
+
+interface PayloadOrderItem {
+  /** Real Payload `orders_items` row id — the stable per-item key, unlike a synthesized one. */
+  id: string;
+  kind: CartItem["kind"];
+  refId: string;
+  label: string;
+  meta?: string | null;
+  unitPrice: number;
+  quantity: number;
+  collectedAt?: string | null;
+}
 
 interface PayloadOrderDoc {
   id: string;
   user: string;
   school: string;
-  items: {
-    kind: CartItem["kind"];
-    refId: string;
-    label: string;
-    meta?: string | null;
-    unitPrice: number;
-    quantity: number;
-  }[];
+  items: PayloadOrderItem[];
   totalAmount: number;
   paymentMethod: PaymentMethod;
   status: OrderStatus;
@@ -26,13 +31,14 @@ function toOrder(doc: PayloadOrderDoc): Order {
     userId: doc.user,
     schoolId: doc.school,
     items: doc.items.map((item) => ({
-      id: `${item.kind}-${item.refId}`,
+      id: item.id,
       kind: item.kind,
       refId: item.refId,
       label: item.label,
       meta: item.meta ?? undefined,
       unitPrice: item.unitPrice,
       quantity: item.quantity,
+      collectedAt: item.collectedAt ?? null,
     })),
     totalAmount: doc.totalAmount,
     paymentMethod: doc.paymentMethod,
@@ -74,4 +80,45 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
 export async function getOrdersBySchool(schoolId: string): Promise<Order[]> {
   const docs = await payloadFind<PayloadOrderDoc>("orders", { school: schoolId });
   return docs.map(toOrder);
+}
+
+export async function getOrderById(id: string): Promise<Order | null> {
+  const doc = await payloadFindById<PayloadOrderDoc>("orders", id);
+  return doc ? toOrder(doc) : null;
+}
+
+/**
+ * Console — Receipt / QR Scanner's "Save changes" button. `changes` maps
+ * item id -> desired collected state (true = mark collected, false = undo
+ * a mistaken mark) — the Scanner batches every toggle a staff member makes
+ * locally and calls this once, rather than one REST call per click. Sends
+ * the full items array back (Payload array-field PATCH semantics upsert by
+ * row `id`), so untouched rows pass through unchanged. The Orders
+ * `afterChange` hook (see collections/Orders.ts) picks up the diff and
+ * handles the rollup Receipt status + "items collected" email (undo makes
+ * no email — there's nothing to notify the parent about).
+ */
+export async function updateOrderItemsCollected(
+  orderId: string,
+  changes: Record<string, boolean>,
+): Promise<Order> {
+  const order = await getOrderById(orderId);
+  if (!order) throw new Error("Order not found.");
+  const now = new Date().toISOString();
+  const items = order.items.map((item) =>
+    item.id in changes ? { ...item, collectedAt: changes[item.id] ? now : null } : item,
+  );
+  const doc = await payloadUpdate<PayloadOrderDoc>("orders", orderId, {
+    items: items.map((item) => ({
+      id: item.id,
+      kind: item.kind,
+      refId: item.refId,
+      label: item.label,
+      meta: item.meta,
+      unitPrice: item.unitPrice,
+      quantity: item.quantity,
+      collectedAt: item.collectedAt,
+    })),
+  });
+  return toOrder(doc);
 }

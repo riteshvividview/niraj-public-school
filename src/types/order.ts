@@ -3,12 +3,21 @@ import type { CartItem } from "./cart";
 export type PaymentMethod = "upi" | "card" | "netbanking";
 export type OrderStatus = "paid" | "pending" | "failed" | "refunded";
 
+/**
+ * An order line once persisted — `id` is the real Payload `orders_items`
+ * row id (stable, used as the PATCH target for marking collection), not
+ * the synthetic `${kind}-${refId}` cart-line id CartItem uses pre-checkout.
+ */
+export interface OrderItem extends CartItem {
+  collectedAt: string | null;
+}
+
 /** Mirrors the future Payload `orders` collection. Built in Phase 6. */
 export interface Order {
   id: string;
   userId: string;
   schoolId: string;
-  items: CartItem[];
+  items: OrderItem[];
   totalAmount: number;
   paymentMethod: PaymentMethod;
   status: OrderStatus;
