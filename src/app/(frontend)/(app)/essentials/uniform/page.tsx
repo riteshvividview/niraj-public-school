@@ -137,6 +137,23 @@ export default function UniformPage() {
               const confirmed = cart.getItem(id);
               const selectedSize = confirmed?.meta ?? "";
               const displayPrice = confirmed?.unitPrice ?? item.sizeOptions[0].price;
+              const hasSingleSize = item.sizeOptions.length === 1;
+
+              if (hasSingleSize) {
+                const only = item.sizeOptions[0];
+                return (
+                  <ItemCard
+                    key={item.id}
+                    name={item.name}
+                    meta={item.description}
+                    price={only.price}
+                    selected={Boolean(confirmed)}
+                    onToggleSelected={(selected) =>
+                      selected ? cart.setIncluded(uniformToCartItem(item, only.size, only.price), true) : cart.remove(id)
+                    }
+                  />
+                );
+              }
 
               return (
                 <ItemCard

@@ -1,16 +1,15 @@
 "use client";
 
-import { BookOpen, ChevronRight, PencilRuler, Shirt } from "lucide-react";
+import { BookOpen, ChevronRight, Shirt } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/shared/app-header";
 import { formatTemplate } from "@/i18n/format";
 import { useTranslation } from "@/i18n/context";
-import { bookToCartItem, stationeryToCartItem } from "@/lib/cart-items";
-import { getBooksByClass, getStationeryItemsByClass, getUniformItemsByClass } from "@/lib/data-source";
+import { getBooksByClass, getUniformItemsByClass } from "@/lib/data-source";
 import { useAuth } from "@/store/auth-store";
 import { lineId, useCart } from "@/store/cart-store";
-import type { Book, StationeryItem, UniformItem } from "@/types";
+import type { Book, UniformItem } from "@/types";
 
 interface HubRowProps {
   href: string;
@@ -45,27 +44,21 @@ export default function EssentialsHubPage() {
 
   const [books, setBooks] = useState<Book[] | null>(null);
   const [uniformItems, setUniformItems] = useState<UniformItem[] | null>(null);
-  const [stationeryItems, setStationeryItems] = useState<StationeryItem[] | null>(null);
 
   useEffect(() => {
     if (!profile) return;
+    // Only for the "X of Y selected" status label below — the actual
+    // selection/confirmation (and cart seeding) happens on the books page's
+    // own selection step, since which book set applies depends on choices
+    // made there, not just the student's saved profile defaults.
     getBooksByClass(profile.schoolId, profile.classLevelId, {
       language: profile.academicLanguage,
       stream: profile.stream,
       elective: profile.elective,
-    }).then((result) => {
-      setBooks(result);
-      cart.reconcileKind("book", result.map((book) => lineId("book", book.id)));
-      result.forEach((book) => cart.ensureDefault(bookToCartItem(book)));
-    });
+    }).then(setBooks);
     getUniformItemsByClass(profile.schoolId, profile.classLevelId, profile.gender).then((result) => {
       setUniformItems(result);
       cart.reconcileKind("uniform", result.map((item) => lineId("uniform", item.id)));
-    });
-    getStationeryItemsByClass(profile.schoolId, profile.classLevelId).then((result) => {
-      setStationeryItems(result);
-      cart.reconcileKind("stationery", result.map((item) => lineId("stationery", item.id)));
-      result.forEach((item) => cart.ensureDefault(stationeryToCartItem(item)));
     });
     // Only re-seed when the logged-in profile changes, not on every cart update.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -76,8 +69,6 @@ export default function EssentialsHubPage() {
   const booksSelected = books?.filter((book) => cart.isIncluded(lineId("book", book.id))).length ?? 0;
   const uniformConfirmed =
     uniformItems?.filter((item) => cart.isIncluded(lineId("uniform", item.id))).length ?? 0;
-  const stationerySelected =
-    stationeryItems?.filter((item) => cart.isIncluded(lineId("stationery", item.id))).length ?? 0;
 
   return (
     <>
@@ -111,24 +102,6 @@ export default function EssentialsHubPage() {
             }
             isComplete={
               uniformItems !== null && uniformConfirmed === uniformItems.length && uniformItems.length > 0
-            }
-          />
-          <HubRow
-            href="/essentials/stationery"
-            icon={PencilRuler}
-            title={t.essentials.stationery}
-            statusLabel={
-              stationeryItems === null
-                ? "…"
-                : formatTemplate(t.essentials.selectedCount, {
-                    selected: stationerySelected,
-                    total: stationeryItems.length,
-                  })
-            }
-            isComplete={
-              stationeryItems !== null &&
-              stationerySelected === stationeryItems.length &&
-              stationeryItems.length > 0
             }
           />
         </div>

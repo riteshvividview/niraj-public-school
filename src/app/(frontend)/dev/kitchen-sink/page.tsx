@@ -86,8 +86,8 @@ export default function KitchenSinkPage() {
               Poppins subheading, weight 600
             </p>
             <p className="text-base text-ink">
-              Inter body text — pay online, get a digital receipt, collect books,
-              uniform and stationery at school.
+              Inter body text — pay online, get a digital receipt, collect books
+              and uniform at school.
             </p>
             <p className="text-sm text-sub">
               Inter secondary text at 14px, used for helper copy and metadata.

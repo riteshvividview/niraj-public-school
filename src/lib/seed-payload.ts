@@ -2,8 +2,6 @@ import type { Payload } from "payload";
 import { ALL_BOOKS } from "@/lib/mock/books";
 import { MOCK_PROGRAMS } from "@/lib/mock/programs";
 import { CLASS_LEVELS, MOCK_SCHOOL } from "@/lib/mock/school";
-import { ALL_STATIONERY_ITEMS } from "@/lib/mock/stationery";
-import { MOCK_TIMETABLES } from "@/lib/mock/timetable";
 import { ALL_UNIFORM_ITEMS } from "@/lib/mock/uniform";
 import { MOCK_USER_PASSWORD, MOCK_USERS } from "@/lib/mock/users";
 
@@ -70,20 +68,6 @@ export async function seedPayload(payload: Payload): Promise<{ schoolId: string 
     });
   }
 
-  for (const item of ALL_STATIONERY_ITEMS) {
-    await payload.create({
-      collection: "stationery-items",
-      data: {
-        school: school.id,
-        classLevel: classLevelIdByMockId.get(item.classLevelId),
-        name: item.name,
-        quantityLabel: item.quantityLabel,
-        price: item.price,
-        imageUrl: item.imageUrl ?? undefined,
-      },
-    });
-  }
-
   for (const program of MOCK_PROGRAMS) {
     await payload.create({
       collection: "programs",
@@ -99,18 +83,6 @@ export async function seedPayload(payload: Payload): Promise<{ schoolId: string 
         seatsAvailable: program.seatsAvailable,
         status: program.status,
         contactPhone: program.contactPhone,
-      },
-    });
-  }
-
-  for (const timetable of MOCK_TIMETABLES) {
-    await payload.create({
-      collection: "timetables",
-      data: {
-        school: school.id,
-        classLevel: classLevelIdByMockId.get(timetable.classLevelId),
-        periods: timetable.periods,
-        notes: timetable.notes,
       },
     });
   }

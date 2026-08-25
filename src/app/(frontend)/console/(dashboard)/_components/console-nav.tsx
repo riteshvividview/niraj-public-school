@@ -7,7 +7,6 @@ import {
   LogOut,
   Receipt,
   ScanLine,
-  Table2,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -20,7 +19,6 @@ const NAV_ITEMS = [
   { href: "/console/catalogue", label: "Catalogue Manager", icon: BookMarked },
   { href: "/console/programs", label: "Program Manager", icon: CalendarClock },
   { href: "/console/students", label: "Students", icon: Users },
-  { href: "/console/timetable", label: "Timetable Manager", icon: Table2 },
   { href: "/console/scan", label: "Receipt / QR Scanner", icon: ScanLine },
   { href: "/console/payments", label: "Payments", icon: Receipt },
   {

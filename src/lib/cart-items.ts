@@ -1,31 +1,27 @@
 import { lineId } from "@/store/cart-store";
-import type { Book, CartItem, ReceiptRecord, StationeryItem, UniformItem } from "@/types";
+import type { Book, CartItem, ReceiptRecord, UniformItem } from "@/types";
 
 /**
- * Book/StationeryItem/UniformItem -> CartItem mappers, shared by the
- * essentials hub and its three sub-pages so "what a cart line looks like
- * for this catalogue item" is defined once.
+ * Book/UniformItem -> CartItem mappers, shared by the essentials hub and
+ * its sub-pages so "what a cart line looks like for this catalogue item"
+ * is defined once.
  */
-export function bookToCartItem(book: Book): CartItem {
+/**
+ * `variantLabels` carries the student's chosen 2nd language/specialization/
+ * specialization 2 (see the essentials/books selection step) onto the cart
+ * line's `meta`, so it surfaces automatically everywhere a CartItem is
+ * already rendered — cart, ReceiptCard (receipts, console Scan, console
+ * Student Detail) — without any new fields elsewhere.
+ */
+export function bookToCartItem(book: Book, variantLabels: string[] = []): CartItem {
+  const meta = [book.subject, ...variantLabels].filter(Boolean).join(" · ");
   return {
     id: lineId("book", book.id),
     kind: "book",
     refId: book.id,
     label: book.title,
-    meta: book.subject,
+    meta,
     unitPrice: book.price,
-    quantity: 1,
-  };
-}
-
-export function stationeryToCartItem(item: StationeryItem): CartItem {
-  return {
-    id: lineId("stationery", item.id),
-    kind: "stationery",
-    refId: item.id,
-    label: item.name,
-    meta: item.quantityLabel,
-    unitPrice: item.price,
     quantity: 1,
   };
 }
@@ -47,7 +43,6 @@ export function groupItemsByKind(items: CartItem[]) {
   return {
     books: items.filter((item) => item.kind === "book"),
     uniform: items.filter((item) => item.kind === "uniform"),
-    stationery: items.filter((item) => item.kind === "stationery"),
     programs: items.filter((item) => item.kind === "program"),
   };
 }
@@ -59,14 +54,13 @@ export function subtotal(items: CartItem[]): number {
 /** PriceSummary-ready {label, amount} lines, one per non-empty category. */
 export function buildPriceSummaryLines(
   items: CartItem[],
-  labels: { books: string; uniform: string; stationery: string; programs: string },
+  labels: { books: string; uniform: string; programs: string },
 ) {
   const grouped = groupItemsByKind(items);
   return (
     [
       { key: "books", label: labels.books, items: grouped.books },
       { key: "uniform", label: labels.uniform, items: grouped.uniform },
-      { key: "stationery", label: labels.stationery, items: grouped.stationery },
       { key: "programs", label: labels.programs, items: grouped.programs },
     ] as const
   )
@@ -78,7 +72,6 @@ export interface ReceiptTitleLabels {
   /** Short nouns for composing a title, e.g. "Books" — distinct from essentials.uniform ("Uniform & Kit"), which reads awkwardly once joined with "&". */
   books: string;
   uniform: string;
-  stationery: string;
   /** "Receipt" */
   receiptWord: string;
   /** "Programme Receipt" */
@@ -103,7 +96,6 @@ export function deriveReceiptTitle(items: CartItem[], labels: ReceiptTitleLabels
   const essentialParts = [
     grouped.books.length > 0 && labels.books,
     grouped.uniform.length > 0 && labels.uniform,
-    grouped.stationery.length > 0 && labels.stationery,
   ].filter((part): part is string => Boolean(part));
   const hasPrograms = grouped.programs.length > 0;
 

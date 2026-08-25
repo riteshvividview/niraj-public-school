@@ -33,16 +33,12 @@ import {
 } from "@/components/ui/table";
 import {
   createBook,
-  createStationeryItem,
   createUniformItem,
   deleteBook,
-  deleteStationeryItem,
   deleteUniformItem,
   getBooksByClass,
-  getStationeryItemsByClass,
   getUniformItemsByClass,
   updateBook,
-  updateStationeryItem,
   updateUniformItem,
 } from "@/lib/data-source";
 import { useClassLevels, useConsoleSchoolId } from "@/lib/hooks/console-data";
@@ -50,7 +46,6 @@ import type {
   AcademicLanguage,
   Book,
   Elective,
-  StationeryItem,
   Stream,
   UniformItem,
   UniformSizeOption,
@@ -371,234 +366,6 @@ function BooksManager({
         onOpenChange={(open) => !open && setDeleteTarget(null)}
         title="Delete this book?"
         description={`"${deleteTarget?.title}" will be removed from this class's book list. This can't be undone.`}
-        onConfirm={handleDelete}
-      />
-    </Card>
-  );
-}
-
-// --- Stationery -----------------------------------------------------------
-
-function StationeryForm({
-  schoolId,
-  classLevelId,
-  editing,
-  onDone,
-}: {
-  schoolId: string;
-  classLevelId: string;
-  editing: StationeryItem | null;
-  onDone: () => void;
-}) {
-  const [name, setName] = useState(editing?.name ?? "");
-  const [quantityLabel, setQuantityLabel] = useState(
-    editing?.quantityLabel ?? "",
-  );
-  const [price, setPrice] = useState(editing ? String(editing.price) : "");
-
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    const priceNum = Number(price);
-    if (!name.trim() || !quantityLabel.trim() || !priceNum) return;
-    if (editing) {
-      await updateStationeryItem(editing.id, {
-        name: name.trim(),
-        quantityLabel: quantityLabel.trim(),
-        price: priceNum,
-      });
-      toast.success("Stationery item updated");
-    } else {
-      await createStationeryItem({
-        schoolId,
-        classLevelId,
-        name: name.trim(),
-        quantityLabel: quantityLabel.trim(),
-        price: priceNum,
-      });
-      toast.success("Stationery item added");
-    }
-    onDone();
-  }
-
-  return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
-      <div className="space-y-2">
-        <Label htmlFor="stationery-name">Name</Label>
-        <Input
-          id="stationery-name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="stationery-qty">Quantity label</Label>
-        <Input
-          id="stationery-qty"
-          placeholder="e.g. Set of 5"
-          value={quantityLabel}
-          onChange={(e) => setQuantityLabel(e.target.value)}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="stationery-price">Price (₹)</Label>
-        <Input
-          id="stationery-price"
-          type="number"
-          min="0"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          required
-        />
-      </div>
-      <DialogFooter>
-        <Button type="submit">{editing ? "Save Changes" : "Add Item"}</Button>
-      </DialogFooter>
-    </form>
-  );
-}
-
-function StationeryDialog({
-  open,
-  onOpenChange,
-  schoolId,
-  classLevelId,
-  editing,
-  onSaved,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  schoolId: string;
-  classLevelId: string;
-  editing: StationeryItem | null;
-  onSaved: () => void;
-}) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {editing ? "Edit Stationery Item" : "Add Stationery Item"}
-          </DialogTitle>
-        </DialogHeader>
-        {open ? (
-          <StationeryForm
-            key={editing?.id ?? "new"}
-            schoolId={schoolId}
-            classLevelId={classLevelId}
-            editing={editing}
-            onDone={() => {
-              onOpenChange(false);
-              onSaved();
-            }}
-          />
-        ) : null}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function StationeryManager({
-  schoolId,
-  classLevelId,
-}: {
-  schoolId: string;
-  classLevelId: string;
-}) {
-  const { data: itemsData, mutate: refresh } = useSWR(
-    ["console:stationery", schoolId, classLevelId],
-    () => getStationeryItemsByClass(schoolId, classLevelId),
-  );
-  const items = itemsData ?? null;
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState<StationeryItem | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<StationeryItem | null>(null);
-
-  async function handleDelete() {
-    if (!deleteTarget) return;
-    await deleteStationeryItem(deleteTarget.id);
-    setDeleteTarget(null);
-    toast.success("Stationery item deleted");
-    refresh();
-  }
-
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Stationery</CardTitle>
-        <Button
-          size="sm"
-          onClick={() => {
-            setEditing(null);
-            setDialogOpen(true);
-          }}
-        >
-          Add Item
-        </Button>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Quantity</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {(items ?? []).map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.name}</TableCell>
-                  <TableCell>{item.quantityLabel}</TableCell>
-                  <TableCell>₹{item.price}</TableCell>
-                  <TableCell className="space-x-1 text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setEditing(item);
-                        setDialogOpen(true);
-                      }}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setDeleteTarget(item)}
-                    >
-                      Delete
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {items !== null && items.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center text-sub">
-                    No stationery items for this class yet.
-                  </TableCell>
-                </TableRow>
-              ) : null}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-      <StationeryDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        schoolId={schoolId}
-        classLevelId={classLevelId}
-        editing={editing}
-        onSaved={refresh}
-      />
-      <ConfirmDeleteDialog
-        open={deleteTarget !== null}
-        onOpenChange={(open) => !open && setDeleteTarget(null)}
-        title="Delete this item?"
-        description={`"${deleteTarget?.name}" will be removed from this class's stationery list. This can't be undone.`}
         onConfirm={handleDelete}
       />
     </Card>
@@ -944,7 +711,7 @@ export default function CatalogueManagerPage() {
           Catalogue Manager
         </h1>
         <p className="text-sm text-sub">
-          Manage the fixed book, uniform and stationery lists by class. In Phase
+          Manage the fixed book and uniform lists by class. In Phase
           9 this becomes Payload&apos;s generated <code>/admin</code> collection
           UI — this screen is a temporary stand-in, not a bulk-import tool.
         </p>
@@ -970,7 +737,6 @@ export default function CatalogueManagerPage() {
         <div className="space-y-6">
           <BooksManager schoolId={schoolId} classLevelId={effectiveClassLevelId} />
           <UniformManager schoolId={schoolId} classLevelId={effectiveClassLevelId} />
-          <StationeryManager schoolId={schoolId} classLevelId={effectiveClassLevelId} />
         </div>
       ) : null}
     </div>

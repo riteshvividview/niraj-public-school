@@ -1,4 +1,4 @@
-import { Calendar, Home, Receipt, ShoppingBag, Table2, User, type LucideIcon } from "lucide-react";
+import { Calendar, Home, Receipt, ShoppingBag, User, type LucideIcon } from "lucide-react";
 import type { Dictionary } from "@/i18n/types";
 
 export interface AppNavItem {
@@ -13,7 +13,6 @@ export function getAppNavItems(t: Dictionary): AppNavItem[] {
     { href: "/home", label: t.nav.home, icon: Home },
     { href: "/essentials", label: t.nav.essentials, icon: ShoppingBag },
     { href: "/programs", label: t.nav.programs, icon: Calendar },
-    { href: "/timetable", label: t.nav.timetable, icon: Table2 },
     { href: "/receipts", label: t.nav.receipts, icon: Receipt },
     { href: "/profile", label: t.nav.profile, icon: User },
   ];

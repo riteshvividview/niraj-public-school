@@ -60,7 +60,6 @@ export default function CartPage() {
   const categoryLabels = {
     books: t.essentials.books,
     uniform: t.essentials.uniform,
-    stationery: t.essentials.stationery,
     programs: t.nav.programs,
   };
   const lines = buildPriceSummaryLines(cart.items, categoryLabels);
@@ -105,18 +104,6 @@ export default function CartPage() {
                         onRemove={() => cart.setIncluded(item, false)}
                         changeSizeLabel={t.cart.changeSize}
                       />
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-              {grouped.stationery.length > 0 ? (
-                <div>
-                  <h2 className="mb-2 font-heading text-base font-semibold text-ink">
-                    {categoryLabels.stationery}
-                  </h2>
-                  <div className="divide-y divide-line rounded-lg border border-line/60 bg-card">
-                    {grouped.stationery.map((item) => (
-                      <CartLineRow key={item.id} item={item} onRemove={() => cart.setIncluded(item, false)} />
                     ))}
                   </div>
                 </div>

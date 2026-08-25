@@ -10,15 +10,24 @@ import { useCart } from "@/store/cart-store";
 import type { CartItem } from "@/types";
 
 /**
- * Sticky across all three essentials sub-sections, scoped to just the
+ * Sticky across both essentials sub-sections, scoped to just the
  * current page's category (`kind`) — not the whole cart, so switching
- * between Books/Uniform/Stationery doesn't leak another category's total
+ * between Books/Uniform doesn't leak another category's total
  * onto this page. Sits just above the app's BottomNav on mobile
  * (`bottom-16` ≈ the nav's height) rather than stacking sticky elements at
  * the same edge; on md+ there's no bottom nav (it's a sidebar instead), so
  * it sits close to the viewport edge like a normal sticky bar.
  */
-export function EssentialsReviewBar({ kind }: { kind: CartItem["kind"] }) {
+export function EssentialsReviewBar({
+  kind,
+  ctaLabel,
+  ctaHref,
+}: {
+  kind: CartItem["kind"];
+  /** Defaults to "Review & Pay" → "/cart" — override for a mid-flow "Next" step (see essentials/books). */
+  ctaLabel?: string;
+  ctaHref?: string;
+}) {
   const { t, language } = useTranslation();
   const { items } = useCart();
 
@@ -36,7 +45,7 @@ export function EssentialsReviewBar({ kind }: { kind: CartItem["kind"] }) {
           <p className="font-heading text-lg font-bold text-ink">{formatCurrencyINR(total, language)}</p>
         </div>
         <Button asChild>
-          <Link href="/cart">{t.essentials.reviewAndPay}</Link>
+          <Link href={ctaHref ?? "/cart"}>{ctaLabel ?? t.essentials.reviewAndPay}</Link>
         </Button>
       </div>
     </div>

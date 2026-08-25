@@ -21,7 +21,7 @@ export const Orders: CollectionConfig = {
       required: true,
       minRows: 1,
       fields: [
-        { name: "kind", type: "select", required: true, options: ["book", "uniform", "stationery", "program"] },
+        { name: "kind", type: "select", required: true, options: ["book", "uniform", "program"] },
         { name: "refId", type: "text", required: true },
         { name: "label", type: "text", required: true },
         { name: "meta", type: "text" },

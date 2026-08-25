@@ -243,7 +243,7 @@ export interface ReceiptStats {
   redeemed: number;
   pending: number;
   totalRevenue: number;
-  categoryRevenue: { books: number; uniform: number; stationery: number; programs: number };
+  categoryRevenue: { books: number; uniform: number; programs: number };
 }
 
 interface PayloadStatsReceiptDoc {
@@ -274,14 +274,13 @@ export async function getReceiptStatsBySchool(schoolId: string): Promise<Receipt
     ),
   ]);
 
-  const categoryRevenue = { books: 0, uniform: 0, stationery: 0, programs: 0 };
+  const categoryRevenue = { books: 0, uniform: 0, programs: 0 };
   let totalRevenue = 0;
   revenueDocs.forEach((doc) => {
     totalRevenue += doc.order.totalAmount;
     const grouped = groupItemsByKind(toOrderItems(doc.order.items));
     categoryRevenue.books += grouped.books.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
     categoryRevenue.uniform += grouped.uniform.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
-    categoryRevenue.stationery += grouped.stationery.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
     categoryRevenue.programs += grouped.programs.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
   });
 

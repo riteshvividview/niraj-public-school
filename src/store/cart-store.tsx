@@ -8,7 +8,7 @@ import type { CartItem } from "@/types";
  * (Phase 7) — both are just CartItem lines. Phase 6 builds checkout directly
  * on top of this; don't reshape it without checking what Phase 6/7 expect.
  *
- * Books/Stationery are "default included" (plan.html: fixed list, not
+ * Books are "default included" (plan.html: fixed list, not
  * à la carte) — pages call `ensureDefault()` per catalogue item on load, and
  * that only takes effect if the line hasn't been explicitly excluded before
  * (tracked separately in `excludedIds`, so a removal sticks across remounts

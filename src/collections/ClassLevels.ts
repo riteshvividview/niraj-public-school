@@ -4,7 +4,7 @@ import type { CollectionConfig } from "payload";
  * Mirrors src/types/school.ts ClassLevel. Kept as its own collection (not
  * embedded) to match Phase 1's relational model.
  * Fully open: the School Console (Students tab's "Add new class" flow, plus
- * Catalogue/Program/Timetable managers reading this list) writes here over
+ * Catalogue/Program managers reading this list) writes here over
  * unauthenticated REST — none of the app's three auth systems produce a
  * real Payload session yet. See Books.ts for the same pattern.
  */

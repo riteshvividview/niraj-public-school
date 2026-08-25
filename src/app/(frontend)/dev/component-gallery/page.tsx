@@ -101,8 +101,8 @@ export default function ComponentGalleryPage() {
             <SectionCard
               icon={ShoppingBag}
               title="Essentials Store"
-              description="Books, uniform & kit, and stationery — exactly what the school has listed."
-              items={["Class-wise book list", "Size guide for uniform", "Fixed starter kit"]}
+              description="Books and uniform & kit — exactly what the school has listed."
+              items={["Class-wise book list", "Size guide for uniform"]}
               accent="essentials"
             />
             <SectionCard
@@ -171,9 +171,8 @@ export default function ComponentGalleryPage() {
             lines={[
               { label: "Books", amount: 1240 },
               { label: "Uniform & Kit", amount: 2060 },
-              { label: "Stationery", amount: 940 },
             ]}
-            total={4240}
+            total={3300}
             note="No admission fee or delivery charge — this is the exact amount for the items listed above."
           />
         </section>

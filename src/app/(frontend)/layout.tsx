@@ -31,7 +31,7 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   title: "School Workspace",
   description:
-    "Order books, uniform kits, stationery and enroll in school programs — pay online, collect at school.",
+    "Order books, uniform kits and enroll in school programs — pay online, collect at school.",
 };
 
 export default function RootLayout({

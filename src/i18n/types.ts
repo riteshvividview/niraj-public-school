@@ -13,7 +13,6 @@ export interface Dictionary {
     home: string;
     essentials: string;
     programs: string;
-    timetable: string;
     receipts: string;
     profile: string;
   };
@@ -52,6 +51,7 @@ export interface Dictionary {
     ticketLabel: string;
     back: string;
     change: string;
+    next: string;
   };
 
   auth: {
@@ -82,13 +82,11 @@ export interface Dictionary {
     hasReceiptsMessage: string;
     noReceiptsTitle: string;
     noReceiptsDescription: string;
-    viewTimetable: string;
   };
 
   essentials: {
     books: string;
     uniform: string;
-    stationery: string;
     hubTitle: string;
     hubSubtitle: string;
     /** Template with "{selected}" and "{total}" placeholders. */
@@ -109,24 +107,23 @@ export interface Dictionary {
     sizeUnselectOption: string;
     notNeeded: string;
     booksSubtitle: string;
-    stationerySubtitle: string;
-  };
-
-  timetable: {
-    title: string;
-    subtitle: string;
-    periodColumnLabel: string;
-    monday: string;
-    tuesday: string;
-    wednesday: string;
-    thursday: string;
-    friday: string;
-    saturday: string;
-    notesTitle: string;
-    fullScreenLabel: string;
-    exitFullScreenLabel: string;
-    emptyTitle: string;
-    emptyDescription: string;
+    /** Books selection step — choose 2nd language / specialization / specialization 2. */
+    selectionSubtitle: string;
+    secondLanguageLabel: string;
+    specializationLabel: string;
+    specialization2Label: string;
+    languageHindi: string;
+    languageTelugu: string;
+    streamScience: string;
+    streamEconomics: string;
+    electiveEna: string;
+    electiveHomeScience: string;
+    electiveRoboticsAI: string;
+    yourSelectionTitle: string;
+    changeSelection: string;
+    noBookSetTitle: string;
+    noBookSetDescription: string;
+    notSelectedYet: string;
   };
 
   cart: {
@@ -164,7 +161,6 @@ export interface Dictionary {
     /** Short nouns used to compose a per-order title — see deriveReceiptTitle in src/lib/cart-items.ts. */
     titleBooks: string;
     titleUniform: string;
-    titleStationery: string;
     titleReceiptWord: string;
     titleProgrammeReceiptWord: string;
     paidAtLabel: string;

@@ -20,13 +20,13 @@ export interface ItemCardProps {
 }
 
 /**
- * Catalogue item summary used for books/uniform/stationery. Fixed-list
- * items default to selected; unchecking marks "not needed" rather than
- * removing the row, per plan.html's "fixed list, not à la carte" model.
+ * Catalogue item summary used for books/uniform. Fixed-list items default
+ * to selected; unchecking marks "not needed" rather than removing the row,
+ * per plan.html's "fixed list, not à la carte" model.
  *
  * When `onToggleSelected` is provided and there's no `trailing` control
- * (books/stationery — a plain checkbox toggle, not a size picker like
- * uniform), the whole card is clickable, not just the checkbox itself.
+ * (books — a plain checkbox toggle, not a size picker like uniform), the
+ * whole card is clickable, not just the checkbox itself.
  */
 export function ItemCard({ name, meta, price, selected, onToggleSelected, trailing, className }: ItemCardProps) {
   const { language } = useTranslation();

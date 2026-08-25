@@ -18,7 +18,6 @@ function ReceiptRow({ record }: { record: ReceiptRecord }) {
   const title = deriveReceiptTitle(record.order.items, {
     books: t.receiptsPage.titleBooks,
     uniform: t.receiptsPage.titleUniform,
-    stationery: t.receiptsPage.titleStationery,
     receiptWord: t.receiptsPage.titleReceiptWord,
     programmeReceiptWord: t.receiptsPage.titleProgrammeReceiptWord,
   });

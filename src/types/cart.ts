@@ -1,4 +1,4 @@
-export type CartItemKind = "book" | "uniform" | "stationery" | "program";
+export type CartItemKind = "book" | "uniform" | "program";
 
 /**
  * A single cart line. Not a Payload collection itself — this is client-side
@@ -8,7 +8,7 @@ export interface CartItem {
   /** Cart line id (stable per selection, not the same as refId). */
   id: string;
   kind: CartItemKind;
-  /** Id of the underlying Book / UniformItem / StationeryItem / Program. */
+  /** Id of the underlying Book / UniformItem / Program. */
   refId: string;
   label: string;
   /** Optional context, e.g. a chosen uniform size or a book's subject. */

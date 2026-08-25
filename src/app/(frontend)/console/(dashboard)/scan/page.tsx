@@ -194,7 +194,6 @@ export default function ScannerPage() {
 const RECEIPT_TITLE_LABELS = {
   books: "Books",
   uniform: "Uniform",
-  stationery: "Stationery",
   receiptWord: "Receipt",
   programmeReceiptWord: "Programme Receipt",
 };

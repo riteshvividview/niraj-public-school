@@ -57,7 +57,6 @@ export default function ReceiptDetailPage() {
   const receiptTitle = deriveReceiptTitle(record.order.items, {
     books: t.receiptsPage.titleBooks,
     uniform: t.receiptsPage.titleUniform,
-    stationery: t.receiptsPage.titleStationery,
     receiptWord: t.receiptsPage.titleReceiptWord,
     programmeReceiptWord: t.receiptsPage.titleProgrammeReceiptWord,
   });

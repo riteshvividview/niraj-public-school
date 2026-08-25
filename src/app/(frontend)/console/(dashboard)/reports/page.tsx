@@ -65,7 +65,6 @@ export default function ReportsPage() {
               [
                 ["Books", stats.categoryRevenue.books],
                 ["Uniform & Kit", stats.categoryRevenue.uniform],
-                ["Stationery", stats.categoryRevenue.stationery],
                 ["Programs & Events", stats.categoryRevenue.programs],
               ] as const
             ).map(([label, amount]) => {

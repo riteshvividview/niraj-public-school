@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, CalendarDays, PencilRuler, Receipt as ReceiptIcon, Shirt } from "lucide-react";
+import { BookOpen, Receipt as ReceiptIcon, Shirt } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/shared/app-header";
@@ -8,7 +8,6 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { ProgramCardSkeleton } from "@/components/shared/loading-skeletons";
 import { ProgramCard } from "@/components/shared/program-card";
 import { SectionCard } from "@/components/shared/section-card";
-import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/i18n/context";
 import { registeredProgramIds } from "@/lib/cart-items";
 import { getClassLevelById, getPrograms, getReceiptsByUser, getSchoolById } from "@/lib/data-source";
@@ -44,18 +43,7 @@ export default function HomePage() {
 
   return (
     <>
-      <AppHeader
-        title={t.appName}
-        showAvatar
-        right={
-          <Button variant="outline" size="sm" className="gap-1.5 px-2.5 sm:px-3" asChild>
-            <Link href="/timetable" aria-label={t.home.viewTimetable}>
-              <CalendarDays className="size-4" />
-              <span className="hidden sm:inline">{t.home.viewTimetable}</span>
-            </Link>
-          </Button>
-        }
-      />
+      <AppHeader title={t.appName} showAvatar />
 
       <div className="w-full space-y-6 p-4 pb-8 sm:space-y-8 sm:p-6 lg:p-8">
         <section className="animate-in fade-in slide-in-from-bottom-2 rounded-xl border border-line/60 bg-card p-5 duration-500 sm:p-6">
@@ -71,15 +59,12 @@ export default function HomePage() {
 
         <section className="space-y-3">
           <h2 className="font-heading text-base font-semibold text-ink">{t.nav.essentials}</h2>
-          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
             <Link href="/essentials/books">
               <SectionCard icon={BookOpen} title={t.essentials.books} accent="essentials" />
             </Link>
             <Link href="/essentials/uniform">
               <SectionCard icon={Shirt} title={t.essentials.uniform} accent="essentials" />
-            </Link>
-            <Link href="/essentials/stationery">
-              <SectionCard icon={PencilRuler} title={t.essentials.stationery} accent="essentials" />
             </Link>
           </div>
         </section>
