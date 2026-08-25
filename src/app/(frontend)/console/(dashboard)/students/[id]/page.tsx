@@ -80,6 +80,13 @@ function ReceiptHistoryCard({ record }: { record: ReceiptRecord }) {
                   <p className="truncate text-ink">{item.label}</p>
                   {item.meta ? <p className="text-xs text-sub">{item.meta}</p> : null}
                   {item.quantity > 1 ? <p className="text-xs text-sub">Qty {item.quantity}</p> : null}
+                  {item.kind !== "program" ? (
+                    <p className={`text-xs font-medium ${item.collectedAt ? "text-section-essentials" : "text-warm"}`}>
+                      {item.collectedAt
+                        ? `Collected ${formatDate(item.collectedAt)} · ${formatTime(item.collectedAt)}`
+                        : "Pending collection"}
+                    </p>
+                  ) : null}
                 </div>
                 <span className="shrink-0 font-medium text-ink">
                   ₹{item.unitPrice * item.quantity}

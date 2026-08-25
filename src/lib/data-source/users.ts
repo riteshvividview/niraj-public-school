@@ -1,3 +1,4 @@
+import { oppositeLanguage } from "@/lib/academic-language";
 import type {
   AcademicLanguage,
   Elective,
@@ -259,11 +260,35 @@ export async function getStudentsPageBySchool(
   if (filters.classLevelId) and.push({ classLevel: { equals: filters.classLevelId } });
   if (filters.section) and.push({ section: { equals: filters.section } });
   if (filters.gender) and.push({ gender: { equals: filters.gender } });
+  // First/second language are always each other's opposite (see
+  // src/lib/academic-language.ts and student-shared.tsx's firstLanguageOf/
+  // secondLanguageOf, which this mirrors) — a student's "first language" is
+  // either an explicit academicLanguage+"first" row, or the *opposite*
+  // language stored as "second" (and vice versa). Each filter must be its
+  // own `or` group pushed as a single `and` entry — the previous version
+  // pushed academicLanguage/languageLevel as separate top-level `and`
+  // entries, so setting both filters together required academicLanguage to
+  // equal two different values at once and silently matched nothing.
+  // "not second" is spelled as an explicit `first OR unset` `or`, not
+  // `languageLevel: { not_equals: "second" }` — SQL's `<> 'second'` is NULL
+  // (i.e. excluded) for a NULL column, but an unset level should still count
+  // as "first" here, matching firstLanguageOf's own default.
+  const notSecond = { or: [{ languageLevel: { equals: "first" } }, { languageLevel: { exists: false } }] };
   if (filters.firstLanguage) {
-    and.push({ academicLanguage: { equals: filters.firstLanguage } }, { languageLevel: { equals: "first" } });
+    and.push({
+      or: [
+        { and: [{ academicLanguage: { equals: filters.firstLanguage } }, notSecond] },
+        { and: [{ academicLanguage: { equals: oppositeLanguage(filters.firstLanguage) } }, { languageLevel: { equals: "second" } }] },
+      ],
+    });
   }
   if (filters.secondLanguage) {
-    and.push({ academicLanguage: { equals: filters.secondLanguage } }, { languageLevel: { equals: "second" } });
+    and.push({
+      or: [
+        { and: [{ academicLanguage: { equals: filters.secondLanguage } }, { languageLevel: { equals: "second" } }] },
+        { and: [{ academicLanguage: { equals: oppositeLanguage(filters.secondLanguage) } }, notSecond] },
+      ],
+    });
   }
   if (filters.stream) and.push({ stream: { equals: filters.stream } });
   if (filters.elective) and.push({ elective: { equals: filters.elective } });

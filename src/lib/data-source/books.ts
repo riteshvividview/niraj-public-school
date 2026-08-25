@@ -66,6 +66,12 @@ export async function getBooksByClass(
     .map(toBook);
 }
 
+/** Console — Stock tab (whole-school view, unlike getBooksByClass's per-class scoping). */
+export async function getBooksBySchool(schoolId: string): Promise<Book[]> {
+  const docs = await payloadFind<PayloadBookDoc>("books", { school: schoolId });
+  return docs.map(toBook);
+}
+
 export async function getBookById(id: string): Promise<Book | null> {
   const doc = await payloadFindById<PayloadBookDoc>("books", id);
   return doc ? toBook(doc) : null;

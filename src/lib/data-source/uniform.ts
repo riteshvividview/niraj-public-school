@@ -51,6 +51,12 @@ export async function getUniformItemsByClass(
     .map(toUniformItem);
 }
 
+/** Console — Stock tab (whole-school view, unlike getUniformItemsByClass's per-class scoping). */
+export async function getUniformItemsBySchool(schoolId: string): Promise<UniformItem[]> {
+  const docs = await payloadFind<PayloadUniformDoc>("uniform-items", { school: schoolId });
+  return docs.map(toUniformItem);
+}
+
 export async function getUniformItemById(id: string): Promise<UniformItem | null> {
   const doc = await payloadFindById<PayloadUniformDoc>("uniform-items", id);
   return doc ? toUniformItem(doc) : null;

@@ -68,6 +68,7 @@ import {
   useClassLevels,
   useConsoleSchoolId,
 } from "@/lib/hooks/console-data";
+import { oppositeLanguage } from "@/lib/academic-language";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import {
   deriveLanguage,
@@ -623,7 +624,15 @@ function StudentFilterBar({
       </div>
       <div className="w-40 space-y-1.5">
         <Label className="text-xs text-sub">First Language</Label>
-        <Select value={filters.firstLanguage} onValueChange={(v) => set("firstLanguage", v)}>
+        <Select
+          value={filters.firstLanguage}
+          onValueChange={(v) => {
+            // Same rule as the Add/Edit forms — first/second are always
+            // opposites, so picking one forces the other, never a match.
+            const opposite = v === ALL_VALUE ? ALL_VALUE : oppositeLanguage(v as AcademicLanguage);
+            setFilters({ ...filters, firstLanguage: v, secondLanguage: opposite });
+          }}
+        >
           <SelectTrigger className="w-full">
             <SelectValue />
           </SelectTrigger>
@@ -639,7 +648,13 @@ function StudentFilterBar({
       </div>
       <div className="w-40 space-y-1.5">
         <Label className="text-xs text-sub">Second Language</Label>
-        <Select value={filters.secondLanguage} onValueChange={(v) => set("secondLanguage", v)}>
+        <Select
+          value={filters.secondLanguage}
+          onValueChange={(v) => {
+            const opposite = v === ALL_VALUE ? ALL_VALUE : oppositeLanguage(v as AcademicLanguage);
+            setFilters({ ...filters, secondLanguage: v, firstLanguage: opposite });
+          }}
+        >
           <SelectTrigger className="w-full">
             <SelectValue />
           </SelectTrigger>

@@ -5,3 +5,4 @@ export * from "./programs";
 export * from "./users";
 export * from "./orders";
 export * from "./receipts";
+export * from "./essentials-stock";

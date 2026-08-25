@@ -5,18 +5,23 @@ import {
   CalendarClock,
   LayoutDashboard,
   LogOut,
+  PackageSearch,
   Receipt,
   ScanLine,
   Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import useSWR from "swr";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { getEssentialsStockBySchool } from "@/lib/data-source";
+import { useConsoleSchoolId } from "@/lib/hooks/console-data";
 import { cn } from "@/lib/utils";
 import { useConsoleAuth } from "@/store/console-auth-store";
 
 const NAV_ITEMS = [
   { href: "/console/catalogue", label: "Catalogue Manager", icon: BookMarked },
+  { href: "/console/stock", label: "Essentials Stock", icon: PackageSearch },
   { href: "/console/programs", label: "Program Manager", icon: CalendarClock },
   { href: "/console/students", label: "Students", icon: Users },
   { href: "/console/scan", label: "Receipt / QR Scanner", icon: ScanLine },
@@ -28,12 +33,24 @@ const NAV_ITEMS = [
   },
 ];
 
+/** Count of essentials-stock rows at/under their low-stock threshold — shown as a badge on the Essentials Stock nav item, per the school's "notify in the CMS, not by email" request. */
+function useLowStockCount(): number {
+  const schoolId = useConsoleSchoolId();
+  const { data: stockRows } = useSWR(
+    schoolId ? ["console:nav:stock", schoolId] : null,
+    () => getEssentialsStockBySchool(schoolId),
+  );
+  if (!stockRows) return 0;
+  return stockRows.filter((row) => row.quantityOnHand <= row.lowStockThreshold).length;
+}
+
 function NavLinks({
   direction = "vertical",
 }: {
   direction?: "vertical" | "horizontal";
 }) {
   const pathname = usePathname();
+  const lowStockCount = useLowStockCount();
   return (
     <nav
       className={cn(
@@ -43,6 +60,7 @@ function NavLinks({
     >
       {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
         const isActive = pathname === href || pathname.startsWith(`${href}/`);
+        const showLowStockBadge = href === "/console/stock" && lowStockCount > 0;
         return (
           <Link
             key={href}
@@ -56,6 +74,11 @@ function NavLinks({
           >
             <Icon className="size-4 shrink-0" />
             {label}
+            {showLowStockBadge ? (
+              <span className="ml-auto flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
+                {lowStockCount > 9 ? "9+" : lowStockCount}
+              </span>
+            ) : null}
           </Link>
         );
       })}

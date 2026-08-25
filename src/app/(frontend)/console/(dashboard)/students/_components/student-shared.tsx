@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { oppositeLanguage } from "@/lib/academic-language";
 import { resetStudentPassword, updateStudent } from "@/lib/data-source";
 import type { AcademicLanguage, ClassLevel, Elective, Stream, UserProfile } from "@/types";
 
@@ -41,18 +42,29 @@ export function electiveLabel(elective: Elective | undefined): string {
   return "—";
 }
 
+/**
+ * First/second language are always opposites of each other, so the one the
+ * roster didn't explicitly record is fully determined by the one it did —
+ * never left blank. A student with no academicLanguage at all still shows
+ * neither (nothing to derive from).
+ */
 export function firstLanguageOf(student: UserProfile): AcademicLanguage | undefined {
-  return student.languageLevel === "first" ? student.academicLanguage : undefined;
+  if (!student.academicLanguage) return undefined;
+  return student.languageLevel === "second" ? oppositeLanguage(student.academicLanguage) : student.academicLanguage;
 }
 export function secondLanguageOf(student: UserProfile): AcademicLanguage | undefined {
-  return student.languageLevel === "second" ? student.academicLanguage : undefined;
+  if (!student.academicLanguage) return undefined;
+  return student.languageLevel === "second" ? student.academicLanguage : oppositeLanguage(student.academicLanguage);
 }
 
 /**
  * The roster only ever records one language pick per student (as either
  * their first or second language) — see bulk-import.ts's parseLanguageCell.
  * The Add/Edit forms surface this as two separate selects per the school's
- * own terminology, but they stay mutually exclusive under the hood.
+ * own terminology, but they stay mutually exclusive under the hood — picking
+ * either one auto-fills the other with its opposite (see
+ * LanguageAndSpecializationFields), so whichever was picked last is "the"
+ * source of truth here.
  */
 export function deriveLanguage(
   firstLanguage: AcademicLanguage | "",
@@ -91,7 +103,9 @@ export function LanguageAndSpecializationFields({
           onValueChange={(v) => {
             const next = v === NONE_VALUE ? "" : (v as AcademicLanguage);
             setFirstLanguage(next);
-            if (next) setSecondLanguage("");
+            // Always the opposite of the other — picking one fully
+            // determines both, so there's never a matching or blank pair.
+            setSecondLanguage(next ? oppositeLanguage(next) : "");
           }}
         >
           <SelectTrigger className="w-full">
@@ -114,7 +128,7 @@ export function LanguageAndSpecializationFields({
           onValueChange={(v) => {
             const next = v === NONE_VALUE ? "" : (v as AcademicLanguage);
             setSecondLanguage(next);
-            if (next) setFirstLanguage("");
+            setFirstLanguage(next ? oppositeLanguage(next) : "");
           }}
         >
           <SelectTrigger className="w-full">
@@ -191,12 +205,8 @@ export function EditStudentForm({
   const [classLevelId, setClassLevelId] = useState(student.classLevelId);
   const [section, setSection] = useState(student.section ?? "");
   const [gender, setGender] = useState<UserProfile["gender"] | "">(student.gender ?? "");
-  const [firstLanguage, setFirstLanguage] = useState<AcademicLanguage | "">(
-    student.languageLevel === "first" ? (student.academicLanguage ?? "") : "",
-  );
-  const [secondLanguage, setSecondLanguage] = useState<AcademicLanguage | "">(
-    student.languageLevel === "second" ? (student.academicLanguage ?? "") : "",
-  );
+  const [firstLanguage, setFirstLanguage] = useState<AcademicLanguage | "">(firstLanguageOf(student) ?? "");
+  const [secondLanguage, setSecondLanguage] = useState<AcademicLanguage | "">(secondLanguageOf(student) ?? "");
   const [stream, setStream] = useState<Stream | "">(student.stream ?? "");
   const [elective, setElective] = useState<Elective | "">(student.elective ?? "");
   const [error, setError] = useState<string | null>(null);

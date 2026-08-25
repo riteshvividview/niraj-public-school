@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 
 import { Books } from "./src/collections/Books";
 import { ClassLevels } from "./src/collections/ClassLevels";
+import { EssentialsStock } from "./src/collections/EssentialsStock";
 import { Media } from "./src/collections/Media";
 import { Orders } from "./src/collections/Orders";
 import { PayloadAdmins } from "./src/collections/PayloadAdmins";
@@ -31,6 +32,7 @@ export default buildConfig({
     ClassLevels,
     Books,
     UniformItems,
+    EssentialsStock,
     Programs,
     Users,
     Orders,
