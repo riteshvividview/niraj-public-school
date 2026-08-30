@@ -44,6 +44,8 @@ const hi: Dictionary = {
     back: "वापस",
     change: "बदलें",
     next: "आगे",
+    previous: "पिछला",
+    pageOf: "पृष्ठ",
     collected: "ले लिया गया",
     pendingCollection: "लेना बाकी है",
   },

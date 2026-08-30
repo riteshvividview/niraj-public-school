@@ -19,7 +19,8 @@ function CartLineRow({
   changeSizeLabel,
 }: {
   item: CartItem;
-  onRemove: () => void;
+  /** Omit for a compulsory line (e.g. books) — no product concept of removing a required item. */
+  onRemove?: () => void;
   changeSizeLabel?: string;
 }) {
   const { language } = useTranslation();
@@ -39,14 +40,16 @@ function CartLineRow({
           ) : null}
         </div>
       </div>
-      <button
-        type="button"
-        onClick={onRemove}
-        aria-label={item.label}
-        className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-sub transition-colors hover:bg-muted hover:text-destructive"
-      >
-        <X className="size-4" />
-      </button>
+      {onRemove ? (
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label={item.label}
+          className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-sub transition-colors hover:bg-muted hover:text-destructive"
+        >
+          <X className="size-4" />
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -86,7 +89,7 @@ export default function CartPage() {
                   </h2>
                   <div className="divide-y divide-line rounded-lg border border-line/60 bg-card">
                     {grouped.books.map((item) => (
-                      <CartLineRow key={item.id} item={item} onRemove={() => cart.setIncluded(item, false)} />
+                      <CartLineRow key={item.id} item={item} />
                     ))}
                   </div>
                 </div>

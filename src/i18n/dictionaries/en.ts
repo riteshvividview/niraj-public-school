@@ -44,6 +44,8 @@ const en: Dictionary = {
     back: "Back",
     change: "Change",
     next: "Next",
+    previous: "Previous",
+    pageOf: "Page",
     collected: "Collected",
     pendingCollection: "Pending collection",
   },

@@ -44,6 +44,8 @@ const te: Dictionary = {
     back: "వెనుకకు",
     change: "మార్చండి",
     next: "తదుపరి",
+    previous: "మునుపటి",
+    pageOf: "పేజీ",
     collected: "తీసుకోబడింది",
     pendingCollection: "తీసుకోవడం పెండింగ్‌లో ఉంది",
   },

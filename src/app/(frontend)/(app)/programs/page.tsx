@@ -1,7 +1,8 @@
 "use client";
 
-import { Calendar } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState } from "react";
+import useSWR, { preload } from "swr";
 import { AppHeader } from "@/components/shared/app-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ProgramCardSkeleton } from "@/components/shared/loading-skeletons";
@@ -15,72 +16,74 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTranslation } from "@/i18n/context";
-import { registeredProgramIds as computeRegisteredProgramIds } from "@/lib/cart-items";
-import { getPrograms, getReceiptsByUser, isProgramEligibleForClass } from "@/lib/data-source";
+import { getProgramCategories, getProgramsPage, getRegisteredProgramIds } from "@/lib/data-source";
 import { useAuth } from "@/store/auth-store";
-import type { Program } from "@/types";
 
 const FEE_BRACKETS = [500, 1000, 2000, 5000];
+const PAGE_SIZE = 12;
 
 type SortOption = "date" | "fee-asc" | "fee-desc";
 
 const ALL = "all";
 
+const SORT_TO_API: Record<SortOption, "date" | "fee" | "-fee"> = {
+  date: "date",
+  "fee-asc": "fee",
+  "fee-desc": "-fee",
+};
+
 export default function ProgramsFeedPage() {
   const { t } = useTranslation();
   const { profile } = useAuth();
-
-  const [programs, setPrograms] = useState<Program[] | null>(null);
-  const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
-  const [registeredProgramIds, setRegisteredProgramIds] = useState<Set<string>>(new Set());
 
   const [categoryFilter, setCategoryFilter] = useState<string>(ALL);
   const [dateFrom, setDateFrom] = useState("");
   const [maxFee, setMaxFee] = useState<string>(ALL);
   const [sortBy, setSortBy] = useState<SortOption>("date");
+  const [page, setPage] = useState(1);
 
-  // Category is free text now (see Programs.ts) — the filter's option list
-  // is derived from whatever categories actually exist, fetched once
-  // unfiltered, rather than a fixed preset list.
-  useEffect(() => {
-    getPrograms({}).then((all) => {
-      setCategoryOptions(Array.from(new Set(all.map((program) => program.category))).sort());
-    });
-  }, []);
+  // Category is free text now (see Programs.ts) — the filter's option list is
+  // derived from whatever categories actually exist across every school
+  // (Programs & Events is the one cross-school surface), select-trimmed
+  // rather than a full unfiltered fetch.
+  const { data: categoryOptions } = useSWR("program-categories", getProgramCategories);
 
-  useEffect(() => {
-    if (!profile) return;
-    getReceiptsByUser(profile.id).then((records) => setRegisteredProgramIds(computeRegisteredProgramIds(records)));
-  }, [profile]);
+  const { data: registeredProgramIds } = useSWR(profile ? ["registered-program-ids", profile.id] : null, () =>
+    getRegisteredProgramIds(profile!.id),
+  );
 
-  useEffect(() => {
-    // Guard against out-of-order responses: if the filters change again
-    // before this request resolves, its (now stale) result must not
-    // overwrite whatever the latest filter selection fetched.
-    let cancelled = false;
-    getPrograms({
-      category: categoryFilter === ALL ? undefined : categoryFilter,
-      dateFrom: dateFrom || undefined,
-      maxFee: maxFee === ALL ? undefined : Number(maxFee),
-    }).then((result) => {
-      if (!cancelled) setPrograms(result);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [categoryFilter, dateFrom, maxFee]);
+  const filters = {
+    category: categoryFilter === ALL ? undefined : categoryFilter,
+    dateFrom: dateFrom || undefined,
+    maxFee: maxFee === ALL ? undefined : Number(maxFee),
+    classLevelId: profile?.classLevelId,
+  };
+  const filtersKey = JSON.stringify(filters) + sortBy;
 
-  const sortedPrograms = useMemo(() => {
-    if (!programs) return null;
-    const eligible = profile
-      ? programs.filter((program) => isProgramEligibleForClass(program, profile.classLevelId))
-      : programs;
-    const copy = [...eligible];
-    if (sortBy === "date") copy.sort((a, b) => a.date.localeCompare(b.date));
-    else if (sortBy === "fee-asc") copy.sort((a, b) => a.fee - b.fee);
-    else copy.sort((a, b) => b.fee - a.fee);
-    return copy;
-  }, [programs, sortBy, profile]);
+  // Reset to page 1 whenever filters/sort change — in-render state
+  // adjustment (not an effect), same pattern the console's Payments/Students
+  // pages use.
+  const [seenFiltersKey, setSeenFiltersKey] = useState(filtersKey);
+  if (filtersKey !== seenFiltersKey) {
+    setSeenFiltersKey(filtersKey);
+    setPage(1);
+  }
+  const effectivePage = filtersKey === seenFiltersKey ? page : 1;
+
+  const { data: pageData } = useSWR(
+    ["programs", filtersKey, effectivePage],
+    () => getProgramsPage(filters, effectivePage, PAGE_SIZE, SORT_TO_API[sortBy]),
+    { keepPreviousData: true },
+  );
+  const programs = pageData?.programs ?? null;
+  const totalPages = pageData?.totalPages ?? 1;
+
+  if (pageData && effectivePage < pageData.totalPages) {
+    const nextPage = effectivePage + 1;
+    void preload(["programs", filtersKey, nextPage], () =>
+      getProgramsPage(filters, nextPage, PAGE_SIZE, SORT_TO_API[sortBy]),
+    );
+  }
 
   const hasActiveFilters = categoryFilter !== ALL || dateFrom !== "" || maxFee !== ALL;
 
@@ -103,7 +106,7 @@ export default function ProgramsFeedPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={ALL}>{t.programsPage.filterAllCategories}</SelectItem>
-                {categoryOptions.map((category) => (
+                {(categoryOptions ?? []).map((category) => (
                   <SelectItem key={category} value={category}>
                     {category}
                   </SelectItem>
@@ -164,34 +167,63 @@ export default function ProgramsFeedPage() {
           </div>
         </div>
 
-        {sortedPrograms === null ? (
+        {programs === null ? (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: 4 }).map((_, i) => (
               <ProgramCardSkeleton key={i} />
             ))}
           </div>
-        ) : sortedPrograms.length === 0 ? (
+        ) : programs.length === 0 ? (
           <EmptyState
             icon={Calendar}
             title={t.programsPage.noResultsTitle}
             description={t.programsPage.noResultsDescription}
           />
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {sortedPrograms.map((program) => (
-              <ProgramCard
-                key={program.id}
-                title={program.title}
-                date={program.date}
-                venue={program.venue}
-                fee={program.fee}
-                seatsAvailable={program.seatsAvailable}
-                status={program.status}
-                registered={registeredProgramIds.has(program.id)}
-                href={`/programs/${program.id}`}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {programs.map((program) => (
+                <ProgramCard
+                  key={program.id}
+                  title={program.title}
+                  date={program.date}
+                  venue={program.venue}
+                  fee={program.fee}
+                  seatsAvailable={program.seatsAvailable}
+                  status={program.status}
+                  registered={registeredProgramIds?.has(program.id) ?? false}
+                  href={`/programs/${program.id}`}
+                />
+              ))}
+            </div>
+            {totalPages > 1 ? (
+              <div className="flex items-center justify-between gap-3 pt-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  disabled={effectivePage <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  <ChevronLeft className="size-4" />
+                  {t.common.previous}
+                </Button>
+                <p className="text-xs text-sub">
+                  {t.common.pageOf} {effectivePage} / {totalPages}
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  disabled={effectivePage >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                >
+                  {t.common.next}
+                  <ChevronRight className="size-4" />
+                </Button>
+              </div>
+            ) : null}
+          </>
         )}
       </div>
     </>

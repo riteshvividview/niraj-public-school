@@ -53,6 +53,9 @@ export interface Dictionary {
     back: string;
     change: string;
     next: string;
+    previous: string;
+    /** e.g. "Page" in "Page 2 / 5" — combined with a plain "n / total" the caller formats. */
+    pageOf: string;
     collected: string;
     pendingCollection: string;
   };

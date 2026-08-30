@@ -1,40 +1,34 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import useSWR from "swr";
 import { AppHeader } from "@/components/shared/app-header";
 import { ReceiptCard } from "@/components/shared/receipt-card";
 import { toBadgeStatus } from "@/components/shared/status-badge";
 import { useTranslation } from "@/i18n/context";
 import { deriveReceiptTitle, groupItemsByKind } from "@/lib/cart-items";
 import { getProgramById, getReceiptById, getSchoolById } from "@/lib/data-source";
-import type { ReceiptRecord, School } from "@/types";
 
 export default function ReceiptDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { t } = useTranslation();
-  const [record, setRecord] = useState<ReceiptRecord | null | undefined>(undefined);
-  const [school, setSchool] = useState<School | null>(null);
-  const [venue, setVenue] = useState<string | undefined>(undefined);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    getReceiptById(params.id).then(setRecord);
-  }, [params.id]);
+  const { data: record } = useSWR(["receipt", params.id], () => getReceiptById(params.id));
 
   const grouped = record ? groupItemsByKind(record.order.items) : null;
   const isTicket = Boolean(grouped && grouped.programs.length === record!.order.items.length && grouped.programs.length > 0);
+  const singleProgramId = isTicket && grouped?.programs.length === 1 ? grouped.programs[0].refId : null;
 
-  useEffect(() => {
-    if (!record) return;
-    getSchoolById(record.order.schoolId).then(setSchool);
-  }, [record]);
-
-  useEffect(() => {
-    if (!isTicket || !grouped || grouped.programs.length !== 1) return;
-    getProgramById(grouped.programs[0].refId).then((program) => setVenue(program?.venue));
-  }, [isTicket, grouped]);
+  const { data: school } = useSWR(record ? ["school", record.order.schoolId] : null, () =>
+    getSchoolById(record!.order.schoolId),
+  );
+  const { data: program } = useSWR(singleProgramId ? ["program", singleProgramId] : null, () =>
+    getProgramById(singleProgramId!),
+  );
+  const venue = program?.venue;
 
   useEffect(() => {
     if (record === null) {

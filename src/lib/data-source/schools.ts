@@ -111,7 +111,12 @@ export async function getClassLevelsBySchool(schoolId: string): Promise<ClassLev
   return levels;
 }
 
+/** Checks every already-cached school's class-level list first (usually already warm from a getClassLevelsBySchool call) before hitting the network. */
 export async function getClassLevelById(id: string): Promise<ClassLevel | null> {
+  for (const levels of classLevelsCache.values()) {
+    const cached = levels.find((level) => level.id === id);
+    if (cached) return cached;
+  }
   const doc = await payloadFindById<PayloadClassLevelDoc>("class-levels", id);
   return doc ? toClassLevel(doc) : null;
 }

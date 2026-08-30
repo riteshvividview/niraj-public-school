@@ -2,14 +2,14 @@
 
 import { BookOpen, ChevronRight, Shirt } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import useSWR from "swr";
 import { AppHeader } from "@/components/shared/app-header";
 import { formatTemplate } from "@/i18n/format";
 import { useTranslation } from "@/i18n/context";
 import { getBooksByClass, getUniformItemsByClass } from "@/lib/data-source";
 import { useAuth } from "@/store/auth-store";
 import { lineId, useCart } from "@/store/cart-store";
-import type { Book, UniformItem } from "@/types";
 
 interface HubRowProps {
   href: string;
@@ -42,27 +42,32 @@ export default function EssentialsHubPage() {
   const { profile } = useAuth();
   const cart = useCart();
 
-  const [books, setBooks] = useState<Book[] | null>(null);
-  const [uniformItems, setUniformItems] = useState<UniformItem[] | null>(null);
+  // Only for the "X of Y selected" status label below — the actual
+  // selection/confirmation (and cart seeding) happens on the books page's
+  // own selection step, since which book set applies depends on choices
+  // made there, not just the student's saved profile defaults.
+  const { data: books } = useSWR(
+    profile ? ["essentials-hub:books", profile.schoolId, profile.classLevelId, profile.academicLanguage, profile.stream, profile.elective] : null,
+    () =>
+      getBooksByClass(profile!.schoolId, profile!.classLevelId, {
+        language: profile!.academicLanguage,
+        stream: profile!.stream,
+        elective: profile!.elective,
+      }),
+  );
+  const { data: uniformItems } = useSWR(
+    profile ? ["essentials-hub:uniform", profile.schoolId, profile.classLevelId, profile.gender] : null,
+    () => getUniformItemsByClass(profile!.schoolId, profile!.classLevelId, profile!.gender),
+  );
 
+  // Reconciling the cart is a side effect of the uniform catalogue loading,
+  // not part of the fetch itself — runs whenever a fresh result comes in.
   useEffect(() => {
-    if (!profile) return;
-    // Only for the "X of Y selected" status label below — the actual
-    // selection/confirmation (and cart seeding) happens on the books page's
-    // own selection step, since which book set applies depends on choices
-    // made there, not just the student's saved profile defaults.
-    getBooksByClass(profile.schoolId, profile.classLevelId, {
-      language: profile.academicLanguage,
-      stream: profile.stream,
-      elective: profile.elective,
-    }).then(setBooks);
-    getUniformItemsByClass(profile.schoolId, profile.classLevelId, profile.gender).then((result) => {
-      setUniformItems(result);
-      cart.reconcileKind("uniform", result.map((item) => lineId("uniform", item.id)));
-    });
-    // Only re-seed when the logged-in profile changes, not on every cart update.
+    if (!uniformItems) return;
+    cart.reconcileKind("uniform", uniformItems.map((item) => lineId("uniform", item.id)));
+    // Only re-reconcile when the catalogue result itself changes, not on every cart update.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile]);
+  }, [uniformItems]);
 
   if (!profile) return null;
 
@@ -82,18 +87,18 @@ export default function EssentialsHubPage() {
             icon={BookOpen}
             title={t.essentials.books}
             statusLabel={
-              books === null
+              books === undefined
                 ? "…"
                 : formatTemplate(t.essentials.selectedCount, { selected: booksSelected, total: books.length })
             }
-            isComplete={books !== null && booksSelected === books.length && books.length > 0}
+            isComplete={books !== undefined && booksSelected === books.length && books.length > 0}
           />
           <HubRow
             href="/essentials/uniform"
             icon={Shirt}
             title={t.essentials.uniform}
             statusLabel={
-              uniformItems === null
+              uniformItems === undefined
                 ? "…"
                 : formatTemplate(t.essentials.confirmedCount, {
                     selected: uniformConfirmed,
@@ -101,7 +106,7 @@ export default function EssentialsHubPage() {
                   })
             }
             isComplete={
-              uniformItems !== null && uniformConfirmed === uniformItems.length && uniformItems.length > 0
+              uniformItems !== undefined && uniformConfirmed === uniformItems.length && uniformItems.length > 0
             }
           />
         </div>

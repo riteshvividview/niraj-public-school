@@ -134,7 +134,53 @@ export async function createReceiptForOrder(order: Order): Promise<Receipt> {
   };
 }
 
-/** Parent — My Receipts list. */
+/** Parent — Home page's "you have receipts" banner. Cheap existence check, not a full fetch. */
+export async function hasAnyReceiptsForUser(userId: string): Promise<boolean> {
+  const page = await payloadFindPage<PayloadReceiptDoc>("receipts", {
+    where: { user: { equals: userId } },
+    limit: 1,
+  });
+  return page.totalDocs > 0;
+}
+
+/**
+ * Parent — Program detail page's "already registered?" check. Queries
+ * `receipts` directly with a dot-path filter into the populated `order`
+ * relation (same technique `getPaymentsPageBySchool` already uses for
+ * `"user.classLevel"`), `limit: 1`, so this doesn't need to pull the
+ * student's whole receipt history just to find one match.
+ */
+export async function getExistingReceiptIdForProgram(userId: string, programId: string): Promise<string | null> {
+  const page = await payloadFindPage<PayloadReceiptDoc>("receipts", {
+    where: {
+      and: [{ user: { equals: userId } }, { "order.items.refId": { equals: programId } }],
+    },
+    limit: 1,
+  });
+  return page.docs[0]?.id ?? null;
+}
+
+export interface ReceiptsPage {
+  records: ReceiptRecord[];
+  totalCount: number;
+  totalPages: number;
+  page: number;
+}
+
+/** Parent — My Receipts list, paginated server-side — a student's purchase history grows every year of enrollment. */
+export async function getReceiptsPageByUser(userId: string, page: number, pageSize = 20): Promise<ReceiptsPage> {
+  const result = await payloadFindPage<PayloadReceiptDoc>("receipts", {
+    where: { user: { equals: userId } },
+    page,
+    limit: pageSize,
+    sort: "-issuedAt",
+    depth: 1,
+  });
+  const records = result.docs.map(toReceiptRecord).filter((record): record is ReceiptRecord => record !== null);
+  return { records, totalCount: result.totalDocs, totalPages: result.totalPages, page: result.page };
+}
+
+/** Console — Student Detail page's purchase history (one student, inherently bounded). Parent-facing list uses getReceiptsPageByUser instead. */
 export async function getReceiptsByUser(userId: string): Promise<ReceiptRecord[]> {
   const docs = await payloadFind<PayloadReceiptDoc>("receipts", { user: userId }, { depth: 1 });
   return docs
@@ -179,6 +225,14 @@ export interface PaymentPageFilters {
   search?: string;
   classLevelId?: string;
   redemptionStatus?: RedemptionStatus;
+  /**
+   * Broader than `redemptionStatus` — "collected" matches any of
+   * partially-collected/collected/checked-in, "pending" matches exactly
+   * "ready". Used by the Reports Dashboard's Orders drill-down, which deals
+   * in Collected vs. Awaiting Collection rather than one exact status.
+   * Ignored if `redemptionStatus` is also set.
+   */
+  collectionState?: "collected" | "pending";
   paymentMethod?: Order["paymentMethod"];
   fromDate?: string;
   toDate?: string;
@@ -203,6 +257,7 @@ export async function getPaymentsPageBySchool(
   filters: PaymentPageFilters,
   page: number,
   pageSize = 20,
+  sort: "issuedAt" | "-issuedAt" = "-issuedAt",
 ): Promise<PaymentsPage> {
   const and: Record<string, unknown>[] = [{ school: { equals: schoolId } }];
   const search = filters.search?.trim();
@@ -216,7 +271,13 @@ export async function getPaymentsPageBySchool(
     });
   }
   if (filters.classLevelId) and.push({ "user.classLevel": { equals: filters.classLevelId } });
-  if (filters.redemptionStatus) and.push({ redemptionStatus: { equals: filters.redemptionStatus } });
+  if (filters.redemptionStatus) {
+    and.push({ redemptionStatus: { equals: filters.redemptionStatus } });
+  } else if (filters.collectionState === "collected") {
+    and.push({ redemptionStatus: { not_equals: "ready" } });
+  } else if (filters.collectionState === "pending") {
+    and.push({ redemptionStatus: { equals: "ready" } });
+  }
   if (filters.paymentMethod) and.push({ "order.paymentMethod": { equals: filters.paymentMethod } });
   if (filters.fromDate) and.push({ issuedAt: { greater_than_equal: `${filters.fromDate}T00:00:00.000Z` } });
   if (filters.toDate) and.push({ issuedAt: { less_than_equal: `${filters.toDate}T23:59:59.999Z` } });
@@ -225,7 +286,7 @@ export async function getPaymentsPageBySchool(
     where: { and },
     page,
     limit: pageSize,
-    sort: "-issuedAt",
+    sort,
     depth: 1,
   });
   const records: PaymentRecord[] = [];

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import useSWR from "swr";
 import { AppHeader } from "@/components/shared/app-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ItemCard } from "@/components/shared/item-card";
@@ -8,6 +9,7 @@ import { ItemCardSkeleton } from "@/components/shared/loading-skeletons";
 import { Atom, BookOpen, Bot, Check, GraduationCap, Home, Languages, LineChart, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/i18n/context";
+import { secondLanguageOf } from "@/lib/academic-language";
 import { bookToCartItem } from "@/lib/cart-items";
 import { getBooksByClass } from "@/lib/data-source";
 import { formatCurrencyINR } from "@/lib/format";
@@ -87,17 +89,16 @@ export default function BooksPage() {
   const { t, language } = useTranslation();
   const { profile } = useAuth();
   const cart = useCart();
-  const [catalogue, setCatalogue] = useState<Book[] | null>(null);
+  const { data: swrCatalogue } = useSWR(
+    profile ? ["books:catalogue", profile.schoolId, profile.classLevelId] : null,
+    () => getBooksByClass(profile!.schoolId, profile!.classLevelId),
+  );
+  const catalogue = swrCatalogue ?? null;
   const [step, setStep] = useState<"select" | "review">("select");
   const [selectedLanguage, setSelectedLanguage] = useState<AcademicLanguage | "">("");
   const [selectedStream, setSelectedStream] = useState<Stream | "">("");
   const [selectedElective, setSelectedElective] = useState<Elective | "">("");
   const [defaultsAppliedFor, setDefaultsAppliedFor] = useState<Book[] | null>(null);
-
-  useEffect(() => {
-    if (!profile) return;
-    getBooksByClass(profile.schoolId, profile.classLevelId).then(setCatalogue);
-  }, [profile]);
 
   // Seed the selection step from the student's saved profile the first time
   // the class catalogue is known, so returning students see everything
@@ -110,8 +111,9 @@ export default function BooksPage() {
     const streams = new Set(catalogue.map((b) => b.stream).filter(Boolean));
     const electives = new Set(catalogue.map((b) => b.elective).filter(Boolean));
     setDefaultsAppliedFor(catalogue);
-    if (profile?.academicLanguage && languages.has(profile.academicLanguage)) {
-      setSelectedLanguage(profile.academicLanguage);
+    const secondLanguage = profile ? secondLanguageOf(profile) : undefined;
+    if (secondLanguage && languages.has(secondLanguage)) {
+      setSelectedLanguage(secondLanguage);
     }
     if (profile?.stream && streams.has(profile.stream)) {
       setSelectedStream(profile.stream);
@@ -187,7 +189,10 @@ export default function BooksPage() {
       "book",
       matchedBooks.map((book) => lineId("book", book.id)),
     );
-    matchedBooks.forEach((book) => cart.ensureDefault(bookToCartItem(book, chosenLabels)));
+    // Books are compulsory (never à la carte) — always (re-)include them,
+    // ignoring any stale `excludedIds` entry from the cart page's remove
+    // control, so this step's Next button never silently disappears.
+    matchedBooks.forEach((book) => cart.setIncluded(bookToCartItem(book, chosenLabels), true));
     setStep("review");
   }
 
@@ -230,19 +235,6 @@ export default function BooksPage() {
           <div className="lg:grid lg:grid-cols-[1fr_300px] lg:items-start lg:gap-6">
             <div className="space-y-5">
               <p className="text-sm text-sub">{t.essentials.selectionSubtitle}</p>
-              {languageOptions.length > 0 ? (
-                <OptionGroup title={t.essentials.secondLanguageLabel} columns={2}>
-                  {languageOptions.map((opt) => (
-                    <OptionCard
-                      key={opt}
-                      icon={Languages}
-                      label={languageLabel(opt)}
-                      selected={selectedLanguage === opt}
-                      onSelect={() => setSelectedLanguage(opt)}
-                    />
-                  ))}
-                </OptionGroup>
-              ) : null}
               {streamOptions.length > 0 ? (
                 <OptionGroup title={t.essentials.specializationLabel} columns={2}>
                   {streamOptions.map((opt) => (
@@ -318,7 +310,13 @@ export default function BooksPage() {
         )}
       </div>
       {step === "review" && matchedBooks.length > 0 ? (
-        <EssentialsReviewBar kind="book" ctaLabel={t.common.next} ctaHref="/essentials/uniform" />
+        <EssentialsReviewBar
+          kind="book"
+          ctaLabel={t.common.next}
+          ctaHref="/essentials/uniform"
+          countOverride={matchedBooks.length}
+          totalOverride={subtotal}
+        />
       ) : null}
     </>
   );

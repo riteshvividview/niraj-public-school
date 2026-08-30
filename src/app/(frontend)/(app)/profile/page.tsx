@@ -2,14 +2,14 @@
 
 import { Camera, ChevronRight, HelpCircle, KeyRound, Loader2, LogOut } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import useSWR from "swr";
 import { AppHeader } from "@/components/shared/app-header";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/i18n/context";
 import { getClassLevelById, updateUserAvatar } from "@/lib/data-source";
 import { useAuth } from "@/store/auth-store";
-import type { ClassLevel } from "@/types";
 import { ChangePasswordDialog } from "./_components/change-password-dialog";
 
 function ProfileRow({ label, value }: { label: string; value: string }) {
@@ -92,13 +92,10 @@ function AvatarUpload() {
 export default function ProfilePage() {
   const { t } = useTranslation();
   const { profile, logout } = useAuth();
-  const [classLevel, setClassLevel] = useState<ClassLevel | null>(null);
+  const { data: classLevel } = useSWR(profile ? ["class-level", profile.classLevelId] : null, () =>
+    getClassLevelById(profile!.classLevelId),
+  );
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
-
-  useEffect(() => {
-    if (!profile) return;
-    getClassLevelById(profile.classLevelId).then(setClassLevel);
-  }, [profile]);
 
   if (!profile) return null;
 

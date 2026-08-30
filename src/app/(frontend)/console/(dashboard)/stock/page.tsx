@@ -26,13 +26,12 @@ import {
 } from "@/components/ui/table";
 import {
   getBooksBySchool,
-  getEssentialsStockBySchool,
   getOrdersBySchool,
   getUniformItemsBySchool,
   upsertEssentialsStock,
 } from "@/lib/data-source";
 import { formatCurrencyINR } from "@/lib/format";
-import { useClassLevels, useConsoleSchoolId } from "@/lib/hooks/console-data";
+import { useClassLevels, useConsoleSchoolId, useEssentialsStock } from "@/lib/hooks/console-data";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import type { Book, EssentialsStockRow, Order, UniformItem } from "@/types";
 
@@ -253,10 +252,7 @@ export default function StockPage() {
     schoolId ? ["console:stock:uniform", schoolId] : null,
     () => getUniformItemsBySchool(schoolId),
   );
-  const { data: stockRows, mutate: refreshStock } = useSWR(
-    schoolId ? ["console:stock:rows", schoolId] : null,
-    () => getEssentialsStockBySchool(schoolId),
-  );
+  const { stockRows, mutateStockRows: refreshStock } = useEssentialsStock(schoolId);
   const { data: orders } = useSWR(schoolId ? ["console:stock:orders", schoolId] : null, () => getOrdersBySchool(schoolId));
 
   const classLevelById = useMemo(() => new Map(classLevels.map((c) => [c.id, c.label])), [classLevels]);

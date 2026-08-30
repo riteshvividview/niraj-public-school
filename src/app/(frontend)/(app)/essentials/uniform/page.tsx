@@ -1,7 +1,8 @@
 "use client";
 
 import { Ruler, Shirt } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import useSWR from "swr";
 import { AppHeader } from "@/components/shared/app-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ItemCard } from "@/components/shared/item-card";
@@ -27,7 +28,6 @@ import { getUniformItemsByClass } from "@/lib/data-source";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/store/auth-store";
 import { lineId, useCart } from "@/store/cart-store";
-import type { UniformItem } from "@/types";
 import { EssentialsReviewBar } from "../_components/review-bar";
 
 const UNSELECT_VALUE = "__unselect__";
@@ -93,16 +93,18 @@ export default function UniformPage() {
   const { t } = useTranslation();
   const { profile } = useAuth();
   const cart = useCart();
-  const [items, setItems] = useState<UniformItem[] | null>(null);
+  const { data: swrItems } = useSWR(
+    profile ? ["uniform:catalogue", profile.schoolId, profile.classLevelId, profile.gender] : null,
+    () => getUniformItemsByClass(profile!.schoolId, profile!.classLevelId, profile!.gender),
+  );
+  const items = swrItems ?? null;
 
   useEffect(() => {
-    if (!profile) return;
-    getUniformItemsByClass(profile.schoolId, profile.classLevelId, profile.gender).then((result) => {
-      setItems(result);
-      cart.reconcileKind("uniform", result.map((item) => lineId("uniform", item.id)));
-    });
+    if (!items) return;
+    cart.reconcileKind("uniform", items.map((item) => lineId("uniform", item.id)));
+    // Only re-reconcile when the catalogue result itself changes, not on every cart update.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile]);
+  }, [items]);
 
   if (!profile) return null;
 

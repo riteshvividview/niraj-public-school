@@ -20,8 +20,26 @@
 
 const API_BASE = "/api";
 
+/**
+ * `payloadFind`'s default page size — every "whole collection" data-source
+ * call (students, receipts, orders, stock…) relies on this being large
+ * enough to actually be "everything." Payload silently truncates past
+ * `limit`; `warnIfTruncated` below turns that into a loud console warning
+ * instead of a quietly-wrong dashboard once a school's data outgrows this.
+ */
+const DEFAULT_FIND_LIMIT = 2000;
+
 interface PayloadListResponse<T> {
   docs: T[];
+  totalDocs: number;
+}
+
+function warnIfTruncated(collection: string, data: PayloadListResponse<unknown>, limit: number): void {
+  if (data.totalDocs > data.docs.length && data.docs.length >= limit) {
+    console.warn(
+      `[payloadFind] "${collection}" has ${data.totalDocs} docs but only ${data.docs.length} were fetched (limit=${limit}) — results are silently truncated. Raise the limit or switch this call site to payloadFindPage.`,
+    );
+  }
 }
 
 interface PayloadMutationResponse<T> {
@@ -45,10 +63,12 @@ export async function payloadFind<T>(
   Object.entries(where).forEach(([field, value]) => {
     whereParams[`where[${field}][equals]`] = String(value);
   });
-  const query = toQueryString({ depth: 0, limit: 500, ...whereParams, ...extra });
+  const limit = typeof extra.limit === "number" ? extra.limit : DEFAULT_FIND_LIMIT;
+  const query = toQueryString({ depth: 0, limit, ...whereParams, ...extra });
   const res = await fetch(`${API_BASE}/${collection}?${query}`, { cache: "no-store" });
   if (!res.ok) return [];
   const data = (await res.json()) as PayloadListResponse<T>;
+  warnIfTruncated(collection, data, limit);
   return data.docs;
 }
 

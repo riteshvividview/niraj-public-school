@@ -82,6 +82,28 @@ export async function getOrdersBySchool(schoolId: string): Promise<Order[]> {
   return docs.map(toOrder);
 }
 
+/**
+ * Parent — "which programs is this student already registered for," without
+ * the full `receipts` + `depth:1` order fetch `getReceiptsByUser` requires.
+ * Queries `orders` directly and trims to just `items` (`select[items]`) —
+ * items are an embedded array field, not a relation, so no `depth` is
+ * needed to see them.
+ */
+export async function getRegisteredProgramIds(userId: string): Promise<Set<string>> {
+  const docs = await payloadFind<Pick<PayloadOrderDoc, "items">>(
+    "orders",
+    { user: userId },
+    { "select[items]": "true" },
+  );
+  const ids = new Set<string>();
+  docs.forEach((doc) => {
+    doc.items.forEach((item) => {
+      if (item.kind === "program") ids.add(item.refId);
+    });
+  });
+  return ids;
+}
+
 export async function getOrderById(id: string): Promise<Order | null> {
   const doc = await payloadFindById<PayloadOrderDoc>("orders", id);
   return doc ? toOrder(doc) : null;

@@ -1,101 +1,70 @@
 "use client";
 
-import { createContext, useContext, useMemo, useSyncExternalStore, type ReactNode } from "react";
-
-const STORAGE_KEY = "nps-console-session";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { getCurrentConsoleStaff, logoutConsoleStaff } from "@/lib/data-source";
+import type { ConsoleStaffProfile } from "@/types";
 
 /**
- * Mock auth for school staff — deliberately separate storage key and
- * separate React context from the parent/student `useAuth()`
- * (src/store/auth-store.tsx), per the phase spec: console and parent
- * sessions must never share state, even though they run in the same app.
+ * Real auth for the School Console — a Payload `auth: true` collection
+ * (`payload-admins`, the same one raw /admin uses, split by `role`), session
+ * held as an HTTP-only cookie Payload sets on login. This store doesn't call
+ * Payload's login endpoint itself — src/app/(frontend)/console/login/page.tsx
+ * does (via the console-auth precheck/verify-OTP routes, then
+ * payloadLogin), per the data-access-layer rule. On mount, and after a
+ * successful login, it just checks for an existing session via
+ * getCurrentConsoleStaff() (GET /api/payload-admins/me).
+ *
+ * Kept as a separate React context/namespace from the parent/student
+ * `useAuth()` (src/store/auth-store.tsx) — console and parent sessions are
+ * two different account systems that happen to share one browser.
  */
-export interface ConsoleStaff {
-  name: string;
-  email: string;
-}
-
-/** The one demo account — shown directly on the login screen, same spirit as the parent app's demo OTP. */
-export const DEMO_STAFF_EMAIL = "admin@nirajpublicschool.edu.in";
-export const DEMO_STAFF_PASSWORD = "admin123";
-
-type Listener = () => void;
-const listeners = new Set<Listener>();
-let cachedStaff: ConsoleStaff | null = null;
-let hasReadStorage = false;
-
-function readStoredStaff(): ConsoleStaff | null {
-  const raw = window.localStorage.getItem(STORAGE_KEY);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as ConsoleStaff;
-  } catch {
-    return null;
-  }
-}
-
-function subscribe(listener: Listener) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
-
-function getSnapshot(): ConsoleStaff | null {
-  if (!hasReadStorage) {
-    cachedStaff = readStoredStaff();
-    hasReadStorage = true;
-  }
-  return cachedStaff;
-}
-
-function getServerSnapshot(): ConsoleStaff | null {
-  return null;
-}
-
-function persistLogin(staff: ConsoleStaff) {
-  cachedStaff = staff;
-  hasReadStorage = true;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(staff));
-  listeners.forEach((listener) => listener());
-}
-
-function persistLogout() {
-  cachedStaff = null;
-  hasReadStorage = true;
-  window.localStorage.removeItem(STORAGE_KEY);
-  listeners.forEach((listener) => listener());
-}
-
-function subscribeMounted() {
-  return () => {};
-}
-function getMountedSnapshot() {
-  return true;
-}
-function getMountedServerSnapshot() {
-  return false;
-}
-
 interface ConsoleAuthContextValue {
-  staff: ConsoleStaff | null;
+  staff: ConsoleStaffProfile | null;
   isAuthenticated: boolean;
+  /** True once the initial session check (cookie -> /api/payload-admins/me) has resolved. */
   isReady: boolean;
-  login: (staff: ConsoleStaff) => void;
+  /** Re-reads the session — call right after payloadLogin succeeds. */
+  refresh: () => Promise<void>;
   logout: () => void;
 }
 
 const ConsoleAuthContext = createContext<ConsoleAuthContextValue | null>(null);
 
 export function ConsoleAuthProvider({ children }: { children: ReactNode }) {
-  const staff = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const isReady = useSyncExternalStore(subscribeMounted, getMountedSnapshot, getMountedServerSnapshot);
+  const [staff, setStaff] = useState<ConsoleStaffProfile | null>(null);
+  const [isReady, setIsReady] = useState(false);
+
+  async function refresh() {
+    const current = await getCurrentConsoleStaff().catch(() => null);
+    setStaff(current);
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+    getCurrentConsoleStaff()
+      .then((current) => {
+        if (cancelled) return;
+        setStaff(current);
+        setIsReady(true);
+      })
+      .catch(() => {
+        if (!cancelled) setIsReady(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const value = useMemo<ConsoleAuthContextValue>(
     () => ({
       staff,
       isAuthenticated: staff !== null,
       isReady,
-      login: persistLogin,
-      logout: persistLogout,
+      refresh,
+      logout: () => {
+        setStaff(null);
+        void logoutConsoleStaff();
+      },
     }),
     [staff, isReady],
   );

@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, Download, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import useSWR, { preload } from "swr";
 import { ConsoleListSkeleton } from "@/components/shared/console-list-skeleton";
-import { StatusBadge, toBadgeStatus } from "@/components/shared/status-badge";
+import { PaymentCard } from "@/components/console/payment-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,10 +18,11 @@ import {
 } from "@/components/ui/select";
 import { deriveReceiptTitle } from "@/lib/cart-items";
 import { getPaymentsPageBySchool, type PaymentPageFilters } from "@/lib/data-source";
+import { downloadCsv } from "@/lib/export-utils";
 import { formatDate, formatTime } from "@/lib/format";
 import { useClassLevels, useConsoleSchoolId } from "@/lib/hooks/console-data";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
-import type { Order, PaymentRecord, RedemptionStatus } from "@/types";
+import type { Order, RedemptionStatus } from "@/types";
 
 const RECEIPT_TITLE_LABELS = {
   books: "Books",
@@ -49,74 +50,6 @@ const EMPTY_FILTERS: PaymentFilters = {
   fromDate: "",
   toDate: "",
 };
-
-function toCsv(rows: string[][]): string {
-  return rows.map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(",")).join("\n");
-}
-
-function PaymentCard({ record, classLabel }: { record: PaymentRecord; classLabel: string }) {
-  const [expanded, setExpanded] = useState(false);
-  const title = deriveReceiptTitle(record.order.items, RECEIPT_TITLE_LABELS);
-  return (
-    <div className="rounded-xl border border-line/60 p-3.5">
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        className="flex w-full flex-wrap items-start justify-between gap-2 text-left"
-      >
-        <div className="min-w-0">
-          <p className="font-medium text-ink">{title}</p>
-          <p className="font-mono text-xs tracking-widest text-sub">{record.receipt.qrPayload}</p>
-          <p className="mt-0.5 text-xs text-sub">
-            {formatDate(record.receipt.issuedAt)} · {formatTime(record.receipt.issuedAt)}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-ink">₹{record.order.totalAmount}</span>
-          <StatusBadge status={toBadgeStatus(record.receipt.redemptionStatus)} />
-        </div>
-      </button>
-      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-sub">
-        <span>{record.studentName}</span>
-        <span>·</span>
-        <span>{record.registerNumber}</span>
-        <span>·</span>
-        <span>{classLabel}</span>
-        {record.section ? (
-          <>
-            <span>·</span>
-            <span>Sec {record.section}</span>
-          </>
-        ) : null}
-      </div>
-      {expanded ? (
-        <div className="mt-3 space-y-2 border-t border-line pt-3 text-sm">
-          <p className="text-xs text-sub">
-            Paid via {record.order.paymentMethod.toUpperCase()}
-            {record.receipt.redeemedAt ? (
-              <>
-                {" "}
-                · Redeemed {formatDate(record.receipt.redeemedAt)} at {formatTime(record.receipt.redeemedAt)}
-              </>
-            ) : null}
-          </p>
-          <ul className="divide-y divide-line">
-            {record.order.items.map((item) => (
-              <li key={item.id} className="flex items-center justify-between gap-3 py-1.5 text-xs">
-                <div className="min-w-0">
-                  <p className="truncate text-ink">{item.label}</p>
-                  {item.meta ? <p className="text-sub">{item.meta}</p> : null}
-                  {item.quantity > 1 ? <p className="text-sub">Qty {item.quantity}</p> : null}
-                </div>
-                <span className="shrink-0 font-medium text-ink">₹{item.unitPrice * item.quantity}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-    </div>
-  );
-}
 
 const PAGE_SIZE = 20;
 
@@ -242,15 +175,9 @@ export default function PaymentsPage() {
           ]);
         });
       });
-      const blob = new Blob([toCsv(rows)], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
       const suffix =
         filters.fromDate || filters.toDate ? `-${filters.fromDate || "start"}-to-${filters.toDate || "now"}` : "";
-      link.download = `payments${suffix}-${new Date().toISOString().slice(0, 10)}.csv`;
-      link.click();
-      URL.revokeObjectURL(url);
+      downloadCsv(`payments${suffix}-${new Date().toISOString().slice(0, 10)}.csv`, rows);
     } finally {
       setIsExporting(false);
     }

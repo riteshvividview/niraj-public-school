@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
+import useSWR, { useSWRConfig } from "swr";
 import { getCurrentUser, logoutUser } from "@/lib/data-source";
 import { setActiveCartUser } from "@/store/cart-store";
 import type { UserProfile } from "@/types";
@@ -12,6 +13,12 @@ import type { UserProfile } from "@/types";
  * login/register (src/lib/data-source/users.ts does, per the data-access-
  * layer rule) — it just holds the resulting profile and, on mount, checks
  * for an existing cookie session via getCurrentUser() (GET /api/users/me).
+ *
+ * Backed by SWR (one shared cache key, `"auth:me"`) instead of a bare
+ * useState+useEffect — `login()`/`logout()` write straight into that cache
+ * with `revalidate: false` (the result is already known, no need to re-hit
+ * the network), and every other consumer of `useAuth()` shares the same
+ * cached session instead of each mounting its own `/api/users/me` fetch.
  *
  * Public shape (profile / isAuthenticated / isReady / login / logout) is
  * unchanged from the old mock-OTP version on purpose — RequireAuth and every
@@ -29,47 +36,36 @@ interface AuthContextValue {
   logout: () => void;
 }
 
+const AUTH_KEY = "auth:me";
+
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [isReady, setIsReady] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    getCurrentUser()
-      .then((user) => {
-        if (cancelled) return;
-        setProfile(user);
-        setIsReady(true);
-      })
-      .catch(() => {
-        if (!cancelled) setIsReady(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const { data: profile, isLoading } = useSWR(AUTH_KEY, getCurrentUser, { fallbackData: undefined });
+  const { mutate } = useSWRConfig();
+  const resolvedProfile = profile ?? null;
 
   // Cart storage is keyed per user (see cart-store.tsx) — switch it whenever
   // the signed-in profile changes, so two accounts on the same browser never
   // share cart state.
   useEffect(() => {
-    setActiveCartUser(profile?.id ?? null);
-  }, [profile?.id]);
+    setActiveCartUser(resolvedProfile?.id ?? null);
+  }, [resolvedProfile?.id]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
-      profile,
-      isAuthenticated: profile !== null,
-      isReady,
-      login: setProfile,
+      profile: resolvedProfile,
+      isAuthenticated: resolvedProfile !== null,
+      isReady: !isLoading,
+      login: (nextProfile) => {
+        void mutate(AUTH_KEY, nextProfile, { revalidate: false });
+      },
       logout: () => {
-        setProfile(null);
+        void mutate(AUTH_KEY, null, { revalidate: false });
         void logoutUser();
       },
     }),
-    [profile, isReady],
+    [resolvedProfile, isLoading, mutate],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

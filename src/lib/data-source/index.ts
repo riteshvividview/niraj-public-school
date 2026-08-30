@@ -6,3 +6,5 @@ export * from "./users";
 export * from "./orders";
 export * from "./receipts";
 export * from "./essentials-stock";
+export * from "./reports";
+export * from "./console-staff";

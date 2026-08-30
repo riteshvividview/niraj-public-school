@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { oppositeLanguage } from "@/lib/academic-language";
+import { firstLanguageOf, oppositeLanguage, secondLanguageOf } from "@/lib/academic-language";
 import { resetStudentPassword, updateStudent } from "@/lib/data-source";
 import type { AcademicLanguage, ClassLevel, Elective, Stream, UserProfile } from "@/types";
 
@@ -42,20 +42,7 @@ export function electiveLabel(elective: Elective | undefined): string {
   return "—";
 }
 
-/**
- * First/second language are always opposites of each other, so the one the
- * roster didn't explicitly record is fully determined by the one it did —
- * never left blank. A student with no academicLanguage at all still shows
- * neither (nothing to derive from).
- */
-export function firstLanguageOf(student: UserProfile): AcademicLanguage | undefined {
-  if (!student.academicLanguage) return undefined;
-  return student.languageLevel === "second" ? oppositeLanguage(student.academicLanguage) : student.academicLanguage;
-}
-export function secondLanguageOf(student: UserProfile): AcademicLanguage | undefined {
-  if (!student.academicLanguage) return undefined;
-  return student.languageLevel === "second" ? student.academicLanguage : oppositeLanguage(student.academicLanguage);
-}
+export { firstLanguageOf, secondLanguageOf };
 
 /**
  * The roster only ever records one language pick per student (as either

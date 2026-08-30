@@ -8,16 +8,21 @@ import {
   PackageSearch,
   Receipt,
   ScanLine,
+  ShieldCheck,
   Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import useSWR from "swr";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
-import { getEssentialsStockBySchool } from "@/lib/data-source";
-import { useConsoleSchoolId } from "@/lib/hooks/console-data";
+import { useConsoleSchoolId, useEssentialsStock } from "@/lib/hooks/console-data";
 import { cn } from "@/lib/utils";
 import { useConsoleAuth } from "@/store/console-auth-store";
+
+/** Administration is only ever shown to administrators — staff accounts can't invite/manage other accounts. */
+function useNavItems() {
+  const { staff } = useConsoleAuth();
+  return staff?.role === "administrator" ? [...NAV_ITEMS, ADMINISTRATOR_ONLY_ITEM] : NAV_ITEMS;
+}
 
 const NAV_ITEMS = [
   { href: "/console/catalogue", label: "Catalogue Manager", icon: BookMarked },
@@ -33,13 +38,16 @@ const NAV_ITEMS = [
   },
 ];
 
+const ADMINISTRATOR_ONLY_ITEM = {
+  href: "/console/administration",
+  label: "Administration",
+  icon: ShieldCheck,
+};
+
 /** Count of essentials-stock rows at/under their low-stock threshold — shown as a badge on the Essentials Stock nav item, per the school's "notify in the CMS, not by email" request. */
 function useLowStockCount(): number {
   const schoolId = useConsoleSchoolId();
-  const { data: stockRows } = useSWR(
-    schoolId ? ["console:nav:stock", schoolId] : null,
-    () => getEssentialsStockBySchool(schoolId),
-  );
+  const { stockRows } = useEssentialsStock(schoolId);
   if (!stockRows) return 0;
   return stockRows.filter((row) => row.quantityOnHand <= row.lowStockThreshold).length;
 }
@@ -51,6 +59,7 @@ function NavLinks({
 }) {
   const pathname = usePathname();
   const lowStockCount = useLowStockCount();
+  const navItems = useNavItems();
   return (
     <nav
       className={cn(
@@ -58,7 +67,7 @@ function NavLinks({
         direction === "vertical" ? "flex-col" : "flex-row",
       )}
     >
-      {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+      {navItems.map(({ href, label, icon: Icon }) => {
         const isActive = pathname === href || pathname.startsWith(`${href}/`);
         const showLowStockBadge = href === "/console/stock" && lowStockCount > 0;
         return (

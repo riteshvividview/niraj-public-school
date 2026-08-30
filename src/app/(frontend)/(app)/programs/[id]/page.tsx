@@ -2,18 +2,24 @@
 
 import { Calendar, GraduationCap, MapPin, Phone, Users } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import useSWR from "swr";
 import { AppHeader } from "@/components/shared/app-header";
 import { StatusBadge, toBadgeStatus } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatTemplate } from "@/i18n/format";
 import { useTranslation } from "@/i18n/context";
-import { getClassLevelsBySchool, getProgramById, getReceiptsByUser, isProgramEligibleForClass } from "@/lib/data-source";
+import {
+  getClassLevelsBySchool,
+  getExistingReceiptIdForProgram,
+  getProgramById,
+  isProgramEligibleForClass,
+} from "@/lib/data-source";
 import { formatCurrencyINR, formatDate } from "@/lib/format";
 import { useAuth } from "@/store/auth-store";
 import { lineId, useCart } from "@/store/cart-store";
-import type { CartItem, ClassLevel, Program } from "@/types";
+import type { CartItem } from "@/types";
 
 export default function ProgramDetailPage() {
   const params = useParams<{ id: string }>();
@@ -22,43 +28,27 @@ export default function ProgramDetailPage() {
   const { profile } = useAuth();
   const cart = useCart();
 
-  const [program, setProgram] = useState<Program | null | undefined>(undefined);
-  const [classLevels, setClassLevels] = useState<ClassLevel[]>([]);
-  const [existingReceiptId, setExistingReceiptId] = useState<string | null>(null);
-
-  useEffect(() => {
-    getProgramById(params.id).then(setProgram);
-  }, [params.id]);
+  const { data: program } = useSWR(["program", params.id], () => getProgramById(params.id));
 
   // Already-registered check: any existing receipt (of any redemption
   // status — ready/collected/checked-in all mean "still enrolled") whose
   // order includes this program. Only staff removing/cancelling that
   // receipt via /admin frees the student to register again — there's no
   // self-service cancel, by design (see the request this implements).
-  useEffect(() => {
-    if (!profile || !params.id) return;
-    let cancelled = false;
-    getReceiptsByUser(profile.id).then((records) => {
-      if (cancelled) return;
-      const match = records.find((record) =>
-        record.order.items.some((item) => item.kind === "program" && item.refId === params.id),
-      );
-      setExistingReceiptId(match?.receipt.id ?? null);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [profile, params.id]);
+  const { data: existingReceiptId } = useSWR(
+    profile && params.id ? ["existing-receipt-for-program", profile.id, params.id] : null,
+    () => getExistingReceiptIdForProgram(profile!.id, params.id),
+  );
+
+  const { data: classLevels } = useSWR(program ? ["class-levels", program.schoolId] : null, () =>
+    getClassLevelsBySchool(program!.schoolId),
+  );
 
   useEffect(() => {
     if (program === null) {
       router.replace("/programs");
     }
   }, [program, router]);
-
-  useEffect(() => {
-    if (program) getClassLevelsBySchool(program.schoolId).then(setClassLevels);
-  }, [program]);
 
   if (program === undefined || program === null) {
     return (
@@ -78,7 +68,7 @@ export default function ProgramDetailPage() {
   const isEligible = !profile || isProgramEligibleForClass(program, profile.classLevelId);
 
   const eligibleGradeLabels = program.eligibleClassLevelIds
-    ?.map((classLevelId) => classLevels.find((level) => level.id === classLevelId)?.label)
+    ?.map((classLevelId) => classLevels?.find((level) => level.id === classLevelId)?.label)
     .filter((label): label is string => Boolean(label));
 
   function handleEnroll() {

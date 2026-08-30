@@ -1,5 +1,5 @@
 import type { Program, ProgramStatus } from "@/types";
-import { payloadCreate, payloadFind, payloadFindById, payloadUpdate, payloadDelete } from "./payload-rest";
+import { payloadCreate, payloadFind, payloadFindById, payloadFindPage, payloadUpdate, payloadDelete } from "./payload-rest";
 
 interface PayloadProgramDoc {
   id: string;
@@ -58,12 +58,15 @@ export interface ProgramFilters {
   maxFee?: number;
 }
 
-export async function getPrograms(filters: ProgramFilters = {}): Promise<Program[]> {
+export async function getPrograms(filters: ProgramFilters = {}, options: { limit?: number } = {}): Promise<Program[]> {
   const where: Record<string, string> = {};
   if (filters.schoolId) where.school = filters.schoolId;
   if (filters.category) where.category = filters.category;
 
-  const docs = await payloadFind<PayloadProgramDoc>("programs", where);
+  const extra: Record<string, string | number> = { sort: "date" };
+  if (options.limit) extra.limit = options.limit;
+
+  const docs = await payloadFind<PayloadProgramDoc>("programs", where, extra);
   const results = docs
     .map(toProgram)
     .filter((program) => {
@@ -76,9 +79,81 @@ export async function getPrograms(filters: ProgramFilters = {}): Promise<Program
   return results;
 }
 
+/** Parent — Programs feed's category filter dropdown. Distinct categories across every school's programs (Programs & Events is the one cross-school surface — see CLAUDE.md), select-trimmed instead of a full unfiltered fetch. */
+export async function getProgramCategories(): Promise<string[]> {
+  const docs = await payloadFind<{ category: string }>("programs", {}, { "select[category]": "true" });
+  return Array.from(new Set(docs.map((doc) => doc.category))).sort();
+}
+
+export interface ProgramPageFilters {
+  category?: string;
+  dateFrom?: string;
+  maxFee?: number;
+  /** Empty/unset eligibleClassLevels on a program means "open to every grade" — matches isProgramEligibleForClass. */
+  classLevelId?: string;
+}
+
+export interface ProgramsPage {
+  programs: Program[];
+  totalCount: number;
+  totalPages: number;
+  page: number;
+}
+
+/** Parent — Programs feed, paginated + filtered server-side (mirrors getStudentsPageBySchool/getPaymentsPageBySchool's pattern). */
+export async function getProgramsPage(
+  filters: ProgramPageFilters,
+  page: number,
+  pageSize = 12,
+  sort: "date" | "fee" | "-fee" = "date",
+): Promise<ProgramsPage> {
+  const and: Record<string, unknown>[] = [];
+  if (filters.category) and.push({ category: { equals: filters.category } });
+  if (filters.dateFrom) and.push({ date: { greater_than_equal: `${filters.dateFrom}T00:00:00.000Z` } });
+  if (filters.maxFee !== undefined) and.push({ fee: { less_than_equal: filters.maxFee } });
+  if (filters.classLevelId) {
+    and.push({
+      or: [{ eligibleClassLevels: { exists: false } }, { eligibleClassLevels: { in: [filters.classLevelId] } }],
+    });
+  }
+
+  const result = await payloadFindPage<PayloadProgramDoc>("programs", {
+    where: and.length > 0 ? { and } : undefined,
+    page,
+    limit: pageSize,
+    sort,
+  });
+  return {
+    programs: result.docs.map(toProgram),
+    totalCount: result.totalDocs,
+    totalPages: result.totalPages,
+    page: result.page,
+  };
+}
+
+/**
+ * Read constantly (every program detail page, every receipt line, every
+ * checkout line item) and only ever written by console staff — a cheap
+ * in-memory memo, cleared on write, same pattern as schools.ts's
+ * schoolsCache/classLevelsCache.
+ */
+const programCache = new Map<string, Program | null>();
+const programInFlight = new Map<string, Promise<Program | null>>();
+
 export async function getProgramById(id: string): Promise<Program | null> {
-  const doc = await payloadFindById<PayloadProgramDoc>("programs", id);
-  return doc ? toProgram(doc) : null;
+  if (programCache.has(id)) return programCache.get(id) ?? null;
+  let inFlight = programInFlight.get(id);
+  if (!inFlight) {
+    inFlight = payloadFindById<PayloadProgramDoc>("programs", id)
+      .then((doc) => (doc ? toProgram(doc) : null))
+      .finally(() => {
+        programInFlight.delete(id);
+      });
+    programInFlight.set(id, inFlight);
+  }
+  const program = await inFlight;
+  programCache.set(id, program);
+  return program;
 }
 
 export interface ProgramInput {
@@ -124,21 +199,32 @@ export async function updateProgram(id: string, patch: Partial<ProgramInput>): P
     ...(patch.contactPhone !== undefined ? { contactPhone: patch.contactPhone } : {}),
     ...(patch.eligibleClassLevelIds !== undefined ? { eligibleClassLevels: patch.eligibleClassLevelIds } : {}),
   });
+  programCache.delete(id);
   return doc ? toProgram(doc) : null;
 }
 
 export async function setProgramStatus(id: string, status: ProgramStatus): Promise<Program | null> {
   const doc = await payloadUpdate<PayloadProgramDoc>("programs", id, { status });
+  programCache.delete(id);
   return doc ? toProgram(doc) : null;
 }
 
-/** Checkout — called once per program line item on order creation. No-ops for unlimited-seat programs (seatsTotal unset). */
+/**
+ * Checkout — called once per program line item on order creation. No-ops
+ * for unlimited-seat programs (seatsTotal unset). Reads `seatsAvailable`
+ * directly (bypassing getProgramById's cache) since this is a read-then-
+ * write on a live counter — a cached read here would only make the
+ * existing (pre-existing, out of scope here) concurrent-checkout race
+ * worse, not better.
+ */
 export async function decrementProgramSeats(programId: string): Promise<void> {
-  const program = await getProgramById(programId);
-  if (!program || program.seatsAvailable === undefined) return;
-  await payloadUpdate("programs", programId, { seatsAvailable: Math.max(0, program.seatsAvailable - 1) });
+  const doc = await payloadFindById<PayloadProgramDoc>("programs", programId);
+  if (!doc || doc.seatsAvailable == null) return;
+  await payloadUpdate("programs", programId, { seatsAvailable: Math.max(0, doc.seatsAvailable - 1) });
+  programCache.delete(programId);
 }
 
 export async function deleteProgram(id: string): Promise<void> {
   await payloadDelete("programs", id);
+  programCache.delete(id);
 }

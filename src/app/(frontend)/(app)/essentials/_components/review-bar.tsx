@@ -22,18 +22,28 @@ export function EssentialsReviewBar({
   kind,
   ctaLabel,
   ctaHref,
+  countOverride,
+  totalOverride,
 }: {
   kind: CartItem["kind"];
   /** Defaults to "Review & Pay" → "/cart" — override for a mid-flow "Next" step (see essentials/books). */
   ctaLabel?: string;
   ctaHref?: string;
+  /**
+   * Use the caller's own authoritative count/total instead of deriving from
+   * cart state — for a compulsory step (e.g. books) where the CTA must
+   * appear whenever the catalogue match is non-empty, independent of
+   * whatever's currently persisted in the cart/localStorage.
+   */
+  countOverride?: number;
+  totalOverride?: number;
 }) {
   const { t, language } = useTranslation();
   const { items } = useCart();
 
   const scoped = items.filter((item) => item.kind === kind);
-  const count = scoped.length;
-  const total = subtotal(scoped);
+  const count = countOverride ?? scoped.length;
+  const total = totalOverride ?? subtotal(scoped);
 
   if (count === 0) return null;
 

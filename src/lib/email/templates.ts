@@ -57,13 +57,16 @@ function itemsTableHtml(items: EmailItemLine[], opts?: { struck?: boolean }): st
   </table>`;
 }
 
-function infoBanner({ icon, bg, border, text }: { icon: string; bg: string; border: string; text: string }): string {
+function infoBanner({ icon, bg, border, text }: { icon?: string; bg: string; border: string; text: string }): string {
+  const iconCell = icon
+    ? `<td style="font-size:18px;vertical-align:top;padding-right:10px;">${icon}</td>`
+    : "";
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:16px 0;">
     <tr>
       <td style="background:${bg};border:1px solid ${border};border-radius:12px;padding:14px 16px;">
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
-            <td style="font-size:18px;vertical-align:top;padding-right:10px;">${icon}</td>
+            ${iconCell}
             <td style="font-size:13px;line-height:1.6;color:${COLORS.ink};">${text}</td>
           </tr>
         </table>
@@ -142,15 +145,17 @@ function wrapper({
 </html>`;
 }
 
-export function otpEmail(code: string): string {
-  const digits = code
+function otpDigitsHtml(code: string): string {
+  return code
     .split("")
     .map(
       (d) =>
         `<td style="width:40px;height:48px;background:${COLORS.bg};border:2px solid ${COLORS.brand};border-radius:10px;text-align:center;font-size:24px;font-weight:800;color:${COLORS.brand};font-family:'Courier New',monospace;">${d}</td>`,
     )
     .join(`<td style="width:8px;">&nbsp;</td>`);
+}
 
+export function otpEmail(code: string): string {
   return wrapper({
     eyebrow: "Account security",
     title: "Your One-Time Password",
@@ -158,7 +163,7 @@ export function otpEmail(code: string): string {
     bodyHtml: `
       <p style="font-size:15px;line-height:1.6;color:${COLORS.ink};margin:0 0 18px;">🔐 Use the code below to change your password. Enter it on the <strong>Change Password</strong> screen to continue.</p>
       <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 18px;">
-        <tr>${digits}</tr>
+        <tr>${otpDigitsHtml(code)}</tr>
       </table>
       <p style="text-align:center;font-size:13px;color:${COLORS.sub};margin:0 0 18px;">⏱️ This code expires in <strong>10 minutes</strong>.</p>
       ${infoBanner({
@@ -169,6 +174,63 @@ export function otpEmail(code: string): string {
       })}
     `,
     footerNote: "For your security, never share this code with anyone — Niraj Public School staff will never ask you for it.",
+  });
+}
+
+/** Console — sent by /api/console-auth/precheck when a login comes from a browser/device not already on that account's trusted list. */
+export function consoleLoginOtpEmail(code: string): string {
+  return wrapper({
+    eyebrow: "Console security",
+    title: "New Device Sign-In Code",
+    headerGradient: `linear-gradient(135deg, ${COLORS.brand} 0%, #1d4fc4 100%)`,
+    bodyHtml: `
+      <p style="font-size:15px;line-height:1.6;color:${COLORS.ink};margin:0 0 18px;">We don't recognize this browser or device. Enter the code below to finish signing in to the School Console.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 18px;">
+        <tr>${otpDigitsHtml(code)}</tr>
+      </table>
+      <p style="text-align:center;font-size:13px;color:${COLORS.sub};margin:0 0 18px;">This code expires in <strong>10 minutes</strong>.</p>
+      ${infoBanner({
+        bg: "#fde8e8",
+        border: "#f3b4b4",
+        text: `<strong>Wasn't you?</strong> Someone else may have your password. Ignore this email and consider asking a Console administrator to reset your access.`,
+      })}
+    `,
+    footerNote: "For your security, never share this code with anyone — Niraj Public School staff will never ask you for it.",
+  });
+}
+
+/** Console — sent by /api/console-auth/invite when an administrator adds a new staff member. */
+export function consoleInviteEmail(code: string, inviterName: string, acceptUrl: string): string {
+  return wrapper({
+    eyebrow: "You've been invited",
+    title: "School Console Access",
+    headerGradient: `linear-gradient(135deg, ${COLORS.brand2} 0%, #086b60 100%)`,
+    bodyHtml: `
+      <p style="font-size:15px;line-height:1.6;color:${COLORS.ink};margin:0 0 18px;"><strong>${inviterName}</strong> has invited you to the Niraj Public School Console — the staff dashboard for managing the catalogue, programs, receipts, and payments.</p>
+      <p style="font-size:14px;line-height:1.6;color:${COLORS.ink};margin:0 0 18px;">Click the button below, then enter the code shown here to verify your email and set up your own password:</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 22px;">
+        <tr>
+          <td style="background:${COLORS.brand2};border-radius:10px;">
+            <a href="${acceptUrl}" style="display:inline-block;padding:14px 28px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;">Set up my account</a>
+          </td>
+        </tr>
+      </table>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 18px;">
+        <tr>${otpDigitsHtml(code)}</tr>
+      </table>
+      <p style="text-align:center;font-size:13px;color:${COLORS.sub};margin:0 0 18px;">This code expires in <strong>24 hours</strong>.</p>
+      ${infoBanner({
+        bg: "#eaf1ff",
+        border: "#c9dbfd",
+        text: `Button not working? Go to the Console login page and use "First time here? Activate your invite" instead — you'll still need the code above.`,
+      })}
+      ${infoBanner({
+        bg: "#fff7e6",
+        border: "#f5deb0",
+        text: `Not expecting this? You can safely ignore this email — no account will be created for you.`,
+      })}
+    `,
+    footerNote: "This Console is confidential — never share your password or a sign-in code with anyone.",
   });
 }
 

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Sans } from "next/font/google";
+import { SWRConfig } from "swr";
 import { Toaster } from "@/components/ui/sonner";
 import { LanguageProvider } from "@/i18n/context";
 import { AuthProvider } from "@/store/auth-store";
@@ -51,11 +52,17 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
           <LanguageProvider>
-            <AuthProvider>
-              <ConsoleAuthProvider>
-                <CartProvider>{children}</CartProvider>
-              </ConsoleAuthProvider>
-            </AuthProvider>
+            {/* One SWR cache for the whole app — same dedupingInterval/revalidateOnFocus
+                already proven by the console's own SWRConfig (console/(dashboard)/layout.tsx),
+                applied once here so every parent/student page inherits it instead of
+                each page configuring (or forgetting to configure) its own. */}
+            <SWRConfig value={{ revalidateOnFocus: true, dedupingInterval: 15000 }}>
+              <AuthProvider>
+                <ConsoleAuthProvider>
+                  <CartProvider>{children}</CartProvider>
+                </ConsoleAuthProvider>
+              </AuthProvider>
+            </SWRConfig>
           </LanguageProvider>
         </ThemeProvider>
         <Toaster position="top-center" />

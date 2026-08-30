@@ -2,17 +2,15 @@
 
 import { BookOpen, Receipt as ReceiptIcon, Shirt } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import useSWR from "swr";
 import { AppHeader } from "@/components/shared/app-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ProgramCardSkeleton } from "@/components/shared/loading-skeletons";
 import { ProgramCard } from "@/components/shared/program-card";
 import { SectionCard } from "@/components/shared/section-card";
 import { useTranslation } from "@/i18n/context";
-import { registeredProgramIds } from "@/lib/cart-items";
-import { getClassLevelById, getPrograms, getReceiptsByUser, getSchoolById } from "@/lib/data-source";
+import { getClassLevelById, getPrograms, getRegisteredProgramIds, getSchoolById, hasAnyReceiptsForUser } from "@/lib/data-source";
 import { useAuth } from "@/store/auth-store";
-import type { ClassLevel, Program, School } from "@/types";
 
 const UPCOMING_PROGRAMS_LIMIT = 2;
 
@@ -20,24 +18,19 @@ export default function HomePage() {
   const { t } = useTranslation();
   const { profile } = useAuth();
 
-  const [school, setSchool] = useState<School | null>(null);
-  const [classLevel, setClassLevel] = useState<ClassLevel | null>(null);
-  const [programs, setPrograms] = useState<Program[] | null>(null);
-  const [hasReceipts, setHasReceipts] = useState(false);
-  const [registeredIds, setRegisteredIds] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    if (!profile) return;
-    getSchoolById(profile.schoolId).then(setSchool);
-    getClassLevelById(profile.classLevelId).then(setClassLevel);
-    getPrograms({ schoolId: profile.schoolId }).then((result) =>
-      setPrograms(result.slice(0, UPCOMING_PROGRAMS_LIMIT)),
-    );
-    getReceiptsByUser(profile.id).then((records) => {
-      setHasReceipts(records.length > 0);
-      setRegisteredIds(registeredProgramIds(records));
-    });
-  }, [profile]);
+  const { data: school } = useSWR(profile ? ["school", profile.schoolId] : null, () => getSchoolById(profile!.schoolId));
+  const { data: classLevel } = useSWR(profile ? ["class-level", profile.classLevelId] : null, () =>
+    getClassLevelById(profile!.classLevelId),
+  );
+  const { data: programs } = useSWR(profile ? ["home:programs", profile.schoolId] : null, () =>
+    getPrograms({ schoolId: profile!.schoolId }, { limit: UPCOMING_PROGRAMS_LIMIT }),
+  );
+  const { data: hasReceipts } = useSWR(profile ? ["has-receipts", profile.id] : null, () =>
+    hasAnyReceiptsForUser(profile!.id),
+  );
+  const { data: registeredIds } = useSWR(profile ? ["registered-program-ids", profile.id] : null, () =>
+    getRegisteredProgramIds(profile!.id),
+  );
 
   if (!profile) return null;
 
@@ -79,7 +72,7 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            {programs === null
+            {programs === undefined
               ? Array.from({ length: UPCOMING_PROGRAMS_LIMIT }).map((_, i) => (
                   <ProgramCardSkeleton key={i} />
                 ))
@@ -92,7 +85,7 @@ export default function HomePage() {
                     fee={program.fee}
                     seatsAvailable={program.seatsAvailable}
                     status={program.status}
-                    registered={registeredIds.has(program.id)}
+                    registered={registeredIds?.has(program.id) ?? false}
                     href={`/programs/${program.id}`}
                   />
                 ))}
