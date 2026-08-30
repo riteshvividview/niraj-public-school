@@ -69,6 +69,17 @@ const en: Dictionary = {
       invalidCredentials: "That register number and password don't match an account.",
       cantLogIn:
         "Can't log in? Contact your school office or class teacher — they can add or fix your record, then you can try again.",
+      forgotPasswordLink: "Forgot password?",
+    },
+    forgotPassword: {
+      title: "Reset your password",
+      registerNumberLabel: "Register number",
+      registerNumberPlaceholder: "e.g. NPS2026001",
+      sendOtpLabel: "Send OTP",
+      otpSentTemplate: "We've sent a code to {email}.",
+      successTitle: "Password updated",
+      successDescription: "Log in with your new password.",
+      backToLogin: "Back to login",
     },
   },
 

@@ -11,6 +11,7 @@ import { loginUser } from "@/lib/data-source";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/store/auth-store";
 import { AuthShell } from "../_components/auth-shell";
+import { ForgotPasswordDialog } from "../_components/forgot-password-dialog";
 
 function LoginForm() {
   const router = useRouter();
@@ -23,6 +24,7 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -95,6 +97,15 @@ function LoginForm() {
               {showPassword ? <EyeOff className="size-[18px]" /> : <Eye className="size-[18px]" />}
             </button>
           </div>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => setForgotPasswordOpen(true)}
+              className="cursor-pointer text-xs font-medium text-brand hover:underline sm:text-sm"
+            >
+              {t.auth.login.forgotPasswordLink}
+            </button>
+          </div>
         </div>
 
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
@@ -114,6 +125,16 @@ function LoginForm() {
           <p>{t.auth.login.cantLogIn}</p>
         </div>
       </form>
+
+      <ForgotPasswordDialog
+        open={forgotPasswordOpen}
+        onOpenChange={setForgotPasswordOpen}
+        onPasswordReset={(resetRegisterNumber) => {
+          setRegisterNumber(resetRegisterNumber);
+          setPassword("");
+          setError(null);
+        }}
+      />
     </AuthShell>
   );
 }

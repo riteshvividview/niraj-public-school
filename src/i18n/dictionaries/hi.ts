@@ -69,6 +69,17 @@ const hi: Dictionary = {
       invalidCredentials: "यह रजिस्टर नंबर और पासवर्ड किसी खाते से मेल नहीं खाते।",
       cantLogIn:
         "लॉग इन नहीं कर पा रहे? अपने स्कूल कार्यालय या कक्षा शिक्षक से संपर्क करें — वे आपका रिकॉर्ड जोड़ या ठीक कर सकते हैं, फिर आप फिर से प्रयास कर सकते हैं।",
+      forgotPasswordLink: "पासवर्ड भूल गए?",
+    },
+    forgotPassword: {
+      title: "अपना पासवर्ड रीसेट करें",
+      registerNumberLabel: "रजिस्टर नंबर",
+      registerNumberPlaceholder: "उदा. NPS2026001",
+      sendOtpLabel: "OTP भेजें",
+      otpSentTemplate: "हमने {email} पर एक कोड भेजा है।",
+      successTitle: "पासवर्ड अपडेट हो गया",
+      successDescription: "अपने नए पासवर्ड से लॉग इन करें।",
+      backToLogin: "लॉगिन पर वापस जाएं",
     },
   },
 

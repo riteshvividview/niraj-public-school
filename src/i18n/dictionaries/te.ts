@@ -69,6 +69,17 @@ const te: Dictionary = {
       invalidCredentials: "ఈ రిజిస్టర్ నంబర్ మరియు పాస్‌వర్డ్ ఏ ఖాతాతోనూ సరిపోలలేదు.",
       cantLogIn:
         "లాగిన్ చేయలేకపోతున్నారా? మీ స్కూల్ ఆఫీస్ లేదా తరగతి ఉపాధ్యాయుడిని సంప్రదించండి — వారు మీ రికార్డును జోడించవచ్చు లేదా సరిదిద్దవచ్చు, తర్వాత మీరు మళ్లీ ప్రయత్నించవచ్చు.",
+      forgotPasswordLink: "పాస్‌వర్డ్ మర్చిపోయారా?",
+    },
+    forgotPassword: {
+      title: "మీ పాస్‌వర్డ్‌ను రీసెట్ చేయండి",
+      registerNumberLabel: "రిజిస్టర్ నంబర్",
+      registerNumberPlaceholder: "ఉదా. NPS2026001",
+      sendOtpLabel: "OTP పంపండి",
+      otpSentTemplate: "మేము {email}కు ఒక కోడ్ పంపాము.",
+      successTitle: "పాస్‌వర్డ్ నవీకరించబడింది",
+      successDescription: "మీ కొత్త పాస్‌వర్డ్‌తో లాగిన్ చేయండి.",
+      backToLogin: "లాగిన్‌కు తిరిగి వెళ్లండి",
     },
   },
 

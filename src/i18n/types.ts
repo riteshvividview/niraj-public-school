@@ -79,6 +79,18 @@ export interface Dictionary {
       invalidCredentials: string;
       /** Shown below the form — no self-registration, so this points students at staff instead. */
       cantLogIn: string;
+      forgotPasswordLink: string;
+    };
+    forgotPassword: {
+      title: string;
+      registerNumberLabel: string;
+      registerNumberPlaceholder: string;
+      sendOtpLabel: string;
+      /** Template with "{email}" placeholder — the masked email the code was sent to. */
+      otpSentTemplate: string;
+      successTitle: string;
+      successDescription: string;
+      backToLogin: string;
     };
   };
 
