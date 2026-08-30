@@ -60,7 +60,7 @@ const en: Dictionary = {
       title: "Welcome back",
       subtitle: "Log in with your register number to continue.",
       registerNumberLabel: "Register number",
-      registerNumberPlaceholder: "e.g. NPS2026001",
+      registerNumberPlaceholder: "e.g. 24NPS0129",
       passwordLabel: "Password",
       passwordPlaceholder: "Enter your password",
       showPasswordLabel: "Show password",
@@ -74,7 +74,7 @@ const en: Dictionary = {
     forgotPassword: {
       title: "Reset your password",
       registerNumberLabel: "Register number",
-      registerNumberPlaceholder: "e.g. NPS2026001",
+      registerNumberPlaceholder: "e.g. 24NPS0129",
       sendOtpLabel: "Send OTP",
       otpSentTemplate: "We've sent a code to {email}.",
       successTitle: "Password updated",

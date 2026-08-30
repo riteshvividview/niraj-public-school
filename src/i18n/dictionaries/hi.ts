@@ -60,7 +60,7 @@ const hi: Dictionary = {
       title: "वापसी पर स्वागत है",
       subtitle: "जारी रखने के लिए अपने रजिस्टर नंबर से लॉग इन करें।",
       registerNumberLabel: "रजिस्टर नंबर",
-      registerNumberPlaceholder: "उदा. NPS2026001",
+      registerNumberPlaceholder: "उदा. 24NPS0129",
       passwordLabel: "पासवर्ड",
       passwordPlaceholder: "अपना पासवर्ड दर्ज करें",
       showPasswordLabel: "पासवर्ड दिखाएं",
@@ -74,7 +74,7 @@ const hi: Dictionary = {
     forgotPassword: {
       title: "अपना पासवर्ड रीसेट करें",
       registerNumberLabel: "रजिस्टर नंबर",
-      registerNumberPlaceholder: "उदा. NPS2026001",
+      registerNumberPlaceholder: "उदा. 24NPS0129",
       sendOtpLabel: "OTP भेजें",
       otpSentTemplate: "हमने {email} पर एक कोड भेजा है।",
       successTitle: "पासवर्ड अपडेट हो गया",

@@ -13,9 +13,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Enter the 6-digit code." }, { status: 400 });
   }
 
+  // See request/route.ts's comment — Payload's username field always stores lowercase.
   const { docs } = await payload.find({
     collection: "users",
-    where: { username: { equals: registerNumber } },
+    where: { username: { equals: registerNumber.toLowerCase() } },
     limit: 1,
   });
   const user = docs[0];

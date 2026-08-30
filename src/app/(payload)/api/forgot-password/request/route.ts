@@ -32,9 +32,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Enter your register number." }, { status: 400 });
   }
 
+  // Payload's built-in username field always stores (and matches) lowercase
+  // — see node_modules/payload/dist/auth/baseFields/username.js's
+  // beforeChange hook — so a raw Local API find has to lowercase the same
+  // way payload.login's own username sanitization does, or a correctly
+  // typed uppercase register number (24NPS0129) would silently miss.
   const { docs } = await payload.find({
     collection: "users",
-    where: { username: { equals: registerNumber } },
+    where: { username: { equals: registerNumber.toLowerCase() } },
     limit: 1,
   });
   const user = docs[0];

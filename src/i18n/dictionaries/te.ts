@@ -60,7 +60,7 @@ const te: Dictionary = {
       title: "తిరిగి స్వాగతం",
       subtitle: "కొనసాగించడానికి మీ రిజిస్టర్ నంబర్‌తో లాగిన్ చేయండి.",
       registerNumberLabel: "రిజిస్టర్ నంబర్",
-      registerNumberPlaceholder: "ఉదా. NPS2026001",
+      registerNumberPlaceholder: "ఉదా. 24NPS0129",
       passwordLabel: "పాస్‌వర్డ్",
       passwordPlaceholder: "మీ పాస్‌వర్డ్‌ను నమోదు చేయండి",
       showPasswordLabel: "పాస్‌వర్డ్ చూపించు",
@@ -74,7 +74,7 @@ const te: Dictionary = {
     forgotPassword: {
       title: "మీ పాస్‌వర్డ్‌ను రీసెట్ చేయండి",
       registerNumberLabel: "రిజిస్టర్ నంబర్",
-      registerNumberPlaceholder: "ఉదా. NPS2026001",
+      registerNumberPlaceholder: "ఉదా. 24NPS0129",
       sendOtpLabel: "OTP పంపండి",
       otpSentTemplate: "మేము {email}కు ఒక కోడ్ పంపాము.",
       successTitle: "పాస్‌వర్డ్ నవీకరించబడింది",

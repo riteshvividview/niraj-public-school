@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, IdCard, KeyRound, Loader2, Mail, ShieldCheck, X } from "lucide-react";
+import { CheckCircle2, Eye, EyeOff, IdCard, KeyRound, Loader2, Mail, ShieldCheck, X } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,6 +51,8 @@ export function ForgotPasswordDialog({
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -61,6 +63,8 @@ export function ForgotPasswordDialog({
     setOtp("");
     setNewPassword("");
     setConfirmPassword("");
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
     setError(null);
     setIsSubmitting(false);
   }
@@ -176,7 +180,7 @@ export function ForgotPasswordDialog({
                   placeholder={t.auth.forgotPassword.registerNumberPlaceholder}
                   value={registerNumber}
                   onChange={(event) => {
-                    setRegisterNumber(event.target.value);
+                    setRegisterNumber(event.target.value.toUpperCase());
                     setError(null);
                   }}
                   required
@@ -231,25 +235,47 @@ export function ForgotPasswordDialog({
             <form className="space-y-4" onSubmit={handleReset}>
               <div className="space-y-2">
                 <Label htmlFor="forgot-new-password">{t.profile.newPasswordLabel}</Label>
-                <Input
-                  id="forgot-new-password"
-                  type="password"
-                  autoComplete="new-password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="forgot-new-password"
+                    type={showNewPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="pr-10"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword((prev) => !prev)}
+                    aria-label={showNewPassword ? t.auth.login.hidePasswordLabel : t.auth.login.showPasswordLabel}
+                    className="absolute top-1/2 right-3 -translate-y-1/2 text-sub transition-colors hover:text-ink"
+                  >
+                    {showNewPassword ? <EyeOff className="size-[18px]" /> : <Eye className="size-[18px]" />}
+                  </button>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="forgot-confirm-password">{t.profile.confirmPasswordLabel}</Label>
-                <Input
-                  id="forgot-confirm-password"
-                  type="password"
-                  autoComplete="new-password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="forgot-confirm-password"
+                    type={showConfirmPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="pr-10"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    aria-label={showConfirmPassword ? t.auth.login.hidePasswordLabel : t.auth.login.showPasswordLabel}
+                    className="absolute top-1/2 right-3 -translate-y-1/2 text-sub transition-colors hover:text-ink"
+                  >
+                    {showConfirmPassword ? <EyeOff className="size-[18px]" /> : <Eye className="size-[18px]" />}
+                  </button>
+                </div>
               </div>
               {error ? <p className="text-sm text-destructive">{error}</p> : null}
               <div className="pt-1">

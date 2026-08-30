@@ -60,7 +60,7 @@ function LoginForm() {
               placeholder={t.auth.login.registerNumberPlaceholder}
               value={registerNumber}
               onChange={(event) => {
-                setRegisterNumber(event.target.value);
+                setRegisterNumber(event.target.value.toUpperCase());
                 setError(null);
               }}
               aria-invalid={error ? true : undefined}
