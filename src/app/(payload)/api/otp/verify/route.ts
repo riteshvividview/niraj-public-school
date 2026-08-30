@@ -1,11 +1,7 @@
 import config from "@payload-config";
-import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getPayload } from "payload";
-
-function hashOtp(code: string): string {
-  return createHash("sha256").update(code).digest("hex");
-}
+import { CLEARED_OTP_FIELDS, isOtpExpired, isOtpValid } from "@/lib/otp";
 
 /** Self-service change-password, step 2. */
 export async function POST(request: Request) {
@@ -25,9 +21,17 @@ export async function POST(request: Request) {
   const otpCodeHash = fullUser.otpCodeHash as string | undefined;
   const otpExpiresAt = fullUser.otpExpiresAt as string | undefined;
 
-  const isExpired = !otpExpiresAt || new Date(otpExpiresAt).getTime() < Date.now();
-  const isMatch = otpCodeHash && otpCodeHash === hashOtp(otp);
-  if (!isMatch || isExpired) {
+  // A code past its 10-minute window is purged from the record right here —
+  // not just rejected — so an expired hash never lingers in the database
+  // waiting to be overwritten by the next request.
+  if (isOtpExpired(otpExpiresAt)) {
+    if (otpCodeHash) {
+      await payload.update({ collection: "users", id: user.id, data: CLEARED_OTP_FIELDS });
+    }
+    return NextResponse.json({ error: "That code is incorrect or has expired." }, { status: 400 });
+  }
+
+  if (!isOtpValid(otpCodeHash, otpExpiresAt, otp)) {
     return NextResponse.json({ error: "That code is incorrect or has expired." }, { status: 400 });
   }
 

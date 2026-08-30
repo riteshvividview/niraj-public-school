@@ -1,6 +1,7 @@
 import config from "@payload-config";
 import { NextResponse } from "next/server";
 import { getPayload } from "payload";
+import { CLEARED_OTP_FIELDS } from "@/lib/otp";
 
 const VERIFIED_WINDOW_MS = 5 * 60 * 1000;
 
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
   await payload.update({
     collection: "users",
     id: user.id,
-    data: { password: newPassword, otpCodeHash: null, otpExpiresAt: null, otpVerifiedAt: null },
+    data: { password: newPassword, ...CLEARED_OTP_FIELDS },
   });
 
   return NextResponse.json({ ok: true });

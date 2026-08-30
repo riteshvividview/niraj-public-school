@@ -1,7 +1,7 @@
 import config from "@payload-config";
 import { NextResponse } from "next/server";
 import { getPayload } from "payload";
-import { isOtpValid } from "@/lib/otp";
+import { CLEARED_OTP_FIELDS, isOtpExpired, isOtpValid } from "@/lib/otp";
 
 /** Forgot-password (logged-out), step 2. */
 export async function POST(request: Request) {
@@ -19,7 +19,21 @@ export async function POST(request: Request) {
     limit: 1,
   });
   const user = docs[0];
-  if (!user || !isOtpValid(user.otpCodeHash as string | undefined, user.otpExpiresAt as string | undefined, otp)) {
+  if (!user) {
+    return NextResponse.json({ error: "That code is incorrect or has expired." }, { status: 400 });
+  }
+
+  // A code past its 10-minute window is purged from the record right here —
+  // not just rejected — so an expired hash never lingers in the database
+  // waiting to be overwritten by the next request.
+  if (isOtpExpired(user.otpExpiresAt as string | undefined)) {
+    if (user.otpCodeHash) {
+      await payload.update({ collection: "users", id: user.id, data: CLEARED_OTP_FIELDS });
+    }
+    return NextResponse.json({ error: "That code is incorrect or has expired." }, { status: 400 });
+  }
+
+  if (!isOtpValid(user.otpCodeHash as string | undefined, user.otpExpiresAt as string | undefined, otp)) {
     return NextResponse.json({ error: "That code is incorrect or has expired." }, { status: 400 });
   }
 

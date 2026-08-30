@@ -15,6 +15,14 @@ export function isOtpValid(storedHash: string | undefined | null, expiresAt: str
   return storedHash === hashOtp(submitted);
 }
 
+/** True once expiresAt has passed (or was never set) — used to tell a stale/expired code apart from a merely wrong one, so callers can purge it from the DB instead of just rejecting the attempt. */
+export function isOtpExpired(expiresAt: string | undefined | null): boolean {
+  return !expiresAt || new Date(expiresAt).getTime() < Date.now();
+}
+
+/** Fields to null out to purge a spent or expired OTP from a record — spread into a payload.update's data. */
+export const CLEARED_OTP_FIELDS = { otpCodeHash: null, otpExpiresAt: null, otpVerifiedAt: null } as const;
+
 /** A trusted-device token — raw value goes in the cookie, only the hash is ever stored. */
 export function generateDeviceToken(): string {
   return randomBytes(32).toString("hex");
