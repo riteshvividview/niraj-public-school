@@ -60,6 +60,7 @@ function OrdersDrillDown() {
     search: debouncedSearch.trim() || undefined,
     classLevelId: filters.classLevelId !== ALL_VALUE ? filters.classLevelId : undefined,
     collectionState: filters.status === "collected" || filters.status === "pending" ? filters.status : undefined,
+    redemptionStatus: filters.status === "partial" ? "partially-collected" : undefined,
     fromDate: filters.fromDate || undefined,
     toDate: filters.toDate || undefined,
   };
@@ -257,6 +258,7 @@ function OrdersDrillDown() {
                 <SelectContent>
                   <SelectItem value={ALL_VALUE}>All</SelectItem>
                   <SelectItem value="collected">Collected</SelectItem>
+                  <SelectItem value="partial">Partially Collected</SelectItem>
                   <SelectItem value="pending">Awaiting collection</SelectItem>
                 </SelectContent>
               </Select>
