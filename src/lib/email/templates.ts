@@ -199,6 +199,29 @@ export function consoleLoginOtpEmail(code: string): string {
   });
 }
 
+/** Console — sent by /api/console-auth/forgot-password/request when staff self-service a password reset. */
+export function consoleForgotPasswordOtpEmail(code: string): string {
+  return wrapper({
+    eyebrow: "Console security",
+    title: "Reset Your Console Password",
+    headerGradient: `linear-gradient(135deg, ${COLORS.brand} 0%, #1d4fc4 100%)`,
+    bodyHtml: `
+      <p style="font-size:15px;line-height:1.6;color:${COLORS.ink};margin:0 0 18px;">Use the code below to reset your School Console password.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 18px;">
+        <tr>${otpDigitsHtml(code)}</tr>
+      </table>
+      <p style="text-align:center;font-size:13px;color:${COLORS.sub};margin:0 0 18px;">This code expires in <strong>10 minutes</strong>.</p>
+      ${infoBanner({
+        icon: "🛡️",
+        bg: "#fff7e6",
+        border: "#f5deb0",
+        text: `<strong>Didn't request this?</strong> Someone may have typed your email by mistake — you can safely ignore this message and your password will stay unchanged.`,
+      })}
+    `,
+    footerNote: "For your security, never share this code with anyone — Niraj Public School staff will never ask you for it.",
+  });
+}
+
 /** Console — sent by /api/console-auth/invite when an administrator adds a new staff member. */
 export function consoleInviteEmail(code: string, inviterName: string, acceptUrl: string): string {
   return wrapper({

@@ -3,18 +3,10 @@ import { NextResponse } from "next/server";
 import { getPayload } from "payload";
 import { sendTransactionalEmail } from "@/lib/email/brevo";
 import { otpEmail } from "@/lib/email/templates";
-import { generateOtpCode, hashOtp } from "@/lib/otp";
+import { generateOtpCode, hashOtp, maskEmail } from "@/lib/otp";
 
 const OTP_TTL_MS = 10 * 60 * 1000;
 const COOLDOWN_MS = 60 * 1000;
-
-/** Masks an email for display before the user has proven they own the account, e.g. "riya@gmail.com" -> "ri**@gmail.com". */
-function maskEmail(email: string): string {
-  const [local, domain] = email.split("@");
-  if (!domain) return email;
-  const visible = local.slice(0, Math.min(2, local.length));
-  return `${visible}${"*".repeat(Math.max(local.length - visible.length, 2))}@${domain}`;
-}
 
 /**
  * Forgot-password (logged-out), step 1 — unlike the profile's own

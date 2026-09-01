@@ -23,6 +23,14 @@ export function isOtpExpired(expiresAt: string | undefined | null): boolean {
 /** Fields to null out to purge a spent or expired OTP from a record — spread into a payload.update's data. */
 export const CLEARED_OTP_FIELDS = { otpCodeHash: null, otpExpiresAt: null, otpVerifiedAt: null } as const;
 
+/** Partially hides an email for a "we sent a code to ri**@gmail.com"-style confirmation message. */
+export function maskEmail(email: string): string {
+  const [local, domain] = email.split("@");
+  if (!domain) return email;
+  const visible = local.slice(0, Math.min(2, local.length));
+  return `${visible}${"*".repeat(Math.max(local.length - visible.length, 2))}@${domain}`;
+}
+
 /** A trusted-device token — raw value goes in the cookie, only the hash is ever stored. */
 export function generateDeviceToken(): string {
   return randomBytes(32).toString("hex");
