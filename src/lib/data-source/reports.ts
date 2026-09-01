@@ -1,14 +1,15 @@
-import { groupItemsByKind } from "@/lib/cart-items";
+import { groupItemsByKind, subtotal } from "@/lib/cart-items";
 import type { ReportFilter } from "@/lib/reports-aggregate";
 import { filterPayments } from "@/lib/reports-aggregate";
-import { getBooksBySchool } from "./books";
+import type { AcademicLanguage, Elective, Gender, Stream } from "@/types";
+import { getBooksByClass, getBooksBySchool } from "./books";
 import { getClassLevelsBySchool } from "./schools";
 import { getEssentialsStockBySchool } from "./essentials-stock";
 import { getOrdersBySchool } from "./orders";
 import { getPaymentsBySchool } from "./receipts";
 import { getPrograms } from "./programs";
 import { getStudentsBySchool } from "./users";
-import { getUniformItemsBySchool } from "./uniform";
+import { getUniformItemsByClass, getUniformItemsBySchool } from "./uniform";
 
 export type { ReportFilter } from "@/lib/reports-aggregate";
 
@@ -164,6 +165,12 @@ export interface PaymentCoverageRow {
   /** Paid for anything at all (any receipt, any status) — the original whole-roster metric, unchanged. */
   paidCount: number;
   totalCount: number;
+  /** Actual books+uniform revenue collected from this class (programs excluded — see EssentialsCoverage note). */
+  actualRevenue: number;
+  /** actualRevenue + estimated cost of what's still unpaid in this class. */
+  potentialRevenue: number;
+  /** potentialRevenue - actualRevenue. */
+  outstandingRevenue: number;
 }
 
 /** Which of the two essentials categories a student has ever paid for — programs don't count toward this (a school essentials store concern, not events). */
@@ -180,6 +187,28 @@ export interface CoverageStudent {
   hasPaidBooks: boolean;
   hasPaidUniform: boolean;
   essentialsCoverage: EssentialsCoverage;
+  /** Real amount paid so far — always exact, never an estimate. */
+  actualBooksRevenue: number;
+  actualUniformRevenue: number;
+  actualTotalRevenue: number;
+  /** Catalogue-derived cost of what's NOT yet paid — 0 once a category is paid. Uniform is an average-of-sizes approximation (no stored per-student size). */
+  estimatedBooksCost: number;
+  estimatedUniformCost: number;
+  /** estimatedBooksCost + estimatedUniformCost — what this student still owes at today's prices. */
+  outstandingAmount: number;
+}
+
+export interface PaymentCoverageSummary {
+  totalActualRevenue: number;
+  totalPotentialRevenue: number;
+  totalOutstandingRevenue: number;
+  booksActualRevenue: number;
+  booksOutstandingRevenue: number;
+  uniformActualRevenue: number;
+  uniformOutstandingRevenue: number;
+  studentsFullyPaid: number;
+  studentsPartiallyPaid: number;
+  studentsUnpaid: number;
 }
 
 /**
@@ -192,7 +221,7 @@ export interface CoverageStudent {
  */
 export async function getPaymentCoverageBySchool(
   schoolId: string,
-): Promise<{ byClass: PaymentCoverageRow[]; students: CoverageStudent[] }> {
+): Promise<{ byClass: PaymentCoverageRow[]; students: CoverageStudent[]; summary: PaymentCoverageSummary }> {
   const [students, classLevels, payments] = await Promise.all([
     getStudentsBySchool(schoolId),
     getClassLevelsBySchool(schoolId),
@@ -202,19 +231,125 @@ export async function getPaymentCoverageBySchool(
   const anyPaidIds = new Set(payments.map((payment) => payment.receipt.userId));
   const booksPaidIds = new Set<string>();
   const uniformPaidIds = new Set<string>();
+  const actualBooksRevenueByUser = new Map<string, number>();
+  const actualUniformRevenueByUser = new Map<string, number>();
   for (const payment of payments) {
     const grouped = groupItemsByKind(payment.order.items);
-    if (grouped.books.length > 0) booksPaidIds.add(payment.receipt.userId);
-    if (grouped.uniform.length > 0) uniformPaidIds.add(payment.receipt.userId);
+    const userId = payment.receipt.userId;
+    if (grouped.books.length > 0) {
+      booksPaidIds.add(userId);
+      actualBooksRevenueByUser.set(userId, (actualBooksRevenueByUser.get(userId) ?? 0) + subtotal(grouped.books));
+    }
+    if (grouped.uniform.length > 0) {
+      uniformPaidIds.add(userId);
+      actualUniformRevenueByUser.set(userId, (actualUniformRevenueByUser.get(userId) ?? 0) + subtotal(grouped.uniform));
+    }
   }
+
+  // Estimated cost of what a student would owe, from today's catalogue — cached per
+  // (classLevelId, variant) combo so a school-wide roster does a handful of catalogue
+  // reads, not one per student.
+  const estimatedBooksCostCache = new Map<string, Promise<number>>();
+  const estimatedBooksCost = (
+    classLevelId: string,
+    variant: { language?: AcademicLanguage; stream?: Stream; elective?: Elective },
+  ) => {
+    const key = `${classLevelId}|${variant.language ?? ""}|${variant.stream ?? ""}|${variant.elective ?? ""}`;
+    let promise = estimatedBooksCostCache.get(key);
+    if (!promise) {
+      promise = getBooksByClass(schoolId, classLevelId, variant).then((books) => books.reduce((sum, b) => sum + b.price, 0));
+      estimatedBooksCostCache.set(key, promise);
+    }
+    return promise;
+  };
+  const estimatedUniformCostCache = new Map<string, Promise<number>>();
+  const estimatedUniformCost = (classLevelId: string, gender: Gender | undefined) => {
+    const key = `${classLevelId}|${gender ?? ""}`;
+    let promise = estimatedUniformCostCache.get(key);
+    if (!promise) {
+      promise = getUniformItemsByClass(schoolId, classLevelId, gender).then((items) =>
+        items.reduce((sum, item) => {
+          if (item.sizeOptions.length === 0) return sum;
+          return sum + item.sizeOptions.reduce((s, o) => s + o.price, 0) / item.sizeOptions.length;
+        }, 0),
+      );
+      estimatedUniformCostCache.set(key, promise);
+    }
+    return promise;
+  };
 
   const classLabelById = new Map(classLevels.map((level) => [level.id, level.label]));
   const byClassMap = new Map<string, PaymentCoverageRow>(
-    classLevels.map((level) => [level.id, { classLevelId: level.id, classLabel: level.label, paidCount: 0, totalCount: 0 }]),
+    classLevels.map((level) => [
+      level.id,
+      {
+        classLevelId: level.id,
+        classLabel: level.label,
+        paidCount: 0,
+        totalCount: 0,
+        actualRevenue: 0,
+        potentialRevenue: 0,
+        outstandingRevenue: 0,
+      },
+    ]),
   );
-  const coverageStudents: CoverageStudent[] = [];
+  const summary: PaymentCoverageSummary = {
+    totalActualRevenue: 0,
+    totalPotentialRevenue: 0,
+    totalOutstandingRevenue: 0,
+    booksActualRevenue: 0,
+    booksOutstandingRevenue: 0,
+    uniformActualRevenue: 0,
+    uniformOutstandingRevenue: 0,
+    studentsFullyPaid: 0,
+    studentsPartiallyPaid: 0,
+    studentsUnpaid: 0,
+  };
 
-  for (const student of students) {
+  const coverageStudents: CoverageStudent[] = await Promise.all(
+    students.map(async (student) => {
+      const hasPaidAnything = anyPaidIds.has(student.id);
+      const hasPaidBooks = booksPaidIds.has(student.id);
+      const hasPaidUniform = uniformPaidIds.has(student.id);
+      const essentialsCoverage: EssentialsCoverage =
+        hasPaidBooks && hasPaidUniform ? "both" : hasPaidBooks ? "booksOnly" : hasPaidUniform ? "uniformOnly" : "neither";
+
+      const actualBooksRevenue = actualBooksRevenueByUser.get(student.id) ?? 0;
+      const actualUniformRevenue = actualUniformRevenueByUser.get(student.id) ?? 0;
+
+      const [booksEstimate, uniformEstimate] = await Promise.all([
+        hasPaidBooks
+          ? Promise.resolve(0)
+          : estimatedBooksCost(student.classLevelId, {
+              language: student.academicLanguage,
+              stream: student.stream,
+              elective: student.elective,
+            }),
+        hasPaidUniform ? Promise.resolve(0) : estimatedUniformCost(student.classLevelId, student.gender),
+      ]);
+
+      return {
+        id: student.id,
+        name: student.name,
+        registerNumber: student.registerNumber,
+        classLevelId: student.classLevelId,
+        section: student.section,
+        mobileNumber: student.mobileNumber,
+        hasPaidAnything,
+        hasPaidBooks,
+        hasPaidUniform,
+        essentialsCoverage,
+        actualBooksRevenue,
+        actualUniformRevenue,
+        actualTotalRevenue: actualBooksRevenue + actualUniformRevenue,
+        estimatedBooksCost: booksEstimate,
+        estimatedUniformCost: uniformEstimate,
+        outstandingAmount: booksEstimate + uniformEstimate,
+      } satisfies CoverageStudent;
+    }),
+  );
+
+  for (const student of coverageStudents) {
     const row =
       byClassMap.get(student.classLevelId) ??
       ({
@@ -222,36 +357,34 @@ export async function getPaymentCoverageBySchool(
         classLabel: classLabelById.get(student.classLevelId) ?? "Unknown class",
         paidCount: 0,
         totalCount: 0,
+        actualRevenue: 0,
+        potentialRevenue: 0,
+        outstandingRevenue: 0,
       } satisfies PaymentCoverageRow);
     row.totalCount += 1;
-
-    const hasPaidAnything = anyPaidIds.has(student.id);
-    if (hasPaidAnything) row.paidCount += 1;
+    if (student.hasPaidAnything) row.paidCount += 1;
+    row.actualRevenue += student.actualTotalRevenue;
+    row.outstandingRevenue += student.outstandingAmount;
+    row.potentialRevenue += student.actualTotalRevenue + student.outstandingAmount;
     byClassMap.set(row.classLevelId, row);
 
-    const hasPaidBooks = booksPaidIds.has(student.id);
-    const hasPaidUniform = uniformPaidIds.has(student.id);
-    const essentialsCoverage: EssentialsCoverage =
-      hasPaidBooks && hasPaidUniform ? "both" : hasPaidBooks ? "booksOnly" : hasPaidUniform ? "uniformOnly" : "neither";
-
-    coverageStudents.push({
-      id: student.id,
-      name: student.name,
-      registerNumber: student.registerNumber,
-      classLevelId: student.classLevelId,
-      section: student.section,
-      mobileNumber: student.mobileNumber,
-      hasPaidAnything,
-      hasPaidBooks,
-      hasPaidUniform,
-      essentialsCoverage,
-    });
+    summary.totalActualRevenue += student.actualTotalRevenue;
+    summary.totalOutstandingRevenue += student.outstandingAmount;
+    summary.booksActualRevenue += student.actualBooksRevenue;
+    summary.booksOutstandingRevenue += student.estimatedBooksCost;
+    summary.uniformActualRevenue += student.actualUniformRevenue;
+    summary.uniformOutstandingRevenue += student.estimatedUniformCost;
+    if (student.essentialsCoverage === "both") summary.studentsFullyPaid += 1;
+    else if (student.essentialsCoverage === "neither") summary.studentsUnpaid += 1;
+    else summary.studentsPartiallyPaid += 1;
   }
+  summary.totalPotentialRevenue = summary.totalActualRevenue + summary.totalOutstandingRevenue;
 
   return {
     byClass: Array.from(byClassMap.values()).sort((a, b) =>
       a.classLabel.localeCompare(b.classLabel, undefined, { numeric: true }),
     ),
     students: coverageStudents.sort((a, b) => a.name.localeCompare(b.name)),
+    summary,
   };
 }
