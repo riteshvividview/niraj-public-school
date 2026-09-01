@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { deriveReceiptTitle } from "@/lib/cart-items";
-import { getPaymentsPageBySchool, type PaymentPageFilters } from "@/lib/data-source";
+import { getPaymentsPageBySchool, getStudentSectionsBySchool, type PaymentPageFilters } from "@/lib/data-source";
 import { downloadCsv } from "@/lib/export-utils";
 import { formatDate, formatTime } from "@/lib/format";
 import { useClassLevels, useConsoleSchoolId } from "@/lib/hooks/console-data";
@@ -36,6 +36,7 @@ const ALL_VALUE = "__all__";
 interface PaymentFilters {
   search: string;
   classLevelId: string;
+  section: string;
   redemptionStatus: string;
   paymentMethod: string;
   fromDate: string;
@@ -45,6 +46,7 @@ interface PaymentFilters {
 const EMPTY_FILTERS: PaymentFilters = {
   search: "",
   classLevelId: ALL_VALUE,
+  section: ALL_VALUE,
   redemptionStatus: ALL_VALUE,
   paymentMethod: ALL_VALUE,
   fromDate: "",
@@ -56,6 +58,9 @@ const PAGE_SIZE = 20;
 export default function PaymentsPage() {
   const schoolId = useConsoleSchoolId();
   const { classLevels } = useClassLevels(schoolId);
+  const { data: sections = [] } = useSWR(schoolId ? ["console:student-sections", schoolId] : null, () =>
+    getStudentSectionsBySchool(schoolId),
+  );
   const [filters, setFilters] = useState<PaymentFilters>(EMPTY_FILTERS);
   const debouncedSearch = useDebouncedValue(filters.search, 300);
   const [page, setPage] = useState(1);
@@ -64,6 +69,7 @@ export default function PaymentsPage() {
   const queryFilters: PaymentPageFilters = {
     search: debouncedSearch.trim() || undefined,
     classLevelId: filters.classLevelId !== ALL_VALUE ? filters.classLevelId : undefined,
+    section: filters.section !== ALL_VALUE ? filters.section : undefined,
     redemptionStatus: filters.redemptionStatus !== ALL_VALUE ? (filters.redemptionStatus as RedemptionStatus) : undefined,
     paymentMethod: filters.paymentMethod !== ALL_VALUE ? (filters.paymentMethod as Order["paymentMethod"]) : undefined,
     fromDate: filters.fromDate || undefined,
@@ -109,6 +115,7 @@ export default function PaymentsPage() {
   const hasActiveFilters =
     filters.search.trim() !== "" ||
     filters.classLevelId !== ALL_VALUE ||
+    filters.section !== ALL_VALUE ||
     filters.redemptionStatus !== ALL_VALUE ||
     filters.paymentMethod !== ALL_VALUE ||
     filters.fromDate !== "" ||
@@ -227,6 +234,22 @@ export default function PaymentsPage() {
                   {classLevels.map((level) => (
                     <SelectItem key={level.id} value={level.id}>
                       {level.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-36 space-y-1.5">
+              <Label className="text-xs text-sub">Section</Label>
+              <Select value={filters.section} onValueChange={(v) => set("section", v)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL_VALUE}>All Sections</SelectItem>
+                  {sections.map((section) => (
+                    <SelectItem key={section} value={section}>
+                      {section}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getPaymentsPageBySchool, type PaymentPageFilters } from "@/lib/data-source";
+import { getPaymentsPageBySchool, getStudentSectionsBySchool, type PaymentPageFilters } from "@/lib/data-source";
 import { downloadCsv } from "@/lib/export-utils";
 import { collectionStatusOf, overviewOf } from "@/lib/reports-aggregate";
 import { deriveReceiptTitle } from "@/lib/cart-items";
@@ -34,6 +34,7 @@ const RECEIPT_TITLE_LABELS = {
 interface OrdersFilters {
   search: string;
   classLevelId: string;
+  section: string;
   status: string;
   fromDate: string;
   toDate: string;
@@ -43,10 +44,14 @@ function OrdersDrillDown() {
   const params = useSearchParams();
   const schoolId = useConsoleSchoolId();
   const { classLevels } = useClassLevels(schoolId);
+  const { data: sections = [] } = useSWR(schoolId ? ["console:student-sections", schoolId] : null, () =>
+    getStudentSectionsBySchool(schoolId),
+  );
 
   const [filters, setFilters] = useState<OrdersFilters>(() => ({
     search: "",
     classLevelId: params.get("classLevelId") ?? ALL_VALUE,
+    section: params.get("section") ?? ALL_VALUE,
     status: params.get("status") ?? ALL_VALUE,
     fromDate: params.get("fromDate") ?? "",
     toDate: params.get("toDate") ?? "",
@@ -59,6 +64,7 @@ function OrdersDrillDown() {
   const queryFilters: PaymentPageFilters = {
     search: debouncedSearch.trim() || undefined,
     classLevelId: filters.classLevelId !== ALL_VALUE ? filters.classLevelId : undefined,
+    section: filters.section !== ALL_VALUE ? filters.section : undefined,
     collectionState: filters.status === "collected" || filters.status === "pending" ? filters.status : undefined,
     redemptionStatus: filters.status === "partial" ? "partially-collected" : undefined,
     fromDate: filters.fromDate || undefined,
@@ -109,6 +115,7 @@ function OrdersDrillDown() {
   const hasActiveFilters =
     filters.search.trim() !== "" ||
     filters.classLevelId !== ALL_VALUE ||
+    filters.section !== ALL_VALUE ||
     filters.status !== ALL_VALUE ||
     filters.fromDate !== "" ||
     filters.toDate !== "";
@@ -249,6 +256,22 @@ function OrdersDrillDown() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="w-36 space-y-1.5">
+              <Label className="text-xs text-sub">Section</Label>
+              <Select value={filters.section} onValueChange={(v) => set("section", v)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL_VALUE}>All Sections</SelectItem>
+                  {sections.map((section) => (
+                    <SelectItem key={section} value={section}>
+                      {section}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="w-40 space-y-1.5">
               <Label className="text-xs text-sub">Status</Label>
               <Select value={filters.status} onValueChange={(v) => set("status", v)}>
@@ -279,7 +302,9 @@ function OrdersDrillDown() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setFilters({ search: "", classLevelId: ALL_VALUE, status: ALL_VALUE, fromDate: "", toDate: "" })}
+                onClick={() =>
+                  setFilters({ search: "", classLevelId: ALL_VALUE, section: ALL_VALUE, status: ALL_VALUE, fromDate: "", toDate: "" })
+                }
               >
                 Clear filters
               </Button>

@@ -28,7 +28,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getStockHealthBySchool } from "@/lib/data-source";
+import { getStockHealthBySchool, getStudentSectionsBySchool } from "@/lib/data-source";
 import { downloadWorkbook } from "@/lib/export-utils";
 import { formatCurrencyINR } from "@/lib/format";
 import {
@@ -70,13 +70,15 @@ interface Filters {
   fromDate: string;
   toDate: string;
   classLevelId: string;
+  section: string;
 }
 
-const EMPTY_FILTERS: Filters = { fromDate: "", toDate: "", classLevelId: ALL_VALUE };
+const EMPTY_FILTERS: Filters = { fromDate: "", toDate: "", classLevelId: ALL_VALUE, section: ALL_VALUE };
 
 function ordersHref(params: {
   status?: "collected" | "pending";
   classLevelId?: string;
+  section?: string;
   fromDate?: string;
   toDate?: string;
   sort?: "oldest";
@@ -84,6 +86,7 @@ function ordersHref(params: {
   const search = new URLSearchParams();
   if (params.status) search.set("status", params.status);
   if (params.classLevelId) search.set("classLevelId", params.classLevelId);
+  if (params.section) search.set("section", params.section);
   if (params.fromDate) search.set("fromDate", params.fromDate);
   if (params.toDate) search.set("toDate", params.toDate);
   if (params.sort) search.set("sort", params.sort);
@@ -94,6 +97,9 @@ function ordersHref(params: {
 export default function ReportsPage() {
   const schoolId = useConsoleSchoolId();
   const { classLevels } = useClassLevels(schoolId);
+  const { data: sections = [] } = useSWR(schoolId ? ["console:student-sections", schoolId] : null, () =>
+    getStudentSectionsBySchool(schoolId),
+  );
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -102,10 +108,12 @@ export default function ReportsPage() {
       fromDate: filters.fromDate || undefined,
       toDate: filters.toDate || undefined,
       classLevelId: filters.classLevelId !== ALL_VALUE ? filters.classLevelId : undefined,
+      section: filters.section !== ALL_VALUE ? filters.section : undefined,
     }),
-    [filters.fromDate, filters.toDate, filters.classLevelId],
+    [filters.fromDate, filters.toDate, filters.classLevelId, filters.section],
   );
-  const hasActiveFilters = filters.fromDate !== "" || filters.toDate !== "" || filters.classLevelId !== ALL_VALUE;
+  const hasActiveFilters =
+    filters.fromDate !== "" || filters.toDate !== "" || filters.classLevelId !== ALL_VALUE || filters.section !== ALL_VALUE;
 
   // Fetched once per school, every payment-derived chart/tile below is a pure
   // client-side derivation (see src/lib/reports-aggregate.ts) — filtering is
@@ -148,15 +156,16 @@ export default function ReportsPage() {
 
   const coverageTotals = useMemo(() => {
     if (!paymentCoverage) return null;
-    const relevant =
-      filters.classLevelId === ALL_VALUE
-        ? paymentCoverage.byClass
-        : paymentCoverage.byClass.filter((row) => row.classLevelId === filters.classLevelId);
-    return relevant.reduce((acc, row) => ({ paid: acc.paid + row.paidCount, total: acc.total + row.totalCount }), {
-      paid: 0,
-      total: 0,
+    const relevant = paymentCoverage.students.filter((student) => {
+      if (filters.classLevelId !== ALL_VALUE && student.classLevelId !== filters.classLevelId) return false;
+      if (filters.section !== ALL_VALUE && student.section !== filters.section) return false;
+      return true;
     });
-  }, [paymentCoverage, filters.classLevelId]);
+    return relevant.reduce(
+      (acc, student) => ({ paid: acc.paid + (student.hasPaidAnything ? 1 : 0), total: acc.total + 1 }),
+      { paid: 0, total: 0 },
+    );
+  }, [paymentCoverage, filters.classLevelId, filters.section]);
 
   const programTotals = useMemo(() => {
     if (!programReport) return null;
@@ -303,6 +312,22 @@ export default function ReportsPage() {
               </SelectContent>
             </Select>
           </div>
+          <div className="w-36 space-y-1.5">
+            <Label className="text-xs text-sub">Section</Label>
+            <Select value={filters.section} onValueChange={(v) => set("section", v)}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_VALUE}>All Sections</SelectItem>
+                {sections.map((section) => (
+                  <SelectItem key={section} value={section}>
+                    {section}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           {hasActiveFilters ? (
             <Button variant="outline" size="sm" onClick={() => setFilters(EMPTY_FILTERS)}>
               Clear filters
@@ -324,7 +349,7 @@ export default function ReportsPage() {
           <StatTile
             label="Total orders"
             value={String(overview.ordersCount)}
-            href={ordersHref({ classLevelId: filter.classLevelId, fromDate: filter.fromDate, toDate: filter.toDate })}
+            href={ordersHref({ classLevelId: filter.classLevelId, section: filter.section, fromDate: filter.fromDate, toDate: filter.toDate })}
           />
           <StatTile label="Total revenue" value={formatCurrencyINR(overview.revenue)} />
           <StatTile label="Avg. order value" value={formatCurrencyINR(overview.avgOrderValue)} />
@@ -334,6 +359,7 @@ export default function ReportsPage() {
             href={ordersHref({
               status: "collected",
               classLevelId: filter.classLevelId,
+              section: filter.section,
               fromDate: filter.fromDate,
               toDate: filter.toDate,
             })}
@@ -344,6 +370,7 @@ export default function ReportsPage() {
             href={ordersHref({
               status: "pending",
               classLevelId: filter.classLevelId,
+              section: filter.section,
               fromDate: filter.fromDate,
               toDate: filter.toDate,
             })}
@@ -532,6 +559,7 @@ export default function ReportsPage() {
                         onClick={() =>
                           (window.location.href = ordersHref({
                             classLevelId: row.classLevelId,
+                            section: filter.section,
                             fromDate: filter.fromDate,
                             toDate: filter.toDate,
                           }))
@@ -597,7 +625,7 @@ export default function ReportsPage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <CardTitle>Oldest pending</CardTitle>
             <Link
-              href={ordersHref({ status: "pending", classLevelId: filter.classLevelId, fromDate: filter.fromDate, toDate: filter.toDate, sort: "oldest" })}
+              href={ordersHref({ status: "pending", classLevelId: filter.classLevelId, section: filter.section, fromDate: filter.fromDate, toDate: filter.toDate, sort: "oldest" })}
               className="inline-flex items-center gap-1 text-sm text-brand hover:underline"
             >
               View all awaiting collection <ArrowRight className="size-3.5" />

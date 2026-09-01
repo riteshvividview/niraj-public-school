@@ -13,6 +13,7 @@ export interface ReportFilter {
   fromDate?: string;
   toDate?: string;
   classLevelId?: string;
+  section?: string;
 }
 
 export function matchesFilter(payment: PaymentRecord, filter?: ReportFilter): boolean {
@@ -21,6 +22,7 @@ export function matchesFilter(payment: PaymentRecord, filter?: ReportFilter): bo
   if (filter.fromDate && date < filter.fromDate) return false;
   if (filter.toDate && date > filter.toDate) return false;
   if (filter.classLevelId && payment.classLevelId !== filter.classLevelId) return false;
+  if (filter.section && payment.section !== filter.section) return false;
   return true;
 }
 

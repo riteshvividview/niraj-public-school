@@ -224,6 +224,7 @@ export async function getPaymentsBySchool(schoolId: string): Promise<PaymentReco
 export interface PaymentPageFilters {
   search?: string;
   classLevelId?: string;
+  section?: string;
   redemptionStatus?: RedemptionStatus;
   /**
    * Broader than `redemptionStatus` — "collected" matches any of
@@ -271,6 +272,7 @@ export async function getPaymentsPageBySchool(
     });
   }
   if (filters.classLevelId) and.push({ "user.classLevel": { equals: filters.classLevelId } });
+  if (filters.section) and.push({ "user.section": { equals: filters.section } });
   if (filters.redemptionStatus) {
     and.push({ redemptionStatus: { equals: filters.redemptionStatus } });
   } else if (filters.collectionState === "collected") {
