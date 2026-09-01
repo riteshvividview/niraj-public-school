@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, RotateCcw, ShieldCheck, ShieldOff, UserPlus } from "lucide-react";
+import { Eye, EyeOff, KeyRound, Plus, RotateCcw, ShieldCheck, ShieldOff, UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -17,10 +17,13 @@ import {
   CooldownError,
   forceConsoleStaffReverification,
   getConsoleStaffList,
+  getSharedDemoAccessInfo,
   inviteConsoleStaff,
   resendConsoleStaffInvite,
+  revokeSharedDemoAccess,
   setConsoleStaffRole,
   setConsoleStaffStatus,
+  setSharedDemoAccessCredential,
 } from "@/lib/data-source";
 import { formatDate } from "@/lib/format";
 import { useConsoleAuth } from "@/store/console-auth-store";
@@ -48,6 +51,17 @@ export default function AdministrationPage() {
     currentStaff?.role === "administrator" ? "console:administration:staff" : null,
     getConsoleStaffList,
   );
+  const { data: demoAccess, mutate: refreshDemoAccess } = useSWR(
+    currentStaff?.role === "administrator" ? "console:administration:demo-access" : null,
+    getSharedDemoAccessInfo,
+  );
+
+  const [demoEmail, setDemoEmail] = useState("");
+  const [demoPassword, setDemoPassword] = useState("");
+  const [showDemoPassword, setShowDemoPassword] = useState(false);
+  const [isSavingDemoAccess, setIsSavingDemoAccess] = useState(false);
+  const [revokeDemoAccessOpen, setRevokeDemoAccessOpen] = useState(false);
+  const [isRevokingDemoAccess, setIsRevokingDemoAccess] = useState(false);
 
   const [addOpen, setAddOpen] = useState(false);
   const [name, setName] = useState("");
@@ -122,6 +136,51 @@ export default function AdministrationPage() {
     }
   }
 
+  async function handleSaveDemoAccess(event: React.FormEvent) {
+    event.preventDefault();
+    setIsSavingDemoAccess(true);
+    try {
+      await setSharedDemoAccessCredential(demoEmail.trim().toLowerCase(), demoPassword);
+      toast.success("Shared demo access saved");
+      setDemoEmail("");
+      setDemoPassword("");
+      refreshDemoAccess();
+      refreshStaff();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Couldn't save that credential.");
+    } finally {
+      setIsSavingDemoAccess(false);
+    }
+  }
+
+  async function handleToggleDemoAccessStatus() {
+    if (!demoAccess?.id) return;
+    const nextStatus = demoAccess.status === "disabled" ? "active" : "disabled";
+    try {
+      await setConsoleStaffStatus(demoAccess.id, nextStatus);
+      toast.success(nextStatus === "disabled" ? "Shared demo access disabled" : "Shared demo access enabled");
+      refreshDemoAccess();
+      refreshStaff();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Something went wrong.");
+    }
+  }
+
+  async function handleRevokeDemoAccess() {
+    setIsRevokingDemoAccess(true);
+    try {
+      await revokeSharedDemoAccess();
+      toast.success("Shared demo access revoked");
+      refreshDemoAccess();
+      refreshStaff();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Something went wrong.");
+    } finally {
+      setIsRevokingDemoAccess(false);
+      setRevokeDemoAccessOpen(false);
+    }
+  }
+
   async function confirmPendingAction() {
     if (!pendingAction) return;
     const { staff: target, kind } = pendingAction;
@@ -181,7 +240,11 @@ export default function AdministrationPage() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <p className="font-medium text-ink">{member.name}</p>
-                          {member.role === "administrator" ? <Badge variant="secondary">Administrator</Badge> : null}
+                          {member.isSharedDemoAccount ? (
+                            <Badge variant="outline">Shared Demo Access</Badge>
+                          ) : member.role === "administrator" ? (
+                            <Badge variant="secondary">Administrator</Badge>
+                          ) : null}
                           <StatusBadge status={member.status} />
                         </div>
                         <p className="text-sm text-sub">{member.email}</p>
@@ -203,7 +266,7 @@ export default function AdministrationPage() {
                             {isResending ? "Sending…" : cooldownSecondsLeft > 0 ? `Resend in ${cooldownSecondsLeft}s` : "Resend invite"}
                           </Button>
                         ) : null}
-                        {member.status !== "invited" ? (
+                        {!member.isSharedDemoAccount && member.status !== "invited" ? (
                           <Button
                             variant="outline"
                             size="sm"
@@ -214,7 +277,7 @@ export default function AdministrationPage() {
                             Force re-verification
                           </Button>
                         ) : null}
-                        {!isSelf && member.status !== "invited" ? (
+                        {!isSelf && !member.isSharedDemoAccount && member.status !== "invited" ? (
                           <Button variant="outline" size="sm" onClick={() => handleRoleToggle(member)}>
                             {member.role === "administrator" ? "Demote to staff" : "Promote to administrator"}
                           </Button>
@@ -238,6 +301,81 @@ export default function AdministrationPage() {
               {staffList.length === 0 ? <p className="py-6 text-center text-sm text-sub">No staff accounts yet.</p> : null}
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <KeyRound className="size-4" />
+            Shared Demo Access
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-sub">
+            Anyone who signs in with this email and password gets in instantly — no device or email verification. Keep
+            this for trusted demo/kiosk use only.
+          </p>
+
+          {demoAccess?.configured ? (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line/60 p-3.5">
+              <div className="flex items-center gap-2">
+                <div>
+                  <p className="text-sm text-sub">Currently configured</p>
+                  <p className="font-medium text-ink">{demoAccess.email}</p>
+                </div>
+                {demoAccess.status === "disabled" ? <Badge variant="destructive">Disabled</Badge> : <Badge variant="secondary">Active</Badge>}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" size="sm" className="gap-1.5" onClick={handleToggleDemoAccessStatus}>
+                  <ShieldOff className="size-3.5" />
+                  {demoAccess.status === "disabled" ? "Enable access" : "Disable access"}
+                </Button>
+                <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setRevokeDemoAccessOpen(true)}>
+                  Revoke access
+                </Button>
+              </div>
+            </div>
+          ) : demoAccess ? (
+            <p className="text-sm text-sub">Not configured — no shared credential exists yet.</p>
+          ) : null}
+
+          <form className="flex flex-wrap items-end gap-3" onSubmit={handleSaveDemoAccess}>
+            <div className="min-w-48 flex-1 space-y-1.5">
+              <Label htmlFor="demo-email">Email</Label>
+              <Input
+                id="demo-email"
+                type="email"
+                value={demoEmail}
+                onChange={(e) => setDemoEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="min-w-48 flex-1 space-y-1.5">
+              <Label htmlFor="demo-password">Password</Label>
+              <div className="relative">
+                <Input
+                  id="demo-password"
+                  type={showDemoPassword ? "text" : "password"}
+                  value={demoPassword}
+                  onChange={(e) => setDemoPassword(e.target.value)}
+                  minLength={6}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowDemoPassword((prev) => !prev)}
+                  aria-label={showDemoPassword ? "Hide password" : "Show password"}
+                  className="absolute top-1/2 right-3 -translate-y-1/2 text-sub transition-colors hover:text-ink"
+                >
+                  {showDemoPassword ? <EyeOff className="size-[18px]" /> : <Eye className="size-[18px]" />}
+                </button>
+              </div>
+            </div>
+            <Button type="submit" disabled={isSavingDemoAccess}>
+              {isSavingDemoAccess ? "Saving…" : demoAccess?.configured ? "Change credential" : "Enable shared access"}
+            </Button>
+          </form>
         </CardContent>
       </Card>
 
@@ -287,6 +425,15 @@ export default function AdministrationPage() {
         }
         confirmLabel={pendingAction?.kind === "reverify" ? "Force re-verification" : pendingAction?.staff.status === "disabled" ? "Restore access" : "Disable access"}
         onConfirm={confirmPendingAction}
+      />
+
+      <ConfirmDeleteDialog
+        open={revokeDemoAccessOpen}
+        onOpenChange={setRevokeDemoAccessOpen}
+        title="Revoke shared demo access?"
+        description="This deletes the shared credential — anyone using it will immediately lose access."
+        confirmLabel={isRevokingDemoAccess ? "Revoking…" : "Revoke access"}
+        onConfirm={handleRevokeDemoAccess}
       />
     </div>
   );

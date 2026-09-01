@@ -29,6 +29,29 @@ const preventLastAdminLockout: CollectionBeforeChangeHook = async ({ data, origi
 };
 
 /**
+ * At most one row may carry `isSharedDemoAccount: true` — setting it on one
+ * clears it from any other, so the console-auth/demo-access route can just
+ * create-or-update without worrying about duplicates from a race.
+ */
+const enforceSingleSharedDemoAccount: CollectionBeforeChangeHook = async ({ data, originalDoc, req }) => {
+  if (data.isSharedDemoAccount !== true) return data;
+  const others = await req.payload.find({
+    collection: "payload-admins",
+    where: { and: [{ isSharedDemoAccount: { equals: true } }, { id: { not_equals: originalDoc?.id ?? "" } }] },
+  });
+  await Promise.all(
+    others.docs.map((doc) => req.payload.update({ collection: "payload-admins", id: doc.id, data: { isSharedDemoAccount: false } })),
+  );
+  return data;
+};
+
+/** The shared demo account can never become an administrator, even via a direct REST role change. */
+const pinSharedDemoAccountRole: CollectionBeforeChangeHook = async ({ data, originalDoc }) => {
+  if (originalDoc?.isSharedDemoAccount === true) data.role = "staff";
+  return data;
+};
+
+/**
  * The one account system shared by raw /admin and the School Console
  * (src/store/console-auth-store.tsx). `role` splits the two: `administrator`
  * can do everything (including /admin itself and inviting other staff),
@@ -43,13 +66,17 @@ const preventLastAdminLockout: CollectionBeforeChangeHook = async ({ data, origi
  * /console/accept-invite (src/app/(payload)/api/console-auth/accept-invite/route.ts),
  * which flips `status` to "active". From then on, every login challenges
  * with an emailed OTP unless the browser already holds a valid entry in
- * `trustedDevices` (src/app/(payload)/api/console-auth/{precheck,verify-device-otp}/route.ts).
+ * `trustedDevices` (src/app/(payload)/api/console-auth/{precheck,verify-device-otp}/route.ts)
+ * — or the account is flagged `isSharedDemoAccount`, in which case `precheck`
+ * always skips straight past the OTP step. Exactly one such account may
+ * exist, managed only via src/app/(payload)/api/console-auth/demo-access/route.ts
+ * from the Console's Administration tab.
  */
 export const PayloadAdmins: CollectionConfig = {
   slug: "payload-admins",
   auth: true,
   admin: { useAsTitle: "email" },
-  hooks: { beforeChange: [preventLastAdminLockout] },
+  hooks: { beforeChange: [preventLastAdminLockout, enforceSingleSharedDemoAccount, pinSharedDemoAccountRole] },
   access: {
     read: ({ req: { user } }) => Boolean(user),
     // Invites/removals go through the console-auth routes above (which
@@ -86,6 +113,10 @@ export const PayloadAdmins: CollectionConfig = {
     { name: "invitedByEmail", type: "text" },
     { name: "invitedAt", type: "date" },
     { name: "lastLoginAt", type: "date" },
+    // Set only via the Local API (console-auth/demo-access route) — REST
+    // updates to this field are always rejected, so an administrator is the
+    // only way in. See enforceSingleSharedDemoAccount/pinSharedDemoAccountRole above.
+    { name: "isSharedDemoAccount", type: "checkbox", defaultValue: false, access: { update: () => false } },
     // OTP state (invite acceptance + new-device login challenge) — same
     // shape as Users' fields, same reason field-level read is closed: only
     // the console-auth routes (Local API, server-side) ever touch these.

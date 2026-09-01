@@ -10,6 +10,7 @@ interface PayloadAdminDoc {
   invitedByEmail?: string | null;
   invitedAt?: string | null;
   lastLoginAt?: string | null;
+  isSharedDemoAccount?: boolean | null;
 }
 
 function toProfile(doc: PayloadAdminDoc): ConsoleStaffProfile {
@@ -22,6 +23,7 @@ function toProfile(doc: PayloadAdminDoc): ConsoleStaffProfile {
     invitedByEmail: doc.invitedByEmail ?? undefined,
     invitedAt: doc.invitedAt ?? undefined,
     lastLoginAt: doc.lastLoginAt ?? undefined,
+    isSharedDemoAccount: doc.isSharedDemoAccount ?? undefined,
   };
 }
 
@@ -35,10 +37,13 @@ export async function logoutConsoleStaff(): Promise<void> {
   await payloadLogout("payload-admins");
 }
 
-/** Console Administration — every staff account, for the roster table. */
+/** Console Administration — every staff account, for the roster table. The shared demo account (if any) is managed exclusively through its own "Shared Demo Access" card, not this list. */
 export async function getConsoleStaffList(): Promise<ConsoleStaffProfile[]> {
   const docs = await payloadFind<PayloadAdminDoc>("payload-admins");
-  return docs.map(toProfile).sort((a, b) => a.name.localeCompare(b.name));
+  return docs
+    .filter((doc) => !doc.isSharedDemoAccount)
+    .map(toProfile)
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 interface CustomRouteError {
@@ -90,4 +95,32 @@ export async function setConsoleStaffRole(id: string, role: ConsoleStaffProfile[
 /** Clears every trusted device on the account — its next login from anywhere requires a fresh OTP. */
 export async function forceConsoleStaffReverification(id: string): Promise<void> {
   await payloadUpdate("payload-admins", id, { trustedDevices: [] });
+}
+
+interface DemoAccessInfo {
+  configured: boolean;
+  id?: string;
+  email?: string;
+  status?: ConsoleStaffProfile["status"];
+}
+
+/** Console Administration — "Shared Demo Access" card. */
+export async function getSharedDemoAccessInfo(): Promise<DemoAccessInfo> {
+  const res = await fetch("/api/console-auth/demo-access", { cache: "no-store" });
+  if (!res.ok) return { configured: false };
+  return (await res.json()) as DemoAccessInfo;
+}
+
+/** Sets (creates or replaces) the single shared instant-access credential. Administrator-only, enforced server-side. */
+export async function setSharedDemoAccessCredential(email: string, password: string): Promise<void> {
+  await postJson("/api/console-auth/demo-access", { email, password });
+}
+
+/** Revokes the shared instant-access credential entirely. */
+export async function revokeSharedDemoAccess(): Promise<void> {
+  const res = await fetch("/api/console-auth/demo-access", { method: "DELETE" });
+  if (!res.ok) {
+    const data = (await res.json().catch(() => null)) as CustomRouteError | null;
+    throw new Error(data?.error ?? "Something went wrong.");
+  }
 }

@@ -11,4 +11,6 @@ export interface ConsoleStaffProfile {
   invitedByEmail?: string;
   invitedAt?: string;
   lastLoginAt?: string;
+  /** True for the single admin-configured shared instant-access account, if any. */
+  isSharedDemoAccount?: boolean;
 }

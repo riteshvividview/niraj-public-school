@@ -50,7 +50,22 @@ export async function POST(request: Request) {
     );
   }
   if (user.status === "disabled") {
-    return NextResponse.json({ error: "This account has been disabled." }, { status: 403 });
+    const error = user.isSharedDemoAccount
+      ? "The administrator disabled this shared access."
+      : "This account has been disabled.";
+    return NextResponse.json({ error }, { status: 403 });
+  }
+
+  // Administrator-configured shared instant-access account (Console
+  // Administration → "Shared Demo Access") — always treated as an already
+  // trusted device, skipping the OTP challenge entirely.
+  if (user.isSharedDemoAccount) {
+    await payload.update({
+      collection: "payload-admins",
+      id: user.id,
+      data: { lastLoginAt: new Date().toISOString() },
+    });
+    return NextResponse.json({ ok: true, requiresOtp: false });
   }
 
   const cookieStore = await cookies();
