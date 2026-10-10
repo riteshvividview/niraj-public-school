@@ -5,6 +5,7 @@ import path from "path";
 import { buildConfig } from "payload";
 import { fileURLToPath } from "url";
 
+import { BookChangeRequests } from "./src/collections/BookChangeRequests";
 import { Books } from "./src/collections/Books";
 import { ClassLevels } from "./src/collections/ClassLevels";
 import { EssentialsStock } from "./src/collections/EssentialsStock";
@@ -39,6 +40,7 @@ export default buildConfig({
     Orders,
     Receipts,
     ExchangeRequests,
+    BookChangeRequests,
     Media,
   ],
   editor: lexicalEditor(),

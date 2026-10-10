@@ -1,23 +1,26 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
-import useSWR from "swr";
+import { useEffect, useState, type ReactNode } from "react";
+import useSWR, { mutate as globalMutate } from "swr";
 import { AppHeader } from "@/components/shared/app-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ItemCard } from "@/components/shared/item-card";
 import { ItemCardSkeleton } from "@/components/shared/loading-skeletons";
-import { Atom, BookOpen, Bot, Check, GraduationCap, Home, Languages, LineChart, type LucideIcon } from "lucide-react";
+import { Atom, BookOpen, Bot, Check, GraduationCap, Home, Languages, LineChart, Lock, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/i18n/context";
 import { secondLanguageOf } from "@/lib/academic-language";
+import { assignedBookSetOf, bookMatchesAssignedSet } from "@/lib/book-set";
 import { bookToCartItem } from "@/lib/cart-items";
-import { getBooksByClass } from "@/lib/data-source";
+import { getBookChangeRequestsByUser, getBooksByClass } from "@/lib/data-source";
 import { formatCurrencyINR } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/store/auth-store";
 import { lineId, useCart } from "@/store/cart-store";
 import type { AcademicLanguage, Book, Elective, Stream } from "@/types";
 import { EssentialsReviewBar } from "../_components/review-bar";
+import { BookChangeDialog, type ChangeableFields } from "./_components/book-change-dialog";
+import { BookChangeStatus, isRequestVisible } from "./_components/book-change-status";
 
 function streamIcon(value: Stream): LucideIcon {
   return value === "science" ? Atom : LineChart;
@@ -28,21 +31,45 @@ function electiveIcon(value: Elective): LucideIcon {
   return Bot;
 }
 
-/** One selectable card in an OptionGroup — cards, not a dropdown, per the school's request for a clearer, single-choice selection UI. */
-function OptionCard({ icon: Icon, label, selected, onSelect }: { icon: LucideIcon; label: string; selected: boolean; onSelect: () => void }) {
+/**
+ * One selectable card in an OptionGroup — cards, not a dropdown, per the school's request for a clearer, single-choice selection UI.
+ * In a `locked` group (the school assigned this choice) the assigned card stays highlighted but isn't clickable, and every other card is dimmed + disabled.
+ */
+function OptionCard({
+  icon: Icon,
+  label,
+  selected,
+  locked = false,
+  onSelect,
+}: {
+  icon: LucideIcon;
+  label: string;
+  selected: boolean;
+  locked?: boolean;
+  onSelect: () => void;
+}) {
+  const dimmed = locked && !selected;
   return (
     <button
       type="button"
       aria-pressed={selected}
-      onClick={onSelect}
+      disabled={dimmed}
+      aria-disabled={locked}
+      onClick={() => {
+        if (!locked) onSelect();
+      }}
       className={cn(
-        "relative flex flex-col items-center gap-2.5 rounded-xl border-2 bg-card p-4 text-center transition-all hover:-translate-y-0.5 hover:shadow-md sm:p-5",
-        selected ? "border-brand shadow-sm ring-2 ring-brand/15" : "border-line/60 hover:border-brand/40",
+        "relative flex flex-col items-center gap-2.5 rounded-xl border-2 bg-card p-4 text-center transition-all sm:p-5",
+        !locked && "hover:-translate-y-0.5 hover:shadow-md",
+        locked && "cursor-default",
+        dimmed && "cursor-not-allowed opacity-45 saturate-0",
+        selected ? "border-brand shadow-sm ring-2 ring-brand/15" : "border-line/60",
+        !selected && !locked && "hover:border-brand/40",
       )}
     >
       {selected ? (
         <span className="absolute top-2 right-2 flex size-5 items-center justify-center rounded-full bg-brand text-white">
-          <Check className="size-3.5" />
+          {locked ? <Lock className="size-3" /> : <Check className="size-3.5" />}
         </span>
       ) : null}
       <div
@@ -58,10 +85,19 @@ function OptionCard({ icon: Icon, label, selected, onSelect }: { icon: LucideIco
   );
 }
 
-function OptionGroup({ title, columns, children }: { title: string; columns: 2 | 3; children: ReactNode }) {
+function OptionGroup({ title, columns, locked = false, children }: { title: string; columns: 2 | 3; locked?: boolean; children: ReactNode }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-2.5">
-      <p className="text-sm font-semibold text-ink">{title}</p>
+      <p className="flex items-center gap-2 text-sm font-semibold text-ink">
+        {title}
+        {locked ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-sub">
+            <Lock className="size-3" />
+            {t.bookLock.lockedBadge}
+          </span>
+        ) : null}
+      </p>
       <div className={cn("grid gap-2.5 sm:gap-3", columns === 2 ? "grid-cols-2" : "grid-cols-3")}>{children}</div>
     </div>
   );
@@ -99,6 +135,29 @@ export default function BooksPage() {
   const [selectedStream, setSelectedStream] = useState<Stream | "">("");
   const [selectedElective, setSelectedElective] = useState<Elective | "">("");
   const [defaultsAppliedFor, setDefaultsAppliedFor] = useState<Book[] | null>(null);
+  const [changeOpen, setChangeOpen] = useState(false);
+  const { data: changeRequests, mutate: mutateChangeRequests } = useSWR(
+    profile ? ["books:change-requests", profile.id] : null,
+    () => getBookChangeRequestsByUser(profile!.id),
+  );
+
+  // The school may have approved a change (or edited the roster) since this
+  // session's profile was loaded — re-read it so the locked selection is current.
+  useEffect(() => {
+    void globalMutate("auth:me");
+  }, []);
+
+  // Drop any book in the cart that no longer belongs to the assigned set
+  // (e.g. a change request was approved after the student filled the cart).
+  const reconcileKind = cart.reconcileKind;
+  useEffect(() => {
+    if (!profile || !swrCatalogue) return;
+    const assignedSet = assignedBookSetOf(profile);
+    reconcileKind(
+      "book",
+      swrCatalogue.filter((book) => bookMatchesAssignedSet(book, assignedSet)).map((book) => lineId("book", book.id)),
+    );
+  }, [profile, swrCatalogue, reconcileKind]);
 
   // Seed the selection step from the student's saved profile the first time
   // the class catalogue is known, so returning students see everything
@@ -155,6 +214,17 @@ export default function BooksPage() {
   const streamOptions = ([...new Set(catalogue.map((b) => b.stream).filter(Boolean))] as Stream[]);
   const electiveOptions = ([...new Set(catalogue.map((b) => b.elective).filter(Boolean))] as Elective[]);
 
+  // A choice the school has assigned is locked: shown selected, every other option disabled.
+  // Unassigned choices (nothing recorded for this student yet) stay selectable.
+  const assigned = assignedBookSetOf(profile);
+  const languageLocked = Boolean(assigned.secondLanguage && languageOptions.includes(assigned.secondLanguage));
+  const streamLocked = Boolean(assigned.stream && streamOptions.includes(assigned.stream));
+  const electiveLocked = Boolean(assigned.elective && electiveOptions.includes(assigned.elective));
+  const anyLocked = languageLocked || streamLocked || electiveLocked;
+  const effLanguage = languageLocked ? assigned.secondLanguage! : selectedLanguage;
+  const effStream = streamLocked ? assigned.stream! : selectedStream;
+  const effElective = electiveLocked ? assigned.elective! : selectedElective;
+
   const languageLabel = (value: AcademicLanguage) =>
     value === "hindi" ? t.essentials.languageHindi : t.essentials.languageTelugu;
   const streamLabel = (value: Stream) =>
@@ -166,22 +236,42 @@ export default function BooksPage() {
         ? t.essentials.electiveHomeScience
         : t.essentials.electiveRoboticsAI;
 
+  const describeSelection = (selection: { secondLanguage?: AcademicLanguage; stream?: Stream; elective?: Elective }) =>
+    [
+      selection.secondLanguage ? languageLabel(selection.secondLanguage) : null,
+      selection.stream ? streamLabel(selection.stream) : null,
+      selection.elective ? electiveLabel(selection.elective) : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
+  const pendingRequest = changeRequests?.find((request) => request.status === "pending");
+  const shownRequest = pendingRequest ?? changeRequests?.find((request) => isRequestVisible(request));
+
+  const changeFields: ChangeableFields = {
+    secondLanguage: languageLocked
+      ? { current: assigned.secondLanguage!, options: languageOptions, label: languageLabel }
+      : undefined,
+    stream: streamLocked ? { current: assigned.stream!, options: streamOptions, label: streamLabel } : undefined,
+    elective: electiveLocked ? { current: assigned.elective!, options: electiveOptions, label: electiveLabel } : undefined,
+  };
+
   const canProceed =
-    (languageOptions.length === 0 || selectedLanguage !== "") &&
-    (streamOptions.length === 0 || selectedStream !== "") &&
-    (electiveOptions.length === 0 || selectedElective !== "");
+    (languageOptions.length === 0 || effLanguage !== "") &&
+    (streamOptions.length === 0 || effStream !== "") &&
+    (electiveOptions.length === 0 || effElective !== "");
 
   const chosenLabels = [
-    selectedLanguage ? languageLabel(selectedLanguage) : null,
-    selectedStream ? streamLabel(selectedStream) : null,
-    selectedElective ? electiveLabel(selectedElective) : null,
+    effLanguage ? languageLabel(effLanguage) : null,
+    effStream ? streamLabel(effStream) : null,
+    effElective ? electiveLabel(effElective) : null,
   ].filter((label): label is string => Boolean(label));
 
   const matchedBooks = catalogue.filter(
     (book) =>
-      (languageOptions.length === 0 || book.language === selectedLanguage) &&
-      (streamOptions.length === 0 || book.stream === selectedStream) &&
-      (electiveOptions.length === 0 || book.elective === selectedElective),
+      (languageOptions.length === 0 || book.language === effLanguage) &&
+      (streamOptions.length === 0 || book.stream === effStream) &&
+      (electiveOptions.length === 0 || book.elective === effElective),
   );
 
   function goToReview() {
@@ -204,23 +294,23 @@ export default function BooksPage() {
         <SelectionRow
           icon={Languages}
           label={t.essentials.secondLanguageLabel}
-          value={selectedLanguage ? languageLabel(selectedLanguage) : null}
+          value={effLanguage ? languageLabel(effLanguage) : null}
           placeholder={t.essentials.notSelectedYet}
         />
       ) : null}
       {streamOptions.length > 0 ? (
         <SelectionRow
-          icon={selectedStream ? streamIcon(selectedStream) : Atom}
+          icon={effStream ? streamIcon(effStream) : Atom}
           label={t.essentials.specializationLabel}
-          value={selectedStream ? streamLabel(selectedStream) : null}
+          value={effStream ? streamLabel(effStream) : null}
           placeholder={t.essentials.notSelectedYet}
         />
       ) : null}
       {electiveOptions.length > 0 ? (
         <SelectionRow
-          icon={selectedElective ? electiveIcon(selectedElective) : GraduationCap}
+          icon={effElective ? electiveIcon(effElective) : GraduationCap}
           label={t.essentials.specialization2Label}
-          value={selectedElective ? electiveLabel(selectedElective) : null}
+          value={effElective ? electiveLabel(effElective) : null}
           placeholder={t.essentials.notSelectedYet}
         />
       ) : null}
@@ -235,27 +325,62 @@ export default function BooksPage() {
           <div className="lg:grid lg:grid-cols-[1fr_300px] lg:items-start lg:gap-6">
             <div className="space-y-5">
               <p className="text-sm text-sub">{t.essentials.selectionSubtitle}</p>
+              {shownRequest ? (
+                <BookChangeStatus request={shownRequest} describe={describeSelection} onChanged={() => void mutateChangeRequests()} />
+              ) : null}
+              {anyLocked ? (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line/60 bg-muted/40 p-4">
+                  <div className="flex min-w-0 flex-1 items-start gap-3">
+                    <Lock className="mt-0.5 size-4 shrink-0 text-sub" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-ink">{t.bookLock.assignedTitle}</p>
+                      <p className="text-sm text-sub">{t.bookLock.assignedNote}</p>
+                    </div>
+                  </div>
+                  {pendingRequest ? null : (
+                    <Button variant="outline" size="sm" onClick={() => setChangeOpen(true)}>
+                      {t.bookLock.requestChange}
+                    </Button>
+                  )}
+                </div>
+              ) : null}
+              {languageOptions.length > 0 ? (
+                <OptionGroup title={t.essentials.secondLanguageLabel} columns={2} locked={languageLocked}>
+                  {languageOptions.map((opt) => (
+                    <OptionCard
+                      key={opt}
+                      icon={Languages}
+                      label={languageLabel(opt)}
+                      selected={effLanguage === opt}
+                      locked={languageLocked}
+                      onSelect={() => setSelectedLanguage(opt)}
+                    />
+                  ))}
+                </OptionGroup>
+              ) : null}
               {streamOptions.length > 0 ? (
-                <OptionGroup title={t.essentials.specializationLabel} columns={2}>
+                <OptionGroup title={t.essentials.specializationLabel} columns={2} locked={streamLocked}>
                   {streamOptions.map((opt) => (
                     <OptionCard
                       key={opt}
                       icon={streamIcon(opt)}
                       label={streamLabel(opt)}
-                      selected={selectedStream === opt}
+                      selected={effStream === opt}
+                      locked={streamLocked}
                       onSelect={() => setSelectedStream(opt)}
                     />
                   ))}
                 </OptionGroup>
               ) : null}
               {electiveOptions.length > 0 ? (
-                <OptionGroup title={t.essentials.specialization2Label} columns={3}>
+                <OptionGroup title={t.essentials.specialization2Label} columns={3} locked={electiveLocked}>
                   {electiveOptions.map((opt) => (
                     <OptionCard
                       key={opt}
                       icon={electiveIcon(opt)}
                       label={electiveLabel(opt)}
-                      selected={selectedElective === opt}
+                      selected={effElective === opt}
+                      locked={electiveLocked}
                       onSelect={() => setSelectedElective(opt)}
                     />
                   ))}
@@ -309,6 +434,22 @@ export default function BooksPage() {
           </div>
         )}
       </div>
+      {anyLocked ? (
+        <BookChangeDialog
+          open={changeOpen}
+          onOpenChange={setChangeOpen}
+          fields={changeFields}
+          titles={{
+            secondLanguage: t.essentials.secondLanguageLabel,
+            stream: t.essentials.specializationLabel,
+            elective: t.essentials.specialization2Label,
+          }}
+          onSent={() => {
+            setChangeOpen(false);
+            void mutateChangeRequests();
+          }}
+        />
+      ) : null}
       {step === "review" && matchedBooks.length > 0 ? (
         <EssentialsReviewBar
           kind="book"

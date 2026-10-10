@@ -1,4 +1,5 @@
 import type { CollectionConfig } from "payload";
+import { staffOnlyField } from "../access/request-access";
 
 /**
  * Mirrors src/types/user-profile.ts UserProfile — student/parent portal
@@ -88,6 +89,8 @@ export const Users: CollectionConfig = {
     {
       name: "academicLanguage",
       type: "select",
+      // Staff-only: the assigned book set — students request changes instead (see staffOnlyField).
+      access: { create: staffOnlyField, update: staffOnlyField },
       options: [
         { label: "Hindi", value: "hindi" },
         { label: "Telugu", value: "telugu" },
@@ -96,6 +99,8 @@ export const Users: CollectionConfig = {
     {
       name: "languageLevel",
       type: "select",
+      // Staff-only: the assigned book set — students request changes instead (see staffOnlyField).
+      access: { create: staffOnlyField, update: staffOnlyField },
       options: [
         { label: "First Language", value: "first" },
         { label: "Second Language", value: "second" },
@@ -104,6 +109,8 @@ export const Users: CollectionConfig = {
     {
       name: "stream",
       type: "select",
+      // Staff-only: the assigned book set — students request changes instead (see staffOnlyField).
+      access: { create: staffOnlyField, update: staffOnlyField },
       options: [
         { label: "Science", value: "science" },
         { label: "Economics", value: "economics" },
@@ -112,6 +119,8 @@ export const Users: CollectionConfig = {
     {
       name: "elective",
       type: "select",
+      // Staff-only: the assigned book set — students request changes instead (see staffOnlyField).
+      access: { create: staffOnlyField, update: staffOnlyField },
       options: [
         { label: "ENA", value: "ena" },
         { label: "Robotics & AI", value: "roboticsAI" },

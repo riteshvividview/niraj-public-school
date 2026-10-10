@@ -252,6 +252,40 @@ export interface Dictionary {
     submitFailed: string;
   };
 
+  bookLock: {
+    assignedTitle: string;
+    assignedNote: string;
+    lockedBadge: string;
+    requestChange: string;
+    changeDialogTitle: string;
+    changeDialogDescription: string;
+    currentLabel: string;
+    keepAsIs: string;
+    reasonLabel: string;
+    reasonPlaceholder: string;
+    submit: string;
+    submitting: string;
+    successTitle: string;
+    successDescription: string;
+    submitFailed: string;
+    pendingTitle: string;
+    pendingDescription: string;
+    approvedTitle: string;
+    approvedDescription: string;
+    rejectedTitle: string;
+    rejectedDescription: string;
+    cancelledTitle: string;
+    noteFromSchool: string;
+    cancelRequest: string;
+    cancelConfirmTitle: string;
+    cancelConfirmDescription: string;
+    keepRequest: string;
+    cancelFailed: string;
+    requestedLabel: string;
+    dismiss: string;
+    cartUpdatedNote: string;
+  };
+
   programsPage: {
     filterCategoryLabel: string;
     filterAllCategories: string;

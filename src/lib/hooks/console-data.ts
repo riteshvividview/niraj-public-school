@@ -13,6 +13,7 @@ import {
   getClassLevelsBySchool,
   getEssentialsStockBySchool,
   getPaymentCoverageBySchool,
+  getPendingBookChangeCount,
   getPendingExchangeCount,
   getPaymentsBySchool,
   getProgramReportBySchool,
@@ -90,6 +91,14 @@ export function useProgramReport(schoolId: string, filter?: ReportFilter) {
  */
 export function usePendingExchangeCount(schoolId: string): number {
   const { data } = useSWR(schoolId ? ["console:exchange-pending", schoolId] : null, () => getPendingExchangeCount(schoolId), {
+    refreshInterval: 60_000,
+  });
+  return data ?? 0;
+}
+
+/** Same idea as usePendingExchangeCount, for the "Subject Change Requests" nav badge. */
+export function usePendingBookChangeCount(schoolId: string): number {
+  const { data } = useSWR(schoolId ? ["console:book-change-pending", schoolId] : null, () => getPendingBookChangeCount(schoolId), {
     refreshInterval: 60_000,
   });
   return data ?? 0;

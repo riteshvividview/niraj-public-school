@@ -10,3 +10,4 @@ export * from "./reports";
 export * from "./console-staff";
 export * from "./exchanges";
 export * from "./request-settings";
+export * from "./book-changes";

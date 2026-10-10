@@ -1,7 +1,8 @@
-import type { CollectionAfterChangeHook, CollectionConfig } from "payload";
+import { APIError, type CollectionAfterChangeHook, type CollectionBeforeChangeHook, type CollectionConfig } from "payload";
 import { authenticated } from "../access/authenticated";
 import { collectedEmail } from "@/lib/email/templates";
 import { sendTransactionalEmail } from "@/lib/email/brevo";
+import { assignedBookSetOf, bookMatchesAssignedSet } from "@/lib/book-set";
 import { deriveRedemptionStatus } from "@/lib/order-items";
 import type { OrderItem } from "@/types";
 
@@ -89,6 +90,49 @@ const notifyOnCollection: CollectionAfterChangeHook = async ({ doc, previousDoc,
   return doc;
 };
 
+/**
+ * Server-side half of the book-set lock (Essentials → Books greys out the
+ * options a student isn't assigned, but a disabled button is not a guard).
+ * When a student account creates an order:
+ *   • it must be for themselves (the collection only demands *a* session), and
+ *   • every book line must belong to the book set the school assigned them —
+ *     second language / stream / elective. An attribute the school hasn't
+ *     recorded yet isn't enforced (that field stays selectable in the UI).
+ * Staff/Local-API creates (seed, console) are not restricted.
+ */
+const enforceStudentOrderRules: CollectionBeforeChangeHook = async ({ data, operation, req }) => {
+  if (operation !== "create") return data;
+  const actor = req.user;
+  if (!actor || actor.collection !== "users") return data;
+
+  const ownerId = typeof data.user === "object" && data.user ? (data.user as { id: string }).id : (data.user as string | undefined);
+  if (ownerId !== actor.id) throw new APIError("You can only place orders for your own account.", 403, undefined, true);
+
+  const bookLines = ((data.items ?? []) as Array<{ kind?: string; refId?: string }>).filter((line) => line.kind === "book");
+  if (bookLines.length === 0) return data;
+
+  const student = await req.payload.findByID({ collection: "users", id: actor.id, depth: 0 });
+  const assigned = assignedBookSetOf({
+    academicLanguage: student.academicLanguage ?? undefined,
+    languageLevel: student.languageLevel ?? undefined,
+    stream: student.stream ?? undefined,
+    elective: student.elective ?? undefined,
+  });
+  for (const line of bookLines) {
+    const book = line.refId ? await req.payload.findByID({ collection: "books", id: line.refId, depth: 0 }).catch(() => null) : null;
+    if (!book) throw new APIError("A book in your cart is no longer available. Please review your cart.", 400, undefined, true);
+    if (!bookMatchesAssignedSet(book as { language?: string | null; stream?: string | null; elective?: string | null }, assigned)) {
+      throw new APIError(
+        "Your cart has books that don't match the book set assigned to you. Please reopen Essentials → Books and review your cart.",
+        400,
+        undefined,
+        true,
+      );
+    }
+  }
+  return data;
+};
+
 /** Mirrors src/types/order.ts Order. Real write path for checkout — see src/lib/data-source/orders.ts. */
 export const Orders: CollectionConfig = {
   slug: "orders",
@@ -100,7 +144,7 @@ export const Orders: CollectionConfig = {
   // actual cookie) — that's free, meaningful protection against forging an
   // order as someone else, so there's no reason to loosen it too.
   access: { read: () => true, create: authenticated, update: () => true, delete: () => true },
-  hooks: { afterChange: [notifyOnCollection] },
+  hooks: { beforeChange: [enforceStudentOrderRules], afterChange: [notifyOnCollection] },
   fields: [
     { name: "user", type: "relationship", relationTo: "users", required: true },
     { name: "school", type: "relationship", relationTo: "schools", required: true },
