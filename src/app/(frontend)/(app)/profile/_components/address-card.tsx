@@ -8,9 +8,8 @@ import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTranslation } from "@/i18n/context";
-import { addressLines, draftFromAddress, mapsLink, missingAddressFields, PINCODE_PATTERN } from "@/lib/address";
+import { draftFromAddress, formatAddress, missingAddressFields, PINCODE_PATTERN } from "@/lib/address";
 import { removeMyAddress, saveMyAddress, suggestAddressFromLocation, type AddressSuggestion } from "@/lib/data-source";
-import { formatDate } from "@/lib/format";
 import { useAuth } from "@/store/auth-store";
 import type { AddressDraft } from "@/types";
 
@@ -28,7 +27,7 @@ function useAddressLabels(): AddressFieldLabels {
     state: p.stateLabel,
     pincode: p.pincodeLabel,
     phone: p.phoneLabel,
-    phoneHint: p.phoneHint,
+    phoneHint: p.phoneHint || undefined,
     errors: {
       house: p.errHouse,
       street: p.errStreet,
@@ -40,85 +39,37 @@ function useAddressLabels(): AddressFieldLabels {
   };
 }
 
-/** Profile → "Delivery address": shows the saved address and opens the add/edit dialog. */
-export function AddressCard() {
-  const { t, language } = useTranslation();
+/**
+ * One plain row in the Profile list, styled exactly like "Register number" /
+ * "Class" / "Language" — deliberately nothing special, so it isn't read as an
+ * offer of delivery. Shows the saved address (or "Not added") and an Add / Edit link.
+ */
+export function AddressRow() {
+  const { t } = useTranslation();
   const p = t.addressSection;
-  const { profile, login } = useAuth();
+  const { profile } = useAuth();
   const [open, setOpen] = useState(false);
-  const [removing, setRemoving] = useState(false);
 
   if (!profile) return null;
   const address = profile.address;
 
-  async function confirmRemove() {
-    setRemoving(false);
-    try {
-      await removeMyAddress();
-      login({ ...profile!, address: undefined });
-      toast.success(p.removedToast);
-    } catch (error) {
-      toast.error(error instanceof Error && error.message ? error.message : p.saveFailed);
-    }
-  }
-
   return (
-    <section className="rounded-lg border border-line/60 bg-card p-4 sm:p-6">
-      <div className="flex items-start gap-3">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-section-workspace-bg text-brand">
-          <MapPin className="size-[18px]" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h2 className="font-heading text-base font-semibold text-ink">{p.title}</h2>
-          {address ? (
-            <div className="mt-1.5 space-y-0.5 text-sm text-ink">
-              {addressLines(address).map((line) => (
-                <p key={line}>{line}</p>
-              ))}
-              {address.phone ? <p className="text-sub">{address.phone}</p> : null}
-              <p className="pt-1 text-xs text-sub">
-                {address.source === "live-location" ? p.sourceLive : p.sourceManual}
-                {address.updatedAt ? ` · ${p.updatedOn} ${formatDate(address.updatedAt, language)}` : ""}
-              </p>
-            </div>
-          ) : (
-            <>
-              <p className="mt-1 text-sm font-medium text-ink">{p.empty}</p>
-              <p className="mt-0.5 text-sm text-sub">{p.optionalNote}</p>
-            </>
-          )}
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Button size="sm" variant={address ? "outline" : "default"} onClick={() => setOpen(true)}>
-              {address ? p.edit : p.add}
-            </Button>
-            {address ? (
-              <>
-                <Button asChild size="sm" variant="outline">
-                  <a href={mapsLink(address)} target="_blank" rel="noreferrer">
-                    {p.openInMaps}
-                  </a>
-                </Button>
-                <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setRemoving(true)}>
-                  {p.remove}
-                </Button>
-              </>
-            ) : null}
-          </div>
-        </div>
+    <div className="flex items-start justify-between gap-4 border-b border-line py-3.5 sm:py-4">
+      <span className="shrink-0 text-sm text-sub">{p.title}</span>
+      <div className="flex min-w-0 flex-col items-end gap-1 text-right">
+        <span className={address ? "text-sm font-medium text-ink" : "text-sm text-sub"}>
+          {address ? formatAddress(address) : p.empty}
+        </span>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="cursor-pointer text-sm font-medium text-brand hover:underline"
+        >
+          {address ? p.edit : p.add}
+        </button>
       </div>
-
       <AddressDialog open={open} onOpenChange={setOpen} />
-
-      <ConfirmDeleteDialog
-        open={removing}
-        onOpenChange={setRemoving}
-        title={p.removeConfirmTitle}
-        description={p.removeConfirmDescription}
-        confirmLabel={p.remove}
-        cancelLabel={p.cancel}
-        onConfirm={confirmRemove}
-      />
-    </section>
+    </div>
   );
 }
 
@@ -151,6 +102,7 @@ function DialogBody({ onClose }: { onClose: () => void }) {
   const [appliedFromLocation, setAppliedFromLocation] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [removing, setRemoving] = useState(false);
 
   function startLiveLocation() {
     setLocationError(null);
@@ -218,6 +170,20 @@ function DialogBody({ onClose }: { onClose: () => void }) {
     }
   }
 
+  async function confirmRemove() {
+    setRemoving(false);
+    setSaving(true);
+    try {
+      await removeMyAddress();
+      if (profile) login({ ...profile, address: undefined });
+      toast.success(p.removedToast);
+      onClose();
+    } catch (error) {
+      toast.error(error instanceof Error && error.message ? error.message : p.saveFailed);
+      setSaving(false);
+    }
+  }
+
   return (
     <>
       <DialogHeader>
@@ -276,6 +242,11 @@ function DialogBody({ onClose }: { onClose: () => void }) {
       </div>
 
       <DialogFooter className="gap-2 sm:gap-2">
+        {profile?.address ? (
+          <Button type="button" variant="ghost" className="text-destructive sm:mr-auto" disabled={saving} onClick={() => setRemoving(true)}>
+            {p.remove}
+          </Button>
+        ) : null}
         <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
           {p.cancel}
         </Button>
@@ -284,6 +255,16 @@ function DialogBody({ onClose }: { onClose: () => void }) {
           {saving ? p.saving : p.save}
         </Button>
       </DialogFooter>
+
+      <ConfirmDeleteDialog
+        open={removing}
+        onOpenChange={setRemoving}
+        title={p.removeConfirmTitle}
+        description={p.removeConfirmDescription}
+        confirmLabel={p.remove}
+        cancelLabel={p.cancel}
+        onConfirm={confirmRemove}
+      />
     </>
   );
 }

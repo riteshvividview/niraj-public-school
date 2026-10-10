@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/i18n/context";
 import { getClassLevelById, updateUserAvatar } from "@/lib/data-source";
 import { useAuth } from "@/store/auth-store";
-import { AddressCard } from "./_components/address-card";
+import { AddressRow } from "./_components/address-card";
 import { ChangePasswordDialog } from "./_components/change-password-dialog";
 
 function ProfileRow({ label, value }: { label: string; value: string }) {
@@ -115,13 +115,12 @@ export default function ProfilePage() {
             <ProfileRow label={t.profile.mobileLabel} value={profile.mobileNumber} />
           ) : null}
           <ProfileRow label={t.profile.classLabel} value={classLevel?.label ?? "…"} />
+          <AddressRow />
           <div className="flex items-center justify-between py-3.5 sm:py-4">
             <span className="text-sm text-sub">{t.profile.languageLabel}</span>
             <LanguageSwitcher />
           </div>
         </section>
-
-        <AddressCard />
 
         <button
           type="button"
