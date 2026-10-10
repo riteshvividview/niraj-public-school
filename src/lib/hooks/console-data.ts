@@ -13,6 +13,7 @@ import {
   getClassLevelsBySchool,
   getEssentialsStockBySchool,
   getPaymentCoverageBySchool,
+  getOpenSupportCount,
   getPendingBookChangeCount,
   getPendingExchangeCount,
   getPaymentsBySchool,
@@ -99,6 +100,14 @@ export function usePendingExchangeCount(schoolId: string): number {
 /** Same idea as usePendingExchangeCount, for the "Subject Change Requests" nav badge. */
 export function usePendingBookChangeCount(schoolId: string): number {
   const { data } = useSWR(schoolId ? ["console:book-change-pending", schoolId] : null, () => getPendingBookChangeCount(schoolId), {
+    refreshInterval: 60_000,
+  });
+  return data ?? 0;
+}
+
+/** Same idea as usePendingExchangeCount, for the "Parent Support" nav badge (queries nobody has picked up yet). */
+export function useOpenSupportCount(schoolId: string): number {
+  const { data } = useSWR(schoolId ? ["console:support-open", schoolId] : null, () => getOpenSupportCount(schoolId), {
     refreshInterval: 60_000,
   });
   return data ?? 0;

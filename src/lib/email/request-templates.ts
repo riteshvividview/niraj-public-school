@@ -280,3 +280,29 @@ export function bookChangeDecisionEmail(args: {
     `,
   });
 }
+
+/** To school staff — a parent sent a query from the Support tab. */
+export function supportRequestedEmail(args: {
+  student: StudentSummary;
+  message: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  consoleUrl: string;
+}): string {
+  return wrapper({
+    eyebrow: "Action needed",
+    title: "New Parent Support Query",
+    headerGradient: `linear-gradient(135deg, ${COLORS.brand} 0%, #1d4fb8 100%)`,
+    bodyHtml: `
+      <p style="font-size:15px;line-height:1.6;color:${COLORS.ink};margin:0 0 4px;">A parent sent a question from the Support tab. Please contact them directly — their details are below and in the School Console.</p>
+      ${detailRows([
+        ...studentRows(args.student),
+        ["Reach them on", args.contactPhone ? escapeHtml(args.contactPhone) : undefined],
+        ["Email", args.contactEmail ? escapeHtml(args.contactEmail) : undefined],
+        ["Their message", escapeHtml(args.message).replace(/\n/g, "<br>")],
+      ])}
+      ${ctaButton(args.consoleUrl, "Open Parent Support")}
+    `,
+    footerNote: STAFF_FOOTER,
+  });
+}

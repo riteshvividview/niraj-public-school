@@ -15,6 +15,7 @@ export interface Dictionary {
     programs: string;
     receipts: string;
     exchange: string;
+    support: string;
     profile: string;
   };
 
@@ -284,6 +285,38 @@ export interface Dictionary {
     requestedLabel: string;
     dismiss: string;
     cartUpdatedNote: string;
+  };
+
+  supportPage: {
+    title: string;
+    subtitle: string;
+    askTitle: string;
+    messageLabel: string;
+    messagePlaceholder: string;
+    contactHeading: string;
+    contactHint: string;
+    phoneLabel: string;
+    emailLabel: string;
+    send: string;
+    sending: string;
+    successTitle: string;
+    successDescription: string;
+    sendFailed: string;
+    needContact: string;
+    schoolContactTitle: string;
+    callSchool: string;
+    emailSchool: string;
+    myQueries: string;
+    noQueriesTitle: string;
+    noQueriesDescription: string;
+    statusOpen: string;
+    statusInProgress: string;
+    statusResolved: string;
+    helpOpen: string;
+    helpInProgress: string;
+    helpResolved: string;
+    sentOn: string;
+    noteFromSchool: string;
   };
 
   programsPage: {

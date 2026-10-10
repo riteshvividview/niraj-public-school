@@ -4,6 +4,7 @@ import {
   BookMarked,
   BookOpenCheck,
   CalendarClock,
+  Headset,
   LayoutDashboard,
   LogOut,
   PackageSearch,
@@ -16,7 +17,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
-import { useConsoleSchoolId, useEssentialsStock, usePendingBookChangeCount, usePendingExchangeCount } from "@/lib/hooks/console-data";
+import { useConsoleSchoolId, useEssentialsStock, useOpenSupportCount, usePendingBookChangeCount, usePendingExchangeCount } from "@/lib/hooks/console-data";
 import { cn } from "@/lib/utils";
 import { useConsoleAuth } from "@/store/console-auth-store";
 
@@ -35,6 +36,7 @@ const NAV_ITEMS = [
   { href: "/console/payments", label: "Payments", icon: Receipt },
   { href: "/console/exchange-requests", label: "Exchange Requests", icon: Repeat },
   { href: "/console/subject-change-requests", label: "Subject Change Requests", icon: BookOpenCheck },
+  { href: "/console/support", label: "Parent Support", icon: Headset },
   {
     href: "/console/reports",
     label: "Reports Dashboard",
@@ -66,11 +68,13 @@ function NavLinks({
   const consoleSchoolId = useConsoleSchoolId();
   const pendingExchanges = usePendingExchangeCount(consoleSchoolId);
   const pendingBookChanges = usePendingBookChangeCount(consoleSchoolId);
+  const openSupport = useOpenSupportCount(consoleSchoolId);
   const navItems = useNavItems();
   const badgeCounts: Record<string, number> = {
     "/console/stock": lowStockCount,
     "/console/exchange-requests": pendingExchanges,
     "/console/subject-change-requests": pendingBookChanges,
+    "/console/support": openSupport,
   };
   return (
     <nav

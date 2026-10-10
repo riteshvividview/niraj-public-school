@@ -16,6 +16,7 @@ import { PayloadAdmins } from "./src/collections/PayloadAdmins";
 import { Programs } from "./src/collections/Programs";
 import { Receipts } from "./src/collections/Receipts";
 import { Schools } from "./src/collections/Schools";
+import { SupportRequests } from "./src/collections/SupportRequests";
 import { UniformItems } from "./src/collections/UniformItems";
 import { Users } from "./src/collections/Users";
 
@@ -41,6 +42,7 @@ export default buildConfig({
     Receipts,
     ExchangeRequests,
     BookChangeRequests,
+    SupportRequests,
     Media,
   ],
   editor: lexicalEditor(),

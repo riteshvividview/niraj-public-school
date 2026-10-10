@@ -58,7 +58,7 @@ export function RequestNotificationsCard({ staffList }: { staffList: ConsoleStaf
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-sub">
-          New exchange and subject-change requests are emailed to every active administrator. Add one more inbox below
+          New exchange, subject-change and parent-support requests are emailed to every active administrator. Add one more inbox below
           to also receive <strong className="text-ink">every update</strong> — new requests and each decision.
         </p>
 

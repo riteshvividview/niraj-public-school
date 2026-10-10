@@ -11,3 +11,4 @@ export * from "./console-staff";
 export * from "./exchanges";
 export * from "./request-settings";
 export * from "./book-changes";
+export * from "./support";

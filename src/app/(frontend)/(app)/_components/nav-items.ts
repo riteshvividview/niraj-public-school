@@ -1,4 +1,4 @@
-import { Calendar, Home, Receipt, Repeat, ShoppingBag, User, type LucideIcon } from "lucide-react";
+import { Calendar, Home, LifeBuoy, Receipt, Repeat, ShoppingBag, User, type LucideIcon } from "lucide-react";
 import type { Dictionary } from "@/i18n/types";
 
 export interface AppNavItem {
@@ -15,6 +15,7 @@ export function getAppNavItems(t: Dictionary): AppNavItem[] {
     { href: "/programs", label: t.nav.programs, icon: Calendar },
     { href: "/receipts", label: t.nav.receipts, icon: Receipt },
     { href: "/exchange", label: t.nav.exchange, icon: Repeat },
+    { href: "/support", label: t.nav.support, icon: LifeBuoy },
     { href: "/profile", label: t.nav.profile, icon: User },
   ];
 }
