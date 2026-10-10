@@ -9,6 +9,7 @@ import {
   getExchangeEligibility,
   type ExchangeReasonValue,
 } from "@/lib/exchange-rules";
+import { eventActor, recordRequestEvent } from "@/lib/server/record-events";
 import { getStaffRecipients, sendEmailsSafely } from "@/lib/server/request-notify";
 import { getRequestActor, isUniqueViolation, jsonError, relId } from "@/lib/server/request-actor";
 import type { OrderItem } from "@/types";
@@ -145,6 +146,15 @@ export async function POST(request: Request) {
     console.error("[exchange/create] failed:", error);
     return jsonError("We couldn't save your request. Please try again.", 500);
   }
+
+  await recordRequestEvent(payload, created as unknown as Record<string, unknown>, {
+    eventType: "exchange.requested",
+    entityType: "exchange",
+    receiptCode: String(receipt.qrPayload),
+    actor: eventActor(actor),
+    summary: `Exchange requested: ${item.label} ${fromSize} → ${toSize} (qty ${quantityInput}) — ${REASON_LABELS[reason]}`,
+    details: { fromSize, toSize, quantity: quantityInput, priceDifference, reason, note: note || null },
+  });
 
   // --- notify staff (never blocks or fails the request) ---------------------
   try {

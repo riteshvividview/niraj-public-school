@@ -18,6 +18,9 @@ export const readOwnOrStaff: Access = ({ req: { user } }) => {
 
 export const denyAll: Access = () => false;
 
+/** Only a logged-in school staff member (a `payload-admins` session). */
+export const staffOnly: Access = ({ req: { user } }) => Boolean(user && user.collection === "payload-admins");
+
 /**
  * Field-level: only a logged-in school staff member (a `payload-admins`
  * session) may set this field. Used on the student fields that decide which

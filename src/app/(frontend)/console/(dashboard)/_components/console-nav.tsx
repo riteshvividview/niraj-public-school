@@ -5,6 +5,7 @@ import {
   BookOpenCheck,
   CalendarClock,
   Headset,
+  History,
   LayoutDashboard,
   LogOut,
   PackageSearch,
@@ -37,6 +38,7 @@ const NAV_ITEMS = [
   { href: "/console/exchange-requests", label: "Exchange Requests", icon: Repeat },
   { href: "/console/subject-change-requests", label: "Subject Change Requests", icon: BookOpenCheck },
   { href: "/console/support", label: "Parent Support", icon: Headset },
+  { href: "/console/records", label: "Records & History", icon: History },
   {
     href: "/console/reports",
     label: "Reports Dashboard",

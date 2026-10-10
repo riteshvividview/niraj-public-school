@@ -3,6 +3,7 @@ import type { Payload } from "payload";
 import { bookChangeCancelledByStudentEmail, bookChangeDecisionEmail } from "@/lib/email/request-templates";
 import { selectionLabels } from "@/lib/server/book-change-labels";
 import { getRequestActor, jsonError, relId } from "@/lib/server/request-actor";
+import { eventActor, recordRequestEvent } from "@/lib/server/record-events";
 import { getExtraNotifyEmail, getStaffRecipients, sendEmailsSafely } from "@/lib/server/request-notify";
 
 type Action = "cancel" | "approve" | "reject" | "note";
@@ -45,6 +46,7 @@ export async function POST(request: Request) {
       [id],
     );
     if (!res.rowCount) return jsonError("This request can no longer be cancelled.", 409);
+    await logBookChange(payload, doc, "bookchange.cancelled", actor);
     try {
       const recipients = await getStaffRecipients(payload, schoolId);
       await sendEmailsSafely(
@@ -98,8 +100,33 @@ export async function POST(request: Request) {
     }
   }
 
+  await logBookChange(payload, doc, action === "approve" ? "bookchange.approved" : "bookchange.rejected", actor, staffNote || undefined);
   await notifyStudent(payload, doc, action === "approve" ? "approved" : "rejected", staffNote || undefined);
   return NextResponse.json({ ok: true });
+}
+
+const EVENT_TEXT: Record<string, string> = {
+  "bookchange.cancelled": "Subject change cancelled",
+  "bookchange.approved": "Subject change approved",
+  "bookchange.rejected": "Subject change rejected",
+};
+
+async function logBookChange(
+  payload: Payload,
+  doc: Record<string, unknown>,
+  eventType: string,
+  actor: { kind: string; user?: { id: string; name?: string; email?: string } },
+  note?: string,
+) {
+  const requested = selectionLabels(doc.requested as Record<string, unknown>);
+  const asText = [requested.secondLanguage, requested.stream, requested.elective].filter(Boolean).join(" · ");
+  await recordRequestEvent(payload, doc, {
+    eventType,
+    entityType: "bookchange",
+    actor: eventActor(actor),
+    summary: `${EVENT_TEXT[eventType]}: ${asText}${note ? ` — ${note}` : ""}`,
+    details: { requested: doc.requested, current: doc.current, note: note ?? null },
+  });
 }
 
 async function notifyStudent(

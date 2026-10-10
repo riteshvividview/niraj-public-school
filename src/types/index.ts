@@ -12,3 +12,4 @@ export * from "./console-staff";
 export * from "./exchange";
 export * from "./book-change";
 export * from "./support";
+export * from "./record-event";

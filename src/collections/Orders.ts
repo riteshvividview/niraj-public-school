@@ -1,5 +1,7 @@
 import { APIError, type CollectionAfterChangeHook, type CollectionBeforeChangeHook, type CollectionConfig } from "payload";
 import { authenticated } from "../access/authenticated";
+import { denyAll, readOwnOrStaff, staffOnly } from "../access/request-access";
+import { actorFromUser, recordEvent } from "@/lib/server/record-events";
 import { collectedEmail } from "@/lib/email/templates";
 import { sendTransactionalEmail } from "@/lib/email/brevo";
 import { assignedBookSetOf, bookMatchesAssignedSet } from "@/lib/book-set";
@@ -66,7 +68,7 @@ const notifyOnCollection: CollectionAfterChangeHook = async ({ doc, previousDoc,
   await req.payload.update({
     collection: "receipts",
     id: receiptDoc.id,
-    data: { redemptionStatus: status, redeemedAt: new Date().toISOString() },
+    data: { redemptionStatus: status, redeemedAt: status === "ready" ? null : (receiptDoc.redeemedAt ?? new Date().toISOString()) },
   });
 
   if (justCollected.length === 0) return doc;
@@ -133,18 +135,68 @@ const enforceStudentOrderRules: CollectionBeforeChangeHook = async ({ data, oper
   return data;
 };
 
+/**
+ * Writes the order's history to the permanent activity log: the order being
+ * placed, and every item being collected at the counter (or that being undone)
+ * with who did it. See src/lib/server/record-events.ts.
+ */
+const logOrderHistory: CollectionAfterChangeHook = async ({ doc, previousDoc, operation, req }) => {
+  const studentId = typeof doc.user === "string" ? doc.user : doc.user?.id;
+  const schoolId = typeof doc.school === "string" ? doc.school : doc.school?.id;
+  if (!studentId || !schoolId) return doc;
+
+  const items: Array<{ id: string; label: string; meta?: string | null; quantity: number; collectedAt?: string | null }> = doc.items ?? [];
+
+  if (operation === "create") {
+    await recordEvent(req.payload, {
+      eventType: "order.created",
+      entityType: "order",
+      entityId: String(doc.id),
+      schoolId,
+      studentId,
+      actor: actorFromUser(req.user),
+      summary: `Order placed — ${items.length} item(s), ₹${Number(doc.totalAmount)} via ${String(doc.paymentMethod).toUpperCase()}`,
+      details: { totalAmount: doc.totalAmount, paymentMethod: doc.paymentMethod, status: doc.status, items: items.map((i) => ({ label: i.label, meta: i.meta, quantity: i.quantity })) },
+    });
+    return doc;
+  }
+
+  if (operation !== "update" || !previousDoc) return doc;
+  const before = new Map(
+    ((previousDoc.items ?? []) as Array<{ id: string; collectedAt?: string | null }>).map((i) => [i.id, i.collectedAt ?? null]),
+  );
+  const changed = items.filter((i) => (i.collectedAt ?? null) !== (before.get(i.id) ?? null));
+  if (changed.length === 0) return doc;
+
+  const receipt = await req.payload.find({ collection: "receipts", where: { order: { equals: doc.id } }, limit: 1, depth: 0 });
+  const receiptCode = receipt.docs[0]?.qrPayload as string | undefined;
+  for (const item of changed) {
+    const collected = Boolean(item.collectedAt);
+    await recordEvent(req.payload, {
+      eventType: collected ? "item.collected" : "item.uncollected",
+      entityType: "order",
+      entityId: String(doc.id),
+      schoolId,
+      studentId,
+      receiptCode,
+      actor: actorFromUser(req.user),
+      summary: `${collected ? "Collected" : "Collection undone"}: ${item.label}${item.meta ? ` (${item.meta})` : ""} ×${item.quantity}`,
+      details: { orderItemId: item.id, label: item.label, meta: item.meta, quantity: item.quantity, collectedAt: item.collectedAt ?? null },
+    });
+  }
+  return doc;
+};
+
 /** Mirrors src/types/order.ts Order. Real write path for checkout — see src/lib/data-source/orders.ts. */
 export const Orders: CollectionConfig = {
   slug: "orders",
-  // Read/update/delete open — same known gap as every other console-writable
-  // collection (see Books.ts): the console's staff session is still a mock,
-  // not a real Payload session, so Reports/Scanner REST calls carry no auth
-  // cookie. `create` stays real-auth-only because the parent/student Users
-  // collection *does* have a real Payload session (payloadLogin sets an
-  // actual cookie) — that's free, meaningful protection against forging an
-  // order as someone else, so there's no reason to loosen it too.
-  access: { read: () => true, create: authenticated, update: () => true, delete: () => true },
-  hooks: { beforeChange: [enforceStudentOrderRules], afterChange: [notifyOnCollection] },
+  // Paid orders are permanent records. A student can read only their own and
+  // create one for themselves (enforced in enforceStudentOrderRules); only
+  // school staff can update (marking items collected at the counter); nobody
+  // can delete over REST, and the database refuses deletes too (see the
+  // record_history migration).
+  access: { read: readOwnOrStaff, create: authenticated, update: staffOnly, delete: denyAll },
+  hooks: { beforeChange: [enforceStudentOrderRules], afterChange: [logOrderHistory, notifyOnCollection] },
   fields: [
     { name: "user", type: "relationship", relationTo: "users", required: true },
     { name: "school", type: "relationship", relationTo: "schools", required: true },

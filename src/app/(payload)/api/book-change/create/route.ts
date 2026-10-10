@@ -3,6 +3,7 @@ import { getAppUrl } from "@/lib/app-url";
 import { assignedBookSetOf } from "@/lib/book-set";
 import { bookChangeRequestedEmail } from "@/lib/email/request-templates";
 import { getRequestActor, isUniqueViolation, jsonError, relId } from "@/lib/server/request-actor";
+import { eventActor, recordRequestEvent } from "@/lib/server/record-events";
 import { getStaffRecipients, sendEmailsSafely } from "@/lib/server/request-notify";
 import { selectionLabels, VALID_ELECTIVES, VALID_LANGUAGES, VALID_STREAMS } from "@/lib/server/book-change-labels";
 
@@ -98,6 +99,16 @@ export async function POST(request: Request) {
     console.error("[book-change/create] failed:", error);
     return jsonError("We couldn't save your request. Please try again.", 500);
   }
+
+  const asText = (labels: ReturnType<typeof selectionLabels>) =>
+    [labels.secondLanguage, labels.stream, labels.elective].filter(Boolean).join(" · ");
+  await recordRequestEvent(payload, created as unknown as Record<string, unknown>, {
+    eventType: "bookchange.requested",
+    entityType: "bookchange",
+    actor: eventActor(actor),
+    summary: `Subject change requested: ${asText(selectionLabels(current))} → ${asText(selectionLabels({ ...current, ...requested }))} — ${reason}`,
+    details: { current, requested, reason },
+  });
 
   try {
     const classLevel = await payload.findByID({ collection: "class-levels", id: classLevelId, depth: 0 }).catch(() => null);

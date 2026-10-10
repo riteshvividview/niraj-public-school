@@ -1,5 +1,7 @@
 import type { CollectionAfterChangeHook, CollectionConfig, Payload } from "payload";
 import { authenticated } from "../access/authenticated";
+import { denyAll, readOwnOrStaff, staffOnly } from "../access/request-access";
+import { actorFromUser, recordEvent } from "@/lib/server/record-events";
 import { readyToCollectEmail } from "@/lib/email/templates";
 import { sendTransactionalEmail } from "@/lib/email/brevo";
 
@@ -80,12 +82,46 @@ const notifyReadyToCollect: CollectionAfterChangeHook = async ({ doc, operation,
   return doc;
 };
 
+/** Permanent activity log: receipt issued, and every change of its collection status. */
+const logReceiptHistory: CollectionAfterChangeHook = async ({ doc, previousDoc, operation, req }) => {
+  const studentId = typeof doc.user === "string" ? doc.user : doc.user?.id;
+  const schoolId = typeof doc.school === "string" ? doc.school : doc.school?.id;
+  if (!studentId || !schoolId) return doc;
+
+  if (operation === "create") {
+    await recordEvent(req.payload, {
+      eventType: "receipt.issued",
+      entityType: "receipt",
+      entityId: String(doc.id),
+      schoolId,
+      studentId,
+      receiptCode: doc.qrPayload,
+      actor: actorFromUser(req.user),
+      summary: `Receipt ${doc.qrPayload} issued`,
+      details: { orderId: typeof doc.order === "string" ? doc.order : doc.order?.id, redemptionStatus: doc.redemptionStatus },
+    });
+  } else if (operation === "update" && previousDoc && previousDoc.redemptionStatus !== doc.redemptionStatus) {
+    await recordEvent(req.payload, {
+      eventType: "receipt.status_changed",
+      entityType: "receipt",
+      entityId: String(doc.id),
+      schoolId,
+      studentId,
+      receiptCode: doc.qrPayload,
+      actor: actorFromUser(req.user),
+      summary: `Receipt ${doc.qrPayload}: ${previousDoc.redemptionStatus} → ${doc.redemptionStatus}`,
+      details: { from: previousDoc.redemptionStatus, to: doc.redemptionStatus },
+    });
+  }
+  return doc;
+};
+
 /** Mirrors src/types/receipt.ts Receipt. Real write path for checkout — see src/lib/data-source/receipts.ts. */
 export const Receipts: CollectionConfig = {
   slug: "receipts",
-  // See Orders.ts's comment — same rationale.
-  access: { read: () => true, create: authenticated, update: () => true, delete: () => true },
-  hooks: { afterChange: [notifyReadyToCollect] },
+  // See Orders.ts's comment — receipts are permanent records too.
+  access: { read: readOwnOrStaff, create: authenticated, update: staffOnly, delete: denyAll },
+  hooks: { afterChange: [logReceiptHistory, notifyReadyToCollect] },
   fields: [
     { name: "order", type: "relationship", relationTo: "orders", required: true },
     { name: "user", type: "relationship", relationTo: "users", required: true },

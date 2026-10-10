@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import type { Payload } from "payload";
 import { exchangeCancelledByParentEmail, exchangeDecisionEmail } from "@/lib/email/request-templates";
 import { EXCHANGE_STAFF_NOTE_MIN } from "@/lib/exchange-rules";
+import { eventActor, recordRequestEvent } from "@/lib/server/record-events";
 import { getExtraNotifyEmail, getStaffRecipients, sendEmailsSafely } from "@/lib/server/request-notify";
+import { eventLabel } from "@/lib/record-events";
 import { getRequestActor, jsonError, relId } from "@/lib/server/request-actor";
 
 type Action = "cancel" | "approve" | "reject" | "complete" | "note";
@@ -51,6 +53,7 @@ export async function POST(request: Request) {
       [id],
     );
     if (!res.rowCount) return jsonError("This request can no longer be cancelled.", 409);
+    await logExchange(payload, doc, "exchange.cancelled", actor);
     await notifyStaffOfCancellation(payload, doc, actor.user.name ?? "", String(actor.user.username ?? ""));
     return NextResponse.json({ ok: true });
   }
@@ -116,8 +119,33 @@ export async function POST(request: Request) {
     }
   }
 
+  await logExchange(
+    payload,
+    doc,
+    ({ approve: "exchange.approved", reject: "exchange.rejected", cancel: "exchange.cancelled", complete: "exchange.completed" } as Record<string, string>)[action],
+    actor,
+    staffNote || undefined,
+  );
   await notifyFamily(payload, doc, action, staffNote || undefined);
   return NextResponse.json({ ok: true, warning });
+}
+
+async function logExchange(
+  payload: Payload,
+  doc: Record<string, unknown>,
+  eventType: string,
+  actor: { kind: string; user?: { id: string; name?: string; email?: string } },
+  note?: string,
+) {
+  const receipt = await payload.findByID({ collection: "receipts", id: relId(doc.receipt), depth: 0 }).catch(() => null);
+  await recordRequestEvent(payload, doc, {
+    eventType,
+    entityType: "exchange",
+    receiptCode: receipt?.qrPayload as string | undefined,
+    actor: eventActor(actor),
+    summary: `${eventLabel(eventType)}: ${String(doc.itemLabel)} ${String(doc.fromSize)} → ${String(doc.toSize)} (qty ${Number(doc.quantity)})${note ? ` — ${note}` : ""}`,
+    details: { fromSize: doc.fromSize, toSize: doc.toSize, quantity: doc.quantity, priceDifference: doc.priceDifference, note: note ?? null },
+  });
 }
 
 async function lowStockWarning(payload: Payload, doc: Record<string, unknown>): Promise<string | undefined> {

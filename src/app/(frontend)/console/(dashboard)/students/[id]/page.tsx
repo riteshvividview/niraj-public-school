@@ -20,7 +20,8 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { deriveReceiptTitle } from "@/lib/cart-items";
-import { deleteStudent, getReceiptsByUser, getUserProfileById } from "@/lib/data-source";
+import { RecordEventRow } from "@/components/console/record-event-list";
+import { deleteStudent, getReceiptsByUser, getRecordEventsByStudent, getUserProfileById } from "@/lib/data-source";
 import { formatDate, formatTime } from "@/lib/format";
 import { classLevelsCacheUpdater, useClassLevels } from "@/lib/hooks/console-data";
 import {
@@ -119,6 +120,7 @@ export default function StudentDetailPage() {
     getReceiptsByUser(studentId),
   );
   const receipts = receiptsData ?? null;
+  const { data: history } = useSWR(["console:student-history", studentId], () => getRecordEventsByStudent(studentId, 50));
 
   const [editOpen, setEditOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
@@ -129,9 +131,16 @@ export default function StudentDetailPage() {
 
   async function handleDelete() {
     setIsDeleting(true);
-    await deleteStudent(studentId);
-    toast.success("Student deleted");
-    router.push("/console/students");
+    try {
+      await deleteStudent(studentId);
+      toast.success("Student deleted");
+      router.push("/console/students");
+    } catch (error) {
+      // e.g. "This student has order or request history, which the school keeps permanently…"
+      toast.error(error instanceof Error ? error.message : "Could not delete the student.");
+      setIsDeleting(false);
+      setDeleteOpen(false);
+    }
   }
 
   const classLabel = classLevels.find((level) => level.id === student?.classLevelId)?.label;
@@ -248,6 +257,31 @@ export default function StudentDetailPage() {
                 )}
               </CardContent>
             </Card>
+
+            <Card className="lg:col-span-2">
+              <CardHeader className="flex flex-row items-center justify-between gap-3">
+                <CardTitle>Activity history</CardTitle>
+                <Link
+                  href={`/console/records?q=${encodeURIComponent(student.registerNumber)}`}
+                  className="text-sm font-medium text-brand hover:underline"
+                >
+                  Open in Records &amp; History
+                </Link>
+              </CardHeader>
+              <CardContent>
+                {history === undefined ? (
+                  <ConsoleListSkeleton />
+                ) : history.length === 0 ? (
+                  <p className="rounded-xl border border-line/60 py-8 text-center text-sm text-sub">No activity recorded yet.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {history.map((event) => (
+                      <RecordEventRow key={event.id} event={event} showStudent={false} />
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
           </div>
 
           <Dialog open={editOpen} onOpenChange={setEditOpen}>
@@ -284,7 +318,7 @@ export default function StudentDetailPage() {
             open={deleteOpen}
             onOpenChange={setDeleteOpen}
             title="Delete this student?"
-            description={`This permanently removes ${student.name} (${student.registerNumber}) and their portal access. This can't be undone.`}
+            description={`This permanently removes ${student.name} (${student.registerNumber}) and their portal access. A student who has any order or request history can't be deleted — that history is kept permanently.`}
             confirmLabel={isDeleting ? "Deleting…" : "Delete Student"}
             onConfirm={handleDelete}
           />

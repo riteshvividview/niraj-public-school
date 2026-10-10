@@ -15,6 +15,7 @@ import { Orders } from "./src/collections/Orders";
 import { PayloadAdmins } from "./src/collections/PayloadAdmins";
 import { Programs } from "./src/collections/Programs";
 import { Receipts } from "./src/collections/Receipts";
+import { RecordEvents } from "./src/collections/RecordEvents";
 import { Schools } from "./src/collections/Schools";
 import { SupportRequests } from "./src/collections/SupportRequests";
 import { UniformItems } from "./src/collections/UniformItems";
@@ -43,6 +44,7 @@ export default buildConfig({
     ExchangeRequests,
     BookChangeRequests,
     SupportRequests,
+    RecordEvents,
     Media,
   ],
   editor: lexicalEditor(),

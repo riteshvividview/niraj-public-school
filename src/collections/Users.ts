@@ -1,5 +1,5 @@
-import type { CollectionConfig } from "payload";
-import { staffOnlyField } from "../access/request-access";
+import { APIError, type CollectionBeforeDeleteHook, type CollectionConfig } from "payload";
+import { staffOnly, staffOnlyField } from "../access/request-access";
 
 /**
  * Mirrors src/types/user-profile.ts UserProfile — student/parent portal
@@ -21,6 +21,28 @@ import { staffOnlyField } from "../access/request-access";
  * Payload field/endpoint is the standard `username`/`/login` mechanism, not
  * a custom one.
  */
+/**
+ * A student who has any order, receipt, exchange, subject-change or support
+ * history can't be deleted — that history has to stay readable (the database
+ * enforces the same with RESTRICT foreign keys). Say so plainly instead of
+ * surfacing a foreign-key error.
+ */
+const keepStudentsWithHistory: CollectionBeforeDeleteHook = async ({ id, req }) => {
+  const checks = ["orders", "receipts", "exchange-requests", "book-change-requests", "support-requests", "record-events"] as const;
+  for (const collection of checks) {
+    const key = collection === "record-events" ? "student" : "user";
+    const found = await req.payload.count({ collection, where: { [key]: { equals: id } } });
+    if (found.totalDocs > 0) {
+      throw new APIError(
+        "This student has order or request history, which the school keeps permanently, so they can't be deleted.",
+        409,
+        undefined,
+        true,
+      );
+    }
+  }
+};
+
 export const Users: CollectionConfig = {
   slug: "users",
   auth: {
@@ -32,7 +54,8 @@ export const Users: CollectionConfig = {
     tokenExpiration: 60 * 60 * 24 * 7, // 7 days — a student shouldn't need to re-login often
   },
   admin: { useAsTitle: "name" },
-  access: { read: () => true, create: () => true, update: () => true, delete: () => true },
+  hooks: { beforeDelete: [keepStudentsWithHistory] },
+  access: { read: () => true, create: () => true, update: () => true, delete: staffOnly },
   fields: [
     { name: "name", type: "text", required: true },
     { name: "avatar", type: "upload", relationTo: "media" },

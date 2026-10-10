@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { Payload } from "payload";
+import { eventActor, recordRequestEvent } from "@/lib/server/record-events";
 import { getRequestActor, jsonError } from "@/lib/server/request-actor";
 
 type Action = "start" | "resolve" | "reopen" | "note";
@@ -67,5 +68,14 @@ export async function POST(request: Request) {
     );
   }
   if (!res.rowCount) return jsonError("This query was already updated by someone else.", 409);
+  const eventType = { start: "support.started", resolve: "support.resolved", reopen: "support.reopened" }[action];
+  const text = { start: "Support query picked up", resolve: "Support query resolved", reopen: "Support query reopened" }[action];
+  await recordRequestEvent(payload, doc, {
+    eventType,
+    entityType: "support",
+    actor: eventActor(actor),
+    summary: `${text}${action === "resolve" && staffNote ? ` — ${staffNote}` : ""}`,
+    details: { note: staffNote || null },
+  });
   return NextResponse.json({ ok: true });
 }

@@ -3,6 +3,7 @@ import { getAppUrl } from "@/lib/app-url";
 import { isPlausiblePhone } from "@/lib/contact-links";
 import { supportRequestedEmail } from "@/lib/email/request-templates";
 import { getRequestActor, jsonError, relId } from "@/lib/server/request-actor";
+import { eventActor, recordRequestEvent } from "@/lib/server/record-events";
 import { getStaffRecipients, sendEmailsSafely } from "@/lib/server/request-notify";
 
 const MESSAGE_MIN = 5;
@@ -71,6 +72,14 @@ export async function POST(request: Request) {
     console.error("[support/create] failed:", error);
     return jsonError("We couldn't send your message. Please try again.", 500);
   }
+
+  await recordRequestEvent(payload, created as unknown as Record<string, unknown>, {
+    eventType: "support.requested",
+    entityType: "support",
+    actor: eventActor(actor),
+    summary: `Support query sent: "${message.length > 120 ? `${message.slice(0, 120)}…` : message}"`,
+    details: { message, contactPhone: contactPhone || null, contactEmail: contactEmail || null },
+  });
 
   try {
     const classLevel = await payload
