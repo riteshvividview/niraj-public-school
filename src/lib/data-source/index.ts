@@ -8,3 +8,5 @@ export * from "./receipts";
 export * from "./essentials-stock";
 export * from "./reports";
 export * from "./console-staff";
+export * from "./exchanges";
+export * from "./request-settings";

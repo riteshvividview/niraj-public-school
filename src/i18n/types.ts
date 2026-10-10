@@ -14,6 +14,7 @@ export interface Dictionary {
     essentials: string;
     programs: string;
     receipts: string;
+    exchange: string;
     profile: string;
   };
 
@@ -182,6 +183,73 @@ export interface Dictionary {
     titleReceiptWord: string;
     titleProgrammeReceiptWord: string;
     paidAtLabel: string;
+  };
+
+  exchangePage: {
+    title: string;
+    subtitle: string;
+    tabNew: string;
+    tabRequests: string;
+    chooseReceiptTitle: string;
+    chooseReceiptHint: string;
+    noReceiptsTitle: string;
+    noReceiptsDescription: string;
+    noUniformTitle: string;
+    noUniformDescription: string;
+    receiptWord: string;
+    /** Template with "{date}" and "{n}" placeholders. */
+    eligibleUntilTemplate: string;
+    requestExchange: string;
+    sizeLabel: string;
+    quantityLabel: string;
+    ineligibleNotCollected: string;
+    ineligibleWindowClosed: string;
+    ineligibleAlreadyRequested: string;
+    ineligibleAlreadyExchanged: string;
+    ineligibleNotPaid: string;
+    formTitle: string;
+    currentSizeLabel: string;
+    newSizeLabel: string;
+    chooseNewSize: string;
+    reasonLabel: string;
+    reasonSizeTooSmall: string;
+    reasonSizeTooLarge: string;
+    reasonDefect: string;
+    reasonOther: string;
+    noteLabel: string;
+    notePlaceholder: string;
+    priceDifferenceLabel: string;
+    /** Template with "{amount}" placeholder. */
+    youPayTemplate: string;
+    /** Template with "{amount}" placeholder. */
+    schoolAdjustsTemplate: string;
+    noPriceDifference: string;
+    settledAtCounterNote: string;
+    submit: string;
+    submitting: string;
+    successTitle: string;
+    successDescription: string;
+    viewMyRequests: string;
+    noRequestsTitle: string;
+    noRequestsDescription: string;
+    statusPending: string;
+    statusApproved: string;
+    statusRejected: string;
+    statusCancelled: string;
+    statusCompleted: string;
+    helpPending: string;
+    helpApproved: string;
+    helpRejected: string;
+    helpCancelled: string;
+    helpCompleted: string;
+    noteFromSchool: string;
+    requestedOn: string;
+    cancelRequest: string;
+    cancelConfirmTitle: string;
+    cancelConfirmDescription: string;
+    keepRequest: string;
+    cancelFailed: string;
+    submitFailed: string;
   };
 
   programsPage: {

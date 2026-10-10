@@ -1,5 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { authenticated } from "../access/authenticated";
+import { administratorOnlyField } from "../access/request-access";
 
 /** Mirrors src/types/school.ts School. */
 export const Schools: CollectionConfig = {
@@ -17,5 +18,14 @@ export const Schools: CollectionConfig = {
     { name: "logoUrl", type: "text" },
     { name: "contactPhone", type: "text", required: true },
     { name: "contactEmail", type: "text", required: true },
+    // Extra inbox for exchange / subject-change request notifications, on top
+    // of every active administrator — set from the console's Administration
+    // tab. Administrator-only to read and write (the collection's own
+    // `read` is public for the unauthenticated parent app).
+    {
+      name: "requestNotifyEmail",
+      type: "email",
+      access: { read: administratorOnlyField, update: administratorOnlyField, create: administratorOnlyField },
+    },
   ],
 };

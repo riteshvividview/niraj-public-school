@@ -13,6 +13,7 @@ import {
   getClassLevelsBySchool,
   getEssentialsStockBySchool,
   getPaymentCoverageBySchool,
+  getPendingExchangeCount,
   getPaymentsBySchool,
   getProgramReportBySchool,
   getSchools,
@@ -80,4 +81,16 @@ export function useProgramReport(schoolId: string, filter?: ReportFilter) {
     schoolId ? ["console:program-report", schoolId, filter?.fromDate, filter?.toDate, filter?.classLevelId] : null,
     () => getProgramReportBySchool(schoolId, filter),
   );
+}
+
+/**
+ * Requests waiting for a staff decision — drives the red badges on the
+ * "Exchange Requests" / "Subject Change Requests" nav items. Polled lightly
+ * so a request raised while staff are logged in shows up without a reload.
+ */
+export function usePendingExchangeCount(schoolId: string): number {
+  const { data } = useSWR(schoolId ? ["console:exchange-pending", schoolId] : null, () => getPendingExchangeCount(schoolId), {
+    refreshInterval: 60_000,
+  });
+  return data ?? 0;
 }

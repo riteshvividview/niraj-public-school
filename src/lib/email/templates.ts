@@ -13,7 +13,7 @@ interface EmailItemLine {
 
 const LOGO_URL = "https://nirajpublicschool.com/wp-content/uploads/2022/06/nps-logo.png";
 
-const COLORS = {
+export const COLORS = {
   ink: "#1a2130",
   sub: "#5c6472",
   bg: "#eef1f6",
@@ -24,7 +24,7 @@ const COLORS = {
   accent: "#e08e00",
 };
 
-function formatINR(amount: number): string {
+export function formatINR(amount: number): string {
   return `₹${Math.round(amount).toLocaleString("en-IN")}`;
 }
 
@@ -57,7 +57,7 @@ function itemsTableHtml(items: EmailItemLine[], opts?: { struck?: boolean }): st
   </table>`;
 }
 
-function infoBanner({ icon, bg, border, text }: { icon?: string; bg: string; border: string; text: string }): string {
+export function infoBanner({ icon, bg, border, text }: { icon?: string; bg: string; border: string; text: string }): string {
   const iconCell = icon
     ? `<td style="font-size:18px;vertical-align:top;padding-right:10px;">${icon}</td>`
     : "";
@@ -80,7 +80,7 @@ function infoBanner({ icon, bg, border, text }: { icon?: string; bg: string; bor
  * for all the detailed content, on a light gray page background — matches
  * the brand tokens in CLAUDE.md / globals.css.
  */
-function wrapper({
+export function wrapper({
   eyebrow,
   title,
   headerGradient,

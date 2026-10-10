@@ -7,6 +7,7 @@ import {
   LogOut,
   PackageSearch,
   Receipt,
+  Repeat,
   ScanLine,
   ShieldCheck,
   Users,
@@ -14,7 +15,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
-import { useConsoleSchoolId, useEssentialsStock } from "@/lib/hooks/console-data";
+import { useConsoleSchoolId, useEssentialsStock, usePendingExchangeCount } from "@/lib/hooks/console-data";
 import { cn } from "@/lib/utils";
 import { useConsoleAuth } from "@/store/console-auth-store";
 
@@ -31,6 +32,7 @@ const NAV_ITEMS = [
   { href: "/console/students", label: "Students", icon: Users },
   { href: "/console/scan", label: "Receipt / QR Scanner", icon: ScanLine },
   { href: "/console/payments", label: "Payments", icon: Receipt },
+  { href: "/console/exchange-requests", label: "Exchange Requests", icon: Repeat },
   {
     href: "/console/reports",
     label: "Reports Dashboard",
@@ -59,7 +61,12 @@ function NavLinks({
 }) {
   const pathname = usePathname();
   const lowStockCount = useLowStockCount();
+  const pendingExchanges = usePendingExchangeCount(useConsoleSchoolId());
   const navItems = useNavItems();
+  const badgeCounts: Record<string, number> = {
+    "/console/stock": lowStockCount,
+    "/console/exchange-requests": pendingExchanges,
+  };
   return (
     <nav
       className={cn(
@@ -69,7 +76,7 @@ function NavLinks({
     >
       {navItems.map(({ href, label, icon: Icon }) => {
         const isActive = pathname === href || pathname.startsWith(`${href}/`);
-        const showLowStockBadge = href === "/console/stock" && lowStockCount > 0;
+        const badgeCount = badgeCounts[href] ?? 0;
         return (
           <Link
             key={href}
@@ -83,9 +90,9 @@ function NavLinks({
           >
             <Icon className="size-4 shrink-0" />
             {label}
-            {showLowStockBadge ? (
+            {badgeCount > 0 ? (
               <span className="ml-auto flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
-                {lowStockCount > 9 ? "9+" : lowStockCount}
+                {badgeCount > 9 ? "9+" : badgeCount}
               </span>
             ) : null}
           </Link>

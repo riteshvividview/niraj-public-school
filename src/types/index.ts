@@ -9,3 +9,5 @@ export * from "./order";
 export * from "./receipt";
 export * from "./essentials-stock";
 export * from "./console-staff";
+export * from "./exchange";
+export * from "./book-change";

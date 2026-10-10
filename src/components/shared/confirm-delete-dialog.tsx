@@ -18,6 +18,7 @@ export function ConfirmDeleteDialog({
   title,
   description,
   confirmLabel = "Delete",
+  cancelLabel = "Cancel",
   onConfirm,
 }: {
   open: boolean;
@@ -25,6 +26,7 @@ export function ConfirmDeleteDialog({
   title: string;
   description: string;
   confirmLabel?: string;
+  cancelLabel?: string;
   onConfirm: () => void;
 }) {
   return (
@@ -35,7 +37,7 @@ export function ConfirmDeleteDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{cancelLabel}</AlertDialogCancel>
           <AlertDialogAction variant="destructive" onClick={onConfirm}>
             {confirmLabel}
           </AlertDialogAction>

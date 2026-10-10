@@ -27,6 +27,7 @@ import {
 } from "@/lib/data-source";
 import { formatDate } from "@/lib/format";
 import { useConsoleAuth } from "@/store/console-auth-store";
+import { RequestNotificationsCard } from "./_components/request-notifications-card";
 import type { ConsoleStaffProfile } from "@/types";
 
 const RESEND_COOLDOWN_MS = 2 * 60 * 1000;
@@ -303,6 +304,8 @@ export default function AdministrationPage() {
           )}
         </CardContent>
       </Card>
+
+      <RequestNotificationsCard staffList={staffList} />
 
       <Card>
         <CardHeader>
