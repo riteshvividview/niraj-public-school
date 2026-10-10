@@ -324,7 +324,6 @@ export default function BooksPage() {
         {step === "select" ? (
           <div className="lg:grid lg:grid-cols-[1fr_300px] lg:items-start lg:gap-6">
             <div className="space-y-5">
-              <p className="text-sm text-sub">{t.essentials.selectionSubtitle}</p>
               {shownRequest ? (
                 <BookChangeStatus request={shownRequest} describe={describeSelection} onChanged={() => void mutateChangeRequests()} />
               ) : null}
@@ -386,7 +385,7 @@ export default function BooksPage() {
                   ))}
                 </OptionGroup>
               ) : null}
-              <Button className="w-full" disabled={!canProceed} onClick={goToReview}>
+              <Button className="w-full lg:hidden" disabled={!canProceed} onClick={goToReview}>
                 {t.common.next}
               </Button>
             </div>
@@ -394,6 +393,9 @@ export default function BooksPage() {
             <aside className="sticky top-6 hidden rounded-xl border border-line/60 bg-card p-5 lg:block">
               <p className="font-heading text-base font-semibold text-ink">{t.essentials.yourSelectionTitle}</p>
               <div className="mt-1 divide-y divide-line/60">{selectionRows}</div>
+              <Button className="mt-4 w-full" disabled={!canProceed} onClick={goToReview}>
+                {t.common.next}
+              </Button>
             </aside>
           </div>
         ) : (
