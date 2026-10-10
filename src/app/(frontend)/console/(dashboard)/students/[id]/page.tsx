@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { deriveReceiptTitle } from "@/lib/cart-items";
+import { AddressBlock } from "@/components/console/address-display";
 import { RecordEventRow } from "@/components/console/record-event-list";
 import { deleteStudent, getReceiptsByUser, getRecordEventsByStudent, getUserProfileById } from "@/lib/data-source";
 import { formatDate, formatTime } from "@/lib/format";
@@ -233,6 +234,12 @@ export default function StudentDetailPage() {
                   <InfoRow label="Specialization 2" value={electiveLabel(student.elective)} />
                   <InfoRow label="Mobile Number" value={student.mobileNumber ?? "—"} />
                   <InfoRow label="Email" value={student.email ?? "—"} />
+                  <div className="flex flex-col gap-1.5 py-2 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                    <span className="shrink-0 text-sm text-sub">Delivery address</span>
+                    <div className="sm:max-w-sm sm:text-right">
+                      <AddressBlock address={student.address} fallbackPhone={student.mobileNumber} />
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

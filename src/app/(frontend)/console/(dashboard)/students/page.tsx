@@ -1,5 +1,6 @@
 "use client";
 
+import { AddressInline } from "@/components/console/address-display";
 import {
   AlertCircle,
   CheckCircle2,
@@ -80,6 +81,7 @@ import {
   secondLanguageOf,
   STREAM_OPTIONS,
 } from "./_components/student-shared";
+import { EMPTY_ADDRESS_DRAFT, resolveAddressDraft, StaffAddressSection } from "./_components/staff-address-section";
 import type { AcademicLanguage, ClassLevel, Elective, Stream, UserProfile } from "@/types";
 
 // --- Add student ------------------------------------------------------------
@@ -107,6 +109,7 @@ function AddStudentForm({
   const [secondLanguage, setSecondLanguage] = useState<AcademicLanguage | "">("");
   const [stream, setStream] = useState<Stream | "">("");
   const [elective, setElective] = useState<Elective | "">("");
+  const [address, setAddress] = useState(EMPTY_ADDRESS_DRAFT);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -114,6 +117,11 @@ function AddStudentForm({
     event.preventDefault();
     if (!name.trim() || !registerNumber.trim() || !password || !classLevelId)
       return;
+    const resolvedAddress = resolveAddressDraft(address, false);
+    if (!resolvedAddress.ok) {
+      setError(resolvedAddress.error);
+      return;
+    }
     setError(null);
     setIsSubmitting(true);
     try {
@@ -130,6 +138,7 @@ function AddStudentForm({
         gender: gender || undefined,
         stream: stream || undefined,
         elective: elective || undefined,
+        address: resolvedAddress.address ?? undefined,
         ...deriveLanguage(firstLanguage, secondLanguage),
       });
       toast.success("Student added");
@@ -239,6 +248,7 @@ function AddStudentForm({
         elective={elective}
         setElective={setElective}
       />
+      <StaffAddressSection draft={address} onChange={setAddress} idPrefix="student-address" />
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <DialogFooter>
         <Button type="submit" disabled={isSubmitting}>
@@ -762,6 +772,7 @@ function StudentRow({ student, classLabel }: { student: UserProfile; classLabel:
             </>
           ) : null}
         </div>
+        <AddressInline address={student.address} className="mt-1" />
       </div>
       <ChevronRight className="size-4 shrink-0 text-sub" />
     </Link>

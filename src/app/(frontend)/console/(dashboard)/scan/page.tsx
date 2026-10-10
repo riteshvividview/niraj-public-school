@@ -1,5 +1,6 @@
 "use client";
 
+import { AddressBlock } from "@/components/console/address-display";
 import { AlertTriangle, CheckCircle2, ScanLine, Search } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
@@ -23,7 +24,7 @@ import { deriveReceiptTitle, groupItemsByKind } from "@/lib/cart-items";
 import { getReceiptByCode, markReceiptRedeemed, updateOrderItemsCollected } from "@/lib/data-source";
 import { useConsoleSchoolId } from "@/lib/hooks/console-data";
 import { cn } from "@/lib/utils";
-import type { OrderItem, ReceiptRecord } from "@/types";
+import type { OrderItem, PaymentRecord, ReceiptRecord } from "@/types";
 
 type LookupResult =
   | { kind: "invalid" }
@@ -69,7 +70,8 @@ export default function ScannerPage() {
     setIsRedeeming(false);
     setConfirmOpen(false);
     if (!updated) return;
-    setLookup({ kind: "found", record: updated });
+    // markReceiptRedeemed returns the bare receipt — keep the student/address details already on screen.
+    setLookup({ kind: "found", record: { ...lookup.record, ...updated } });
     toast.success("Marked attended");
   }
 
@@ -383,8 +385,17 @@ const RECEIPT_TITLE_LABELS = {
 
 function ReceiptSummary({ record }: { record: ReceiptRecord }) {
   const title = deriveReceiptTitle(record.order.items, RECEIPT_TITLE_LABELS);
+  const student = "studentName" in record ? (record as PaymentRecord) : null;
   return (
     <div className="space-y-2 rounded-xl border border-line p-4 text-sm">
+      {student ? (
+        <div className="space-y-2 rounded-lg bg-muted/50 p-3">
+          <p className="font-medium text-ink">
+            {student.studentName} <span className="font-normal text-sub">· {student.registerNumber}</span>
+          </p>
+          <AddressBlock address={student.address} fallbackPhone={student.studentPhone} />
+        </div>
+      ) : null}
       <div className="flex items-center justify-between">
         <span className="font-medium text-ink">{title}</span>
         <StatusBadge status={toBadgeStatus(record.receipt.redemptionStatus)} />

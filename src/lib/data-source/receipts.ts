@@ -1,4 +1,5 @@
 import { groupItemsByKind } from "@/lib/cart-items";
+import { toAddress, type PayloadAddressGroup } from "./address-mapper";
 import type { Order, PaymentRecord, Receipt, ReceiptRecord, RedemptionStatus } from "@/types";
 import { payloadCreate, payloadFind, payloadFindById, payloadFindPage, payloadUpdate } from "./payload-rest";
 
@@ -31,6 +32,8 @@ interface PayloadUserRef {
   username: string;
   classLevel: string;
   section?: string | null;
+  mobileNumber?: string | null;
+  address?: PayloadAddressGroup | null;
 }
 
 interface PayloadReceiptDoc {
@@ -216,6 +219,8 @@ export async function getPaymentsBySchool(schoolId: string): Promise<PaymentReco
       registerNumber: doc.user.username,
       classLevelId: doc.user.classLevel,
       section: doc.user.section ?? undefined,
+      address: toAddress(doc.user.address),
+      studentPhone: doc.user.mobileNumber ?? undefined,
     });
   }
   return records.sort((a, b) => b.receipt.issuedAt.localeCompare(a.receipt.issuedAt));
@@ -301,6 +306,8 @@ export async function getPaymentsPageBySchool(
       registerNumber: doc.user.username,
       classLevelId: doc.user.classLevel,
       section: doc.user.section ?? undefined,
+      address: toAddress(doc.user.address),
+      studentPhone: doc.user.mobileNumber ?? undefined,
     });
   }
   return { records, totalCount: result.totalDocs, totalPages: result.totalPages, page: result.page };
@@ -366,15 +373,27 @@ export async function getReceiptById(id: string): Promise<ReceiptRecord | null> 
   return doc ? toReceiptRecord(doc) : null;
 }
 
-/** Console — Receipt / QR Scanner's manual code lookup. */
-export async function getReceiptByCode(schoolId: string, code: string): Promise<ReceiptRecord | null> {
+/** Console — Receipt / QR Scanner's manual code lookup. Includes who the receipt belongs to and their delivery address. */
+export async function getReceiptByCode(schoolId: string, code: string): Promise<PaymentRecord | ReceiptRecord | null> {
   const docs = await payloadFind<PayloadReceiptDoc>(
     "receipts",
     { school: schoolId, qrPayload: code.trim().toUpperCase() },
     { depth: 1 },
   );
   const [doc] = docs;
-  return doc ? toReceiptRecord(doc) : null;
+  if (!doc) return null;
+  const record = toReceiptRecord(doc);
+  if (!record) return null;
+  if (typeof doc.user === "string") return record;
+  return {
+    ...record,
+    studentName: doc.user.name,
+    registerNumber: doc.user.username,
+    classLevelId: doc.user.classLevel,
+    section: doc.user.section ?? undefined,
+    address: toAddress(doc.user.address),
+    studentPhone: doc.user.mobileNumber ?? undefined,
+  };
 }
 
 /**

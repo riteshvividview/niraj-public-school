@@ -1,3 +1,4 @@
+import type { Address } from "@/types";
 import { groupItemsByKind, subtotal } from "@/lib/cart-items";
 import type { ReportFilter } from "@/lib/reports-aggregate";
 import { filterPayments } from "@/lib/reports-aggregate";
@@ -183,6 +184,7 @@ export interface CoverageStudent {
   classLevelId: string;
   section?: string;
   mobileNumber?: string;
+  address?: Address;
   hasPaidAnything: boolean;
   hasPaidBooks: boolean;
   hasPaidUniform: boolean;
@@ -335,6 +337,7 @@ export async function getPaymentCoverageBySchool(
         classLevelId: student.classLevelId,
         section: student.section,
         mobileNumber: student.mobileNumber,
+        address: student.address,
         hasPaidAnything,
         hasPaidBooks,
         hasPaidUniform,

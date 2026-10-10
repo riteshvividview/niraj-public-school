@@ -1,4 +1,4 @@
-import type { Payload } from "payload";
+import type { Payload, PayloadRequest } from "payload";
 import { relId } from "@/lib/server/request-actor";
 
 /**
@@ -37,11 +37,17 @@ export function eventActor(actor: { kind: string; user?: { id: string; name?: st
   return { type: "system", name: "System" };
 }
 
-export async function recordEvent(payload: Payload, input: RecordEventInput): Promise<void> {
+/**
+ * `req` — pass it when logging from inside a Payload hook that has itself just
+ * written a row the event refers to (e.g. the Users hook, whose own user row is
+ * still locked by the open transaction): the insert then joins that transaction
+ * instead of waiting on a lock the hook is itself holding.
+ */
+export async function recordEvent(payload: Payload, input: RecordEventInput, req?: PayloadRequest): Promise<void> {
   try {
     let { studentName, registerNumber } = input;
     if (!studentName) {
-      const student = await payload.findByID({ collection: "users", id: input.studentId, depth: 0 });
+      const student = await payload.findByID({ collection: "users", id: input.studentId, depth: 0, req });
       studentName = String(student.name ?? "Unknown");
       registerNumber = registerNumber ?? (student.username as string | undefined);
     }
@@ -63,6 +69,7 @@ export async function recordEvent(payload: Payload, input: RecordEventInput): Pr
         details: input.details,
       },
       depth: 0,
+      req,
     });
   } catch (error) {
     console.error(`[record-events] could not log "${input.eventType}":`, error);

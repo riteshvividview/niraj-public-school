@@ -1,5 +1,6 @@
 "use client";
 
+import { AddressBlock } from "@/components/console/address-display";
 import { Loader2, Mail, MessageCircle, Phone } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -155,6 +156,10 @@ function Body({ record, classLabel, onChanged }: { record: SupportRequestRecord;
               <EmailAction key={email} email={email} label={i === 0 && email === record.contactEmail ? "Email" : "Profile email"} />
             ))}
             {phones.length === 0 && emails.length === 0 ? <p className="text-sm text-sub">No contact details on file.</p> : null}
+          </div>
+          <div>
+            <p className="mb-1 text-xs text-sub">Delivery address</p>
+            <AddressBlock address={record.student.address} fallbackPhone={record.student.mobileNumber} />
           </div>
         </section>
 

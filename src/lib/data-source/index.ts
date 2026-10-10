@@ -13,3 +13,4 @@ export * from "./request-settings";
 export * from "./book-changes";
 export * from "./support";
 export * from "./records";
+export * from "./address";

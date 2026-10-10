@@ -29,6 +29,14 @@ export const staffOnly: Access = ({ req: { user } }) => Boolean(user && user.col
  * the caller isn't allowed to make, so a forged PATCH from a student account
  * (or an anonymous call) simply has no effect on these fields.
  */
+/**
+ * Field-level: school staff, or the account the record belongs to. Used for the
+ * student's delivery address — the Users collection is otherwise publicly
+ * readable, and a home address must not be.
+ */
+export const staffOrOwnerField: FieldAccess = ({ req: { user }, id }) =>
+  Boolean(user && (user.collection === "payload-admins" || (id !== undefined && String(user.id) === String(id))));
+
 export const staffOnlyField: FieldAccess = ({ req: { user } }) => Boolean(user && user.collection === "payload-admins");
 
 /** Field-level: only a logged-in administrator (not plain staff, not a student). */

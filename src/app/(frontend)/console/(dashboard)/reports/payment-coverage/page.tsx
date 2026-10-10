@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { type EssentialsCoverage } from "@/lib/data-source";
+import { formatAddress } from "@/lib/address";
 import { downloadCsv } from "@/lib/export-utils";
 import { formatCurrencyINR } from "@/lib/format";
 import { useClassLevels, useConsoleSchoolId, usePaymentCoverage } from "@/lib/hooks/console-data";
@@ -99,6 +100,7 @@ export default function PaymentCoveragePage() {
         "Class",
         "Section",
         "Mobile Number",
+        "Delivery Address",
         "Paid Books",
         "Paid Uniform",
         "Coverage",
@@ -117,6 +119,7 @@ export default function PaymentCoveragePage() {
         classLabelById.get(student.classLevelId) ?? "",
         student.section ?? "",
         student.mobileNumber ?? "",
+        formatAddress(student.address),
         student.hasPaidBooks ? "Yes" : "No",
         student.hasPaidUniform ? "Yes" : "No",
         COVERAGE_LABELS[student.essentialsCoverage],
@@ -441,6 +444,7 @@ export default function PaymentCoveragePage() {
                     <TableHead>Class</TableHead>
                     <TableHead>Section</TableHead>
                     <TableHead>Mobile</TableHead>
+                    <TableHead>Address</TableHead>
                     <TableHead>Books</TableHead>
                     <TableHead>Uniform</TableHead>
                     <TableHead>Total Paid</TableHead>
@@ -455,6 +459,9 @@ export default function PaymentCoveragePage() {
                       <TableCell>{classLabelById.get(student.classLevelId) ?? "—"}</TableCell>
                       <TableCell>{student.section ?? "—"}</TableCell>
                       <TableCell>{student.mobileNumber ?? "—"}</TableCell>
+                      <TableCell className="max-w-56 truncate" title={formatAddress(student.address)}>
+                        {formatAddress(student.address) || "—"}
+                      </TableCell>
                       <TableCell>
                         {student.hasPaidBooks ? (
                           <Badge variant="secondary">{formatCurrencyINR(student.actualBooksRevenue)}</Badge>

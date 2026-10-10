@@ -1,3 +1,4 @@
+import type { Address } from "./address";
 import type { AcademicLanguage, Elective, Stream } from "./user-profile";
 
 export type BookChangeStatus = "pending" | "approved" | "rejected" | "cancelled";
@@ -41,5 +42,6 @@ export interface BookChangeRequestRecord extends BookChangeRequest {
     section?: string;
     mobileNumber?: string;
     email?: string;
+    address?: Address;
   };
 }

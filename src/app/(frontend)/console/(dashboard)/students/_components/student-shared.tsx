@@ -16,7 +16,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { firstLanguageOf, oppositeLanguage, secondLanguageOf } from "@/lib/academic-language";
+import { draftFromAddress } from "@/lib/address";
 import { resetStudentPassword, updateStudent } from "@/lib/data-source";
+import { resolveAddressDraft, StaffAddressSection } from "./staff-address-section";
 import type { AcademicLanguage, ClassLevel, Elective, Stream, UserProfile } from "@/types";
 
 export const NONE_VALUE = "__none__";
@@ -196,16 +198,23 @@ export function EditStudentForm({
   const [secondLanguage, setSecondLanguage] = useState<AcademicLanguage | "">(secondLanguageOf(student) ?? "");
   const [stream, setStream] = useState<Stream | "">(student.stream ?? "");
   const [elective, setElective] = useState<Elective | "">(student.elective ?? "");
+  const [address, setAddress] = useState(() => draftFromAddress(student.address));
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (!name.trim() || !classLevelId) return;
+    const resolvedAddress = resolveAddressDraft(address, Boolean(student.address));
+    if (!resolvedAddress.ok) {
+      setError(resolvedAddress.error);
+      return;
+    }
     setError(null);
     setIsSubmitting(true);
     try {
       await updateStudent(student.id, {
+        address: resolvedAddress.address,
         name: name.trim(),
         mobileNumber: mobileNumber.trim() || undefined,
         email: email.trim() || undefined,
@@ -294,6 +303,7 @@ export function EditStudentForm({
           />
         </div>
       </div>
+      <StaffAddressSection draft={address} onChange={setAddress} idPrefix="edit-address" />
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <DialogFooter>
         <Button type="submit" disabled={isSubmitting}>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AddressInline } from "@/components/console/address-display";
 import { StatusBadge, toBadgeStatus } from "@/components/shared/status-badge";
 import { deriveReceiptTitle } from "@/lib/cart-items";
 import { formatDate, formatTime } from "@/lib/format";
@@ -49,6 +50,7 @@ export function PaymentCard({ record, classLabel }: { record: PaymentRecord; cla
           </>
         ) : null}
       </div>
+      <AddressInline address={record.address} className="mt-1.5" />
       {expanded ? (
         <div className="mt-3 space-y-2 border-t border-line pt-3 text-sm">
           <p className="text-xs text-sub">

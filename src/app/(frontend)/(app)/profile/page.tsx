@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/i18n/context";
 import { getClassLevelById, updateUserAvatar } from "@/lib/data-source";
 import { useAuth } from "@/store/auth-store";
+import { AddressCard } from "./_components/address-card";
 import { ChangePasswordDialog } from "./_components/change-password-dialog";
 
 function ProfileRow({ label, value }: { label: string; value: string }) {
@@ -119,6 +120,8 @@ export default function ProfilePage() {
             <LanguageSwitcher />
           </div>
         </section>
+
+        <AddressCard />
 
         <button
           type="button"

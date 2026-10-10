@@ -1,4 +1,5 @@
 import type { ExchangeReason, ExchangeRequest, ExchangeRequestRecord, ExchangeStatus } from "@/types";
+import { toAddress, type PayloadAddressGroup } from "./address-mapper";
 import { payloadFind, payloadFindPage } from "./payload-rest";
 
 interface PayloadStudentRef {
@@ -9,6 +10,7 @@ interface PayloadStudentRef {
   section?: string | null;
   mobileNumber?: string | null;
   email?: string | null;
+  address?: PayloadAddressGroup | null;
 }
 
 interface PayloadExchangeDoc {
@@ -83,6 +85,7 @@ function toRecord(doc: PayloadExchangeDoc): ExchangeRequestRecord | null {
       section: doc.user.section ?? undefined,
       mobileNumber: doc.user.mobileNumber ?? undefined,
       email: doc.user.email ?? undefined,
+      address: toAddress(doc.user.address),
     },
     receiptCode: typeof doc.receipt === "string" ? "" : doc.receipt.qrPayload,
   };

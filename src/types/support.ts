@@ -1,3 +1,4 @@
+import type { Address } from "./address";
 export type SupportStatus = "open" | "in-progress" | "resolved";
 
 /**
@@ -32,5 +33,6 @@ export interface SupportRequestRecord extends SupportRequest {
     section?: string;
     mobileNumber?: string;
     email?: string;
+    address?: Address;
   };
 }

@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { deriveReceiptTitle } from "@/lib/cart-items";
 import { getPaymentsPageBySchool, getStudentSectionsBySchool, type PaymentPageFilters } from "@/lib/data-source";
+import { formatAddress } from "@/lib/address";
 import { downloadCsv } from "@/lib/export-utils";
 import { formatDate, formatTime } from "@/lib/format";
 import { useClassLevels, useConsoleSchoolId } from "@/lib/hooks/console-data";
@@ -150,6 +151,8 @@ export default function PaymentsPage() {
           "Redeemed Time",
           "Order ID",
           "Receipt ID",
+          "Delivery Address",
+          "Delivery Phone",
         ],
       ];
       allRecords.forEach((record) => {
@@ -179,6 +182,8 @@ export default function PaymentsPage() {
             record.receipt.redeemedAt ? formatTime(record.receipt.redeemedAt) : "",
             record.order.id,
             record.receipt.id,
+            formatAddress(record.address),
+            record.address?.phone ?? record.studentPhone ?? "",
           ]);
         });
       });

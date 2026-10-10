@@ -1,5 +1,8 @@
-import { APIError, type CollectionBeforeDeleteHook, type CollectionConfig } from "payload";
-import { staffOnly, staffOnlyField } from "../access/request-access";
+import { APIError, type CollectionAfterChangeHook, type CollectionBeforeChangeHook, type CollectionBeforeDeleteHook, type CollectionConfig } from "payload";
+import { staffOnly, staffOnlyField, staffOrOwnerField } from "../access/request-access";
+import { isPlausiblePhone } from "@/lib/contact-links";
+import { PINCODE_PATTERN } from "@/lib/address";
+import { actorFromUser, recordEvent } from "@/lib/server/record-events";
 
 /**
  * Mirrors src/types/user-profile.ts UserProfile — student/parent portal
@@ -43,6 +46,99 @@ const keepStudentsWithHistory: CollectionBeforeDeleteHook = async ({ id, req }) 
   }
 };
 
+const ADDRESS_KEYS = ["house", "street", "landmark", "city", "state", "pincode", "phone", "latitude", "longitude", "source"] as const;
+const ADDRESS_REQUIRED = ["house", "street", "city", "state", "pincode"] as const;
+const ADDRESS_LABELS: Record<string, string> = {
+  house: "flat / house number",
+  street: "street / area",
+  city: "city",
+  state: "state",
+  pincode: "pincode",
+};
+
+/**
+ * The address is optional, but never half-saved: either every delivery field
+ * is present and valid, or the whole address is cleared. Runs for every write
+ * (student's own save, console edit, bulk import), so the rules live here and
+ * not in any one screen — the database has matching CHECK constraints.
+ * Partial PATCHes are merged onto the stored address before validating.
+ */
+const normalizeAddress: CollectionBeforeChangeHook = async ({ data, originalDoc }) => {
+  if (!data || data.address === undefined || data.address === null) return data;
+  const merged: Record<string, unknown> = { ...(originalDoc?.address ?? {}), ...(data.address as Record<string, unknown>) };
+
+  const text = (key: string): string | null => {
+    const value = merged[key];
+    return typeof value === "string" && value.trim() !== "" ? value.trim() : null;
+  };
+  const next: Record<string, unknown> = {};
+  for (const key of ADDRESS_KEYS) next[key] = merged[key] ?? null;
+  for (const key of ["house", "street", "landmark", "city", "state", "pincode", "phone"]) next[key] = text(key);
+
+  const anyRequired = ADDRESS_REQUIRED.some((key) => next[key] !== null);
+  if (!anyRequired) {
+    // Cleared.
+    data.address = Object.fromEntries([...ADDRESS_KEYS.map((key) => [key, null]), ["updatedAt", null]]);
+    return data;
+  }
+
+  const missing = ADDRESS_REQUIRED.filter((key) => next[key] === null);
+  if (missing.length > 0) {
+    throw new APIError(`Please fill in: ${missing.map((key) => ADDRESS_LABELS[key]).join(", ")}.`, 400, undefined, true);
+  }
+  if (!PINCODE_PATTERN.test(String(next.pincode))) {
+    throw new APIError("Enter a valid 6-digit pincode.", 400, undefined, true);
+  }
+  if (next.phone !== null && !isPlausiblePhone(String(next.phone))) {
+    throw new APIError("That delivery phone number doesn't look right.", 400, undefined, true);
+  }
+  const lat = next.latitude === null || next.latitude === undefined ? null : Number(next.latitude);
+  const lng = next.longitude === null || next.longitude === undefined ? null : Number(next.longitude);
+  if ((lat === null) !== (lng === null) || (lat !== null && (!(lat >= -90 && lat <= 90) || !(lng! >= -180 && lng! <= 180)))) {
+    throw new APIError("The location coordinates are not valid.", 400, undefined, true);
+  }
+  next.latitude = lat;
+  next.longitude = lng;
+  next.source = next.source === "live-location" && lat !== null ? "live-location" : "manual";
+  next.updatedAt = new Date().toISOString();
+  data.address = next;
+  return data;
+};
+
+/** Permanent activity log: address saved / removed (who, when) — the address itself stays in the user record. */
+const logAddressChange: CollectionAfterChangeHook = async ({ doc, previousDoc, operation, req }) => {
+  // Only real actions by a signed-in student/staff member. A login (or any system update) runs
+  // without a user, so the address is hidden from that request and would look like a removal.
+  if (operation !== "update" || !req.user) return doc;
+  // Only someone who can actually SEE the address (staff, or the owner) can have changed it — anyone else
+  // sees it hidden, which would otherwise look like a removal.
+  const canSee = req.user.collection === "payload-admins" || String(req.user.id) === String(doc.id);
+  if (!canSee) return doc;
+  const sig = (address: Record<string, unknown> | null | undefined) =>
+    JSON.stringify(ADDRESS_KEYS.map((key) => address?.[key] ?? null));
+  if (sig(previousDoc?.address) === sig(doc.address)) return doc;
+
+  const hasNow = Boolean(doc.address?.house);
+  const schoolId = typeof doc.school === "string" ? doc.school : doc.school?.id;
+  if (!schoolId) return doc;
+  // Same transaction as the user update (req): a separate connection would wait on this very row's lock.
+  await recordEvent(req.payload, {
+    eventType: hasNow ? "profile.address_updated" : "profile.address_removed",
+    entityType: "profile",
+    entityId: String(doc.id),
+    schoolId,
+    studentId: String(doc.id),
+    studentName: doc.name,
+    registerNumber: doc.username,
+    actor: actorFromUser(req.user),
+    summary: hasNow
+      ? `Delivery address saved${doc.address.source === "live-location" ? " from live location" : ""} — ${doc.address.city} ${doc.address.pincode}`
+      : "Delivery address removed",
+    details: hasNow ? { source: doc.address.source, city: doc.address.city, state: doc.address.state, pincode: doc.address.pincode } : undefined,
+  }, req);
+  return doc;
+};
+
 export const Users: CollectionConfig = {
   slug: "users",
   auth: {
@@ -54,7 +150,7 @@ export const Users: CollectionConfig = {
     tokenExpiration: 60 * 60 * 24 * 7, // 7 days — a student shouldn't need to re-login often
   },
   admin: { useAsTitle: "name" },
-  hooks: { beforeDelete: [keepStudentsWithHistory] },
+  hooks: { beforeChange: [normalizeAddress], afterChange: [logAddressChange], beforeDelete: [keepStudentsWithHistory] },
   access: { read: () => true, create: () => true, update: () => true, delete: staffOnly },
   fields: [
     { name: "name", type: "text", required: true },
@@ -148,6 +244,27 @@ export const Users: CollectionConfig = {
         { label: "ENA", value: "ena" },
         { label: "Robotics & AI", value: "roboticsAI" },
         { label: "Home Science", value: "homeScience" },
+      ],
+    },
+    // Optional delivery address. Readable by the student themself and by school
+    // staff only (the rest of this collection is public — see header comment);
+    // students save it through /api/address/save, staff through the console.
+    {
+      name: "address",
+      type: "group",
+      access: { read: staffOrOwnerField, create: staffOnlyField, update: staffOnlyField },
+      fields: [
+        { name: "house", type: "text" },
+        { name: "street", type: "text" },
+        { name: "landmark", type: "text" },
+        { name: "city", type: "text" },
+        { name: "state", type: "text" },
+        { name: "pincode", type: "text" },
+        { name: "phone", type: "text" },
+        { name: "latitude", type: "number" },
+        { name: "longitude", type: "number" },
+        { name: "source", type: "select", options: ["manual", "live-location"] },
+        { name: "updatedAt", type: "date" },
       ],
     },
   ],

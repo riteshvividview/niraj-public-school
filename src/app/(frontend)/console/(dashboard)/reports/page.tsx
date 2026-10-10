@@ -1,5 +1,6 @@
 "use client";
 
+import { AddressInline } from "@/components/console/address-display";
 import { ArrowRight, FileSpreadsheet } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -647,6 +648,7 @@ export default function ReportsPage() {
                   <div className="min-w-0">
                     <p className="truncate font-medium text-ink">{record.studentName}</p>
                     <p className="text-xs text-sub">{record.registerNumber}</p>
+                    <AddressInline address={record.address} className="mt-0.5" />
                   </div>
                   <div className="shrink-0 text-right">
                     <p className="font-medium text-ink">{formatCurrencyINR(record.order.totalAmount)}</p>

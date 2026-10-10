@@ -1,3 +1,4 @@
+import type { Address } from "./address";
 export type ExchangeStatus = "pending" | "approved" | "rejected" | "cancelled" | "completed";
 export type ExchangeReason = "size-too-small" | "size-too-large" | "defect" | "other";
 
@@ -48,6 +49,7 @@ export interface ExchangeRequestRecord extends ExchangeRequest {
     section?: string;
     mobileNumber?: string;
     email?: string;
+    address?: Address;
   };
   receiptCode: string;
 }

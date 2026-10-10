@@ -1,5 +1,6 @@
 "use client";
 
+import { AddressBlock } from "@/components/console/address-display";
 import { AlertTriangle, ArrowRight, Loader2, Mail, Phone } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -166,6 +167,10 @@ function Body({
                 No email on file
               </span>
             )}
+          </div>
+          <div>
+            <p className="mb-1 text-xs text-sub">Delivery address</p>
+            <AddressBlock address={record.student.address} fallbackPhone={record.student.mobileNumber} />
           </div>
         </section>
 

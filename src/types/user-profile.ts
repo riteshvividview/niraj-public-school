@@ -1,3 +1,4 @@
+import type { Address } from "./address";
 import type { LanguageCode } from "./language";
 
 export type UserRole = "parent" | "student";
@@ -34,6 +35,8 @@ export interface UserProfile {
   languageLevel?: LanguageLevel;
   stream?: Stream;
   elective?: Elective;
+  /** Optional delivery address — only present for the student themselves and for school staff. */
+  address?: Address;
   createdAt: string;
   updatedAt: string;
 }

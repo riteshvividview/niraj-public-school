@@ -1,3 +1,4 @@
+import type { Address } from "./address";
 import type { Order } from "./order";
 
 export type RedemptionStatus = "ready" | "partially-collected" | "collected" | "checked-in";
@@ -29,4 +30,7 @@ export interface PaymentRecord extends ReceiptRecord {
   registerNumber: string;
   classLevelId: string;
   section?: string;
+  /** Optional delivery address — shown to staff wherever a payment is listed. */
+  address?: Address;
+  studentPhone?: string;
 }

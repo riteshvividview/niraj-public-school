@@ -13,3 +13,4 @@ export * from "./exchange";
 export * from "./book-change";
 export * from "./support";
 export * from "./record-event";
+export * from "./address";

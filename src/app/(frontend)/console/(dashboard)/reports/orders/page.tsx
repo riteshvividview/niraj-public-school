@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getPaymentsPageBySchool, getStudentSectionsBySchool, type PaymentPageFilters } from "@/lib/data-source";
+import { formatAddress } from "@/lib/address";
 import { downloadCsv } from "@/lib/export-utils";
 import { collectionStatusOf, overviewOf } from "@/lib/reports-aggregate";
 import { deriveReceiptTitle } from "@/lib/cart-items";
@@ -141,6 +142,8 @@ function OrdersDrillDown() {
           "Payment Method",
           "Redemption Status",
           "Issued Date",
+          "Delivery Address",
+          "Delivery Phone",
         ],
       ];
       allRecords.forEach((record) => {
@@ -163,6 +166,8 @@ function OrdersDrillDown() {
             record.order.paymentMethod,
             record.receipt.redemptionStatus,
             record.receipt.issuedAt.slice(0, 10),
+            formatAddress(record.address),
+            record.address?.phone ?? record.studentPhone ?? "",
           ]);
         });
       });

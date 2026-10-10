@@ -7,6 +7,7 @@ import type {
   Elective,
   Stream,
 } from "@/types";
+import { toAddress, type PayloadAddressGroup } from "./address-mapper";
 import { payloadFind, payloadFindPage } from "./payload-rest";
 
 interface PayloadSelectionGroup {
@@ -23,6 +24,7 @@ interface PayloadStudentRef {
   section?: string | null;
   mobileNumber?: string | null;
   email?: string | null;
+  address?: PayloadAddressGroup | null;
 }
 
 interface PayloadBookChangeDoc {
@@ -79,6 +81,7 @@ function toRecord(doc: PayloadBookChangeDoc): BookChangeRequestRecord | null {
       section: doc.user.section ?? undefined,
       mobileNumber: doc.user.mobileNumber ?? undefined,
       email: doc.user.email ?? undefined,
+      address: toAddress(doc.user.address),
     },
   };
 }
