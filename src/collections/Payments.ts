@@ -30,6 +30,9 @@ export const Payments: CollectionConfig = {
     { name: "providerOrderId", type: "text" },
     { name: "providerPaymentId", type: "text" },
     { name: "itemsFingerprint", type: "text", required: true },
+    // This payment is a new-admission student's full uniform set; and, for a single extra item, the approved request(s) it uses up.
+    { name: "newAdmissionSet", type: "checkbox", defaultValue: false },
+    { name: "extraRequestIds", type: "json" },
     {
       name: "items",
       type: "array",

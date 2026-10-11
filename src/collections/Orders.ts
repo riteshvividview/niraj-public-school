@@ -347,6 +347,8 @@ export const Orders: CollectionConfig = {
   fields: [
     { name: "user", type: "relationship", relationTo: "users", required: true },
     { name: "school", type: "relationship", relationTo: "schools", required: true },
+    // True for the new-admission student's full uniform set — only ever once per student (a unique index enforces it).
+    { name: "newAdmissionSet", type: "checkbox", defaultValue: false },
     // The confirmed payment this order came from (see collections/Payments.ts).
     { name: "payment", type: "relationship", relationTo: "payments" },
     {

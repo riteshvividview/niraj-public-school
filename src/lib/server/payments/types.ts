@@ -37,6 +37,10 @@ export interface PaymentRow {
   completedAt?: string;
   orderId?: string;
   lateSuccess: boolean;
+  /** A new-admission student's full uniform set. */
+  newAdmissionSet: boolean;
+  /** Approved extra-item requests this payment uses up. */
+  extraRequestIds: string[];
   needsReview: boolean;
   reviewNote?: string;
   createdAt: string;

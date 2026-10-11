@@ -35,6 +35,8 @@ export interface UserProfile {
   languageLevel?: LanguageLevel;
   stream?: Stream;
   elective?: Elective;
+  /** Staff override of the "new admission" rule (see src/lib/academic-year.ts). */
+  newAdmissionOverride?: "new" | "existing";
   /** Optional delivery address — only present for the student themselves and for school staff. */
   address?: Address;
   createdAt: string;

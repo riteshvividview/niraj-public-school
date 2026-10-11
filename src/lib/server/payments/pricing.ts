@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 import type { Payload } from "payload";
+import { newAdmissionItemApplies } from "@/lib/academic-year";
 import { assignedBookSetOf, bookMatchesAssignedSet } from "@/lib/book-set";
+import { getNewAdmissionStatus, getRequiredSet } from "@/lib/server/uniform/new-admission";
 import { relId } from "@/lib/server/request-actor";
 import type { PaymentItem, PaymentKind } from "./types";
 
@@ -35,7 +37,16 @@ const MAX_LINES = 30;
 
 type Doc = Record<string, unknown>;
 
-export async function priceCart(payload: Payload, studentId: string, requested: RequestedLine[]): Promise<{ items: PaymentItem[]; total: number }> {
+export interface PricedCart {
+  items: PaymentItem[];
+  total: number;
+  /** This payment is a new-admission student's full uniform set. */
+  newAdmissionSet: boolean;
+  /** Approved extra-item requests this payment uses up. */
+  extraRequestIds: string[];
+}
+
+export async function priceCart(payload: Payload, studentId: string, requested: RequestedLine[]): Promise<PricedCart> {
   if (!Array.isArray(requested) || requested.length === 0) throw new CartError("Your cart is empty.");
   if (requested.length > MAX_LINES) throw new CartError("Too many items in the cart.");
 
@@ -48,6 +59,9 @@ export async function priceCart(payload: Payload, studentId: string, requested: 
     stream: (student.stream as never) ?? undefined,
     elective: (student.elective as never) ?? undefined,
   });
+
+  const classLevelDoc = (await payload.findByID({ collection: "class-levels", id: classLevelId, depth: 0 }).catch(() => null)) as Doc | null;
+  const classOrder = Number(classLevelDoc?.order ?? 0);
 
   const seen = new Set<string>();
   const items: PaymentItem[] = [];
@@ -78,7 +92,15 @@ export async function priceCart(payload: Payload, studentId: string, requested: 
     } else if (line.kind === "uniform") {
       const item = (await payload.findByID({ collection: "uniform-items", id: line.refId, depth: 0 }).catch(() => null)) as Doc | null;
       const gone = new CartError("A uniform item in your cart is no longer available. Please review your cart.");
-      if (!item || relId(item.school) !== schoolId || relId(item.classLevel) !== classLevelId) throw gone;
+      if (!item || item.retired || relId(item.school) !== schoolId) throw gone;
+      if (item.newAdmission) {
+        // A new-admission item belongs to no class — it applies by gender and class range.
+        const applies = newAdmissionItemApplies(
+          { gender: item.gender as string | undefined, fromOrder: item.newAdmissionFromOrder as number | null, toOrder: item.newAdmissionToOrder as number | null },
+          { gender: student.gender as string | undefined, classOrder },
+        );
+        if (!applies) throw gone;
+      } else if (relId(item.classLevel) !== classLevelId) throw gone;
       if (item.gender && student.gender && item.gender !== student.gender) throw gone;
       const size = (item.sizeOptions as Array<{ size: string; price: number }> | undefined)?.find((option) => option.size === line.meta);
       if (!size) throw new CartError(`The size you chose for ${String(item.name)} is no longer available. Please review your cart.`);
@@ -112,7 +134,60 @@ export async function priceCart(payload: Payload, studentId: string, requested: 
 
   const total = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   if (!(total > 0)) throw new CartError("There is nothing to pay for in this cart.");
-  return { items, total };
+  const rules = await enforceUniformRules(payload, studentId, items);
+  return { items, total, ...rules };
+}
+
+/**
+ * The new-admission rules for uniform lines (see lib/server/uniform/new-admission.ts):
+ *   • an EXISTING student buys uniform items freely, as before;
+ *   • a NEW student who has not bought their set yet must buy the FULL set together — every
+ *     regular item for their class + every new-admission item that applies, nothing missing
+ *     and nothing extra — and can do so only once;
+ *   • a NEW student who already has the set may buy a single extra item only when staff have
+ *     approved a request for exactly that item and size.
+ */
+async function enforceUniformRules(payload: Payload, studentId: string, items: PaymentItem[]): Promise<{ newAdmissionSet: boolean; extraRequestIds: string[] }> {
+  const uniform = items.filter((item) => item.kind === "uniform");
+  if (uniform.length === 0) return { newAdmissionSet: false, extraRequestIds: [] };
+  const status = await getNewAdmissionStatus(payload, studentId);
+  if (!status.isNew) return { newAdmissionSet: false, extraRequestIds: [] };
+
+  if (!status.setBought) {
+    const required = await getRequiredSet(payload, studentId);
+    const requiredIds = new Set(required.map((item) => item.id));
+    const chosenIds = new Set(uniform.map((item) => item.refId));
+    const missing = required.filter((item) => !chosenIds.has(item.id));
+    const extra = uniform.filter((item) => !requiredIds.has(item.refId));
+    if (required.length === 0) throw new CartError("The uniform set for your class isn't ready yet. Please contact the school.", 409);
+    if (missing.length > 0 || extra.length > 0) {
+      throw new CartError(
+        "As a new admission student you need to buy the full uniform set together" +
+          (missing.length > 0 ? ` (still missing: ${missing.map((m) => m.name).join(", ")})` : "") +
+          ". Single items can be requested after the set is bought.",
+        409,
+      );
+    }
+    return { newAdmissionSet: true, extraRequestIds: [] };
+  }
+
+  // Set already bought: every uniform line needs an approved request.
+  const approved = await payload.find({
+    collection: "extra-item-requests",
+    where: { and: [{ user: { equals: studentId } }, { status: { equals: "approved" } }] },
+    limit: 100,
+    depth: 0,
+  });
+  const pool = (approved.docs as unknown as Doc[]).map((doc) => ({ id: String(doc.id), item: relId(doc.uniformItem), size: String(doc.size) }));
+  const used: string[] = [];
+  for (const line of uniform) {
+    const match = pool.find((r) => r.item === line.refId && r.size === line.meta && !used.includes(r.id));
+    if (!match) {
+      throw new CartError(`To buy ${line.label} again, please send a request first — the school confirms it is in stock and then you can pay for it.`, 403);
+    }
+    used.push(match.id);
+  }
+  return { newAdmissionSet: false, extraRequestIds: used };
 }
 
 /**

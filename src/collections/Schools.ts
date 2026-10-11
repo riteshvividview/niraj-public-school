@@ -18,6 +18,16 @@ export const Schools: CollectionConfig = {
     { name: "logoUrl", type: "text" },
     { name: "contactPhone", type: "text", required: true },
     { name: "contactEmail", type: "text", required: true },
+    // When the academic year starts (1–12; April by default). Decides which register numbers
+    // count as "new admission" — see src/lib/academic-year.ts. Administrator-only.
+    {
+      name: "academicYearStartMonth",
+      type: "number",
+      defaultValue: 4,
+      min: 1,
+      max: 12,
+      access: { read: administratorOnlyField, update: administratorOnlyField, create: administratorOnlyField },
+    },
     // Payment safety settings — see src/lib/server/payments. Administrator-only.
     //   duplicate window: a repeat of the SAME items within N minutes of a paid order is
     //   stopped with "you already paid for this" (0 = off).

@@ -24,7 +24,7 @@ export function categoryOfEvent(eventType: string): RecordEventCategory {
 
 /** Event-type prefixes for each category — used to build the server-side filter. */
 export const CATEGORY_PREFIXES: Record<RecordEventCategory, string[]> = {
-  orders: ["order.", "receipt.", "payment."],
+  orders: ["order.", "receipt.", "payment.", "extra."],
   collection: ["item."],
   exchange: ["exchange."],
   subject: ["bookchange."],
@@ -33,6 +33,10 @@ export const CATEGORY_PREFIXES: Record<RecordEventCategory, string[]> = {
 };
 
 const LABELS: Record<string, string> = {
+  "extra.requested": "Extra item requested",
+  "extra.approved": "Extra item approved",
+  "extra.rejected": "Extra item request declined",
+  "extra.cancelled": "Extra item request cancelled",
   "payment.started": "Payment started",
   "payment.paid": "Payment confirmed",
   "payment.failed": "Payment failed",

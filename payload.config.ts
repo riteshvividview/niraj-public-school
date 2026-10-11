@@ -11,6 +11,7 @@ import { ClassLevels } from "./src/collections/ClassLevels";
 import { EssentialsStock } from "./src/collections/EssentialsStock";
 import { ExchangeRequests } from "./src/collections/ExchangeRequests";
 import { Payments } from "./src/collections/Payments";
+import { ExtraItemRequests } from "./src/collections/ExtraItemRequests";
 import { Media } from "./src/collections/Media";
 import { Orders } from "./src/collections/Orders";
 import { PayloadAdmins } from "./src/collections/PayloadAdmins";
@@ -44,6 +45,7 @@ export default buildConfig({
     Receipts,
     ExchangeRequests,
     Payments,
+    ExtraItemRequests,
     BookChangeRequests,
     SupportRequests,
     RecordEvents,

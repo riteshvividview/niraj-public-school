@@ -31,7 +31,7 @@ import { actorFromUser, recordEvent } from "@/lib/server/record-events";
  * surfacing a foreign-key error.
  */
 const keepStudentsWithHistory: CollectionBeforeDeleteHook = async ({ id, req }) => {
-  const checks = ["orders", "receipts", "payments", "exchange-requests", "book-change-requests", "support-requests", "record-events"] as const;
+  const checks = ["orders", "receipts", "payments", "extra-item-requests", "exchange-requests", "book-change-requests", "support-requests", "record-events"] as const;
   for (const collection of checks) {
     const key = collection === "record-events" ? "student" : "user";
     const found = await req.payload.count({ collection, where: { [key]: { equals: id } } });
@@ -203,6 +203,16 @@ export const Users: CollectionConfig = {
       options: [
         { label: "Male", value: "male" },
         { label: "Female", value: "female" },
+      ],
+    },
+    // Staff override of the "new admission" rule (normally decided by the register number's year).
+    {
+      name: "newAdmissionOverride",
+      type: "select",
+      access: { create: staffOnlyField, update: staffOnlyField },
+      options: [
+        { label: "Treat as a new admission", value: "new" },
+        { label: "Treat as an existing student", value: "existing" },
       ],
     },
     {

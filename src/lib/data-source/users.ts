@@ -41,6 +41,7 @@ interface PayloadUserDoc {
   languageLevel?: LanguageLevel | null;
   stream?: Stream | null;
   elective?: Elective | null;
+  newAdmissionOverride?: "new" | "existing" | null;
   address?: PayloadAddressGroup | null;
   createdAt: string;
   updatedAt: string;
@@ -92,6 +93,7 @@ async function toUserProfile(doc: PayloadUserDoc): Promise<UserProfile> {
     languageLevel: doc.languageLevel ?? undefined,
     stream: doc.stream ?? undefined,
     elective: doc.elective ?? undefined,
+    newAdmissionOverride: doc.newAdmissionOverride ?? undefined,
     address: toAddress(doc.address),
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
@@ -339,6 +341,8 @@ export interface UpdateStudentInput {
   elective?: Elective;
   /** undefined = leave as is, null = remove the address, a draft = save it. */
   address?: AddressDraft | null;
+  /** undefined = leave as is, null = back to the register-number rule. */
+  newAdmissionOverride?: "new" | "existing" | null;
 }
 
 export async function updateStudent(id: string, input: UpdateStudentInput): Promise<UserProfile> {
@@ -354,6 +358,7 @@ export async function updateStudent(id: string, input: UpdateStudentInput): Prom
     languageLevel: input.languageLevel,
     stream: input.stream,
     elective: input.elective,
+    ...(input.newAdmissionOverride !== undefined ? { newAdmissionOverride: input.newAdmissionOverride } : {}),
     ...(input.address !== undefined ? { address: toAddressPayload(input.address) } : {}),
   });
   return toUserProfile(doc);

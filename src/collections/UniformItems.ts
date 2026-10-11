@@ -9,7 +9,15 @@ export const UniformItems: CollectionConfig = {
   access: { read: () => true, create: () => true, update: () => true, delete: () => true },
   fields: [
     { name: "school", type: "relationship", relationTo: "schools", required: true },
-    { name: "classLevel", type: "relationship", relationTo: "class-levels", required: true },
+    // Every class-list item belongs to one class. A "new admission item" is common to
+    // all classes (optionally limited to a range of classes) and has no class of its own.
+    {
+      name: "classLevel",
+      type: "relationship",
+      relationTo: "class-levels",
+      validate: (value: unknown, { siblingData }: { siblingData: Record<string, unknown> }) =>
+        value || siblingData?.newAdmission ? true : "Choose a class for this item.",
+    },
     { name: "name", type: "text", required: true },
     {
       name: "category",
@@ -20,6 +28,14 @@ export const UniformItems: CollectionConfig = {
         { label: "Kit", value: "kit" },
       ],
     },
+    // New-admission items (hoody, belt, girls' cycling shorts…): REQUIRED for new students as
+    // part of their full set, optional for existing students. Not tied to a class — the range
+    // below limits them (empty = every class). Compared on the class sort order (class-levels.order).
+    { name: "newAdmission", type: "checkbox", defaultValue: false },
+    { name: "newAdmissionFromOrder", type: "number" },
+    { name: "newAdmissionToOrder", type: "number" },
+    // Taken out of the lists but kept, because past orders / exchanges still point at it.
+    { name: "retired", type: "checkbox", defaultValue: false },
     { name: "description", type: "text" },
     { name: "imageUrl", type: "text" },
     // Unset = unisex item. Set when a school's real uniform bundle differs

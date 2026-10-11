@@ -306,3 +306,47 @@ export function supportRequestedEmail(args: {
     footerNote: STAFF_FOOTER,
   });
 }
+
+/** To school staff — a new-admission student asked to buy one extra uniform item (staff must confirm stock). */
+export function extraItemRequestedEmail(args: { student: StudentSummary; itemLabel: string; size: string; note?: string; consoleUrl: string }): string {
+  return wrapper({
+    eyebrow: "Action needed",
+    title: "Extra Uniform Item Request",
+    headerGradient: `linear-gradient(135deg, ${COLORS.accent} 0%, #b56f00 100%)`,
+    bodyHtml: `
+      <p style="font-size:15px;line-height:1.6;color:${COLORS.ink};margin:0 0 4px;">A new-admission parent asked to buy one more uniform item. Please check you have it in stock and approve or decline in the School Console.</p>
+      ${detailRows([
+        ...studentRows(args.student),
+        ["Item", escapeHtml(args.itemLabel)],
+        ["Size", escapeHtml(args.size)],
+        ["Parent's note", args.note ? escapeHtml(args.note) : undefined],
+      ])}
+      ${ctaButton(args.consoleUrl, "Open Extra Item Requests")}
+    `,
+    footerNote: STAFF_FOOTER,
+  });
+}
+
+/** To the family — the school's decision on their extra-item request. */
+export function extraItemDecisionEmail(args: { approved: boolean; itemLabel: string; size: string; staffNote?: string }): string {
+  return wrapper({
+    eyebrow: args.approved ? "Approved" : "Update on your request",
+    title: args.approved ? "You can now buy this item" : "We couldn't approve this item",
+    headerGradient: args.approved
+      ? `linear-gradient(135deg, ${COLORS.brand2} 0%, #086b60 100%)`
+      : `linear-gradient(135deg, ${COLORS.sub} 0%, #3d4452 100%)`,
+    bodyHtml: `
+      <p style="font-size:15px;line-height:1.6;color:${COLORS.ink};margin:0 0 4px;">${
+        args.approved
+          ? `The school has this item in stock. Open the app, go to <strong>Essentials → Uniform</strong>, add it to your cart and pay online. Then collect it at the school with your receipt.`
+          : `Sorry — the school can't supply this item right now.`
+      }</p>
+      ${detailRows([
+        ["Item", escapeHtml(args.itemLabel)],
+        ["Size", escapeHtml(args.size)],
+        ["Note from the school", args.staffNote ? escapeHtml(args.staffNote) : undefined],
+      ])}
+    `,
+    footerNote: "You are receiving this because you asked to buy an extra uniform item.",
+  });
+}

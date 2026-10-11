@@ -86,6 +86,8 @@ function toRow(doc: Doc): PaymentRow {
     completedAt: str(doc.completedAt),
     orderId: doc.order ? relId(doc.order) : undefined,
     lateSuccess: Boolean(doc.lateSuccess),
+    newAdmissionSet: Boolean(doc.newAdmissionSet),
+    extraRequestIds: Array.isArray(doc.extraRequestIds) ? (doc.extraRequestIds as unknown[]).map(String) : [],
     needsReview: Boolean(doc.needsReview),
     reviewNote: str(doc.reviewNote),
     createdAt: String(doc.createdAt),
@@ -174,6 +176,7 @@ async function ensureOrder(payload: Payload, paymentId: string): Promise<{ order
             quantity: item.quantity,
           })),
           totalAmount: row.amount,
+          newAdmissionSet: row.newAdmissionSet,
           paymentMethod: (KNOWN_METHODS.has(row.method ?? "") ? row.method : "other") as "upi" | "card" | "netbanking" | "other",
           status: "paid",
         },
@@ -192,6 +195,12 @@ async function ensureOrder(payload: Payload, paymentId: string): Promise<{ order
   }
   const orderId = String(order.id);
 
+  if (createdNow && row.extraRequestIds.length > 0) {
+    // The approved extra-item requests this payment was for are now used up.
+    await pool(payload)
+      .query(`UPDATE extra_item_requests SET status = 'used', used_payment_id = $2, updated_at = now() WHERE id = ANY($1::uuid[]) AND status = 'approved'`, [row.extraRequestIds, row.id])
+      .catch((error) => console.error("[payments] could not mark extra-item requests used:", error));
+  }
   if (createdNow) {
     // Program seats: take one per program line. Never below zero; the payment already succeeded so a race here must not fail it.
     for (const item of row.items) {
@@ -410,14 +419,14 @@ export async function startPayment(payload: Payload, studentId: string, requeste
   }
 
   // 3. Price from the database and write the payment BEFORE any money moves.
-  const { items, total } = await priceCart(payload, studentId, requested);
+  const { items, total, newAdmissionSet, extraRequestIds } = await priceCart(payload, studentId, requested);
   const expiresAt = new Date(Date.now() + settings.pendingTimeoutMinutes * 60_000).toISOString();
   let created: PaymentRow;
   try {
     created = toRow(
       (await payload.create({
         collection: "payments",
-        data: { school: schoolId, user: studentId, status: "pending", amount: total, currency: "INR", provider: provider.id, itemsFingerprint: fingerprint, items, expiresAt },
+        data: { school: schoolId, user: studentId, status: "pending", amount: total, currency: "INR", provider: provider.id, itemsFingerprint: fingerprint, items, expiresAt, newAdmissionSet, extraRequestIds },
         depth: 0,
       })) as unknown as Doc,
     );
