@@ -19,6 +19,7 @@ import { firstLanguageOf, oppositeLanguage, secondLanguageOf } from "@/lib/acade
 import { draftFromAddress } from "@/lib/address";
 import { resetStudentPassword, updateStudent } from "@/lib/data-source";
 import { resolveAddressDraft, StaffAddressSection } from "./staff-address-section";
+import { isNewAdmission } from "@/lib/academic-year";
 import type { AcademicLanguage, ClassLevel, Elective, Stream, UserProfile } from "@/types";
 
 export const NONE_VALUE = "__none__";
@@ -31,6 +32,20 @@ export const STREAM_OPTIONS: { value: Stream; label: string }[] = [
   { value: "science", label: "Science" },
   { value: "economics", label: "Economics" },
 ];
+/**
+ * "New admission" chip — a student is new when their register number starts with the current
+ * academic year's digits (or staff marked them). Shown next to the register number.
+ */
+export function NewAdmissionBadge({ student, info }: { student: Pick<UserProfile, "registerNumber" | "newAdmissionOverride">; info?: { startMonth: number } }) {
+  if (!info) return null;
+  if (!isNewAdmission({ registerNumber: student.registerNumber, override: student.newAdmissionOverride ?? null }, new Date(), info.startMonth)) return null;
+  return (
+    <span className="rounded-full bg-section-programs-bg px-2 py-0.5 text-[11px] font-medium text-section-programs" title={student.newAdmissionOverride === "new" ? "Marked as a new admission by staff" : "Register number is from the current academic year"}>
+      New admission{student.newAdmissionOverride === "new" ? " (set by staff)" : ""}
+    </span>
+  );
+}
+
 export const ELECTIVE_OPTIONS: { value: Elective; label: string }[] = [
   { value: "ena", label: "ENA" },
   { value: "homeScience", label: "Home Science" },
@@ -199,6 +214,7 @@ export function EditStudentForm({
   const [stream, setStream] = useState<Stream | "">(student.stream ?? "");
   const [elective, setElective] = useState<Elective | "">(student.elective ?? "");
   const [address, setAddress] = useState(() => draftFromAddress(student.address));
+  const [newAdmissionOverride, setNewAdmissionOverride] = useState<"new" | "existing" | "auto">(student.newAdmissionOverride ?? "auto");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -223,6 +239,7 @@ export function EditStudentForm({
         gender: gender || undefined,
         stream: stream || undefined,
         elective: elective || undefined,
+        newAdmissionOverride: newAdmissionOverride === "auto" ? null : newAdmissionOverride,
         ...deriveLanguage(firstLanguage, secondLanguage),
       });
       toast.success("Student updated");
@@ -287,6 +304,22 @@ export function EditStudentForm({
         elective={elective}
         setElective={setElective}
       />
+      <div className="space-y-2">
+        <Label>New admission</Label>
+        <Select value={newAdmissionOverride} onValueChange={(value) => setNewAdmissionOverride(value as "new" | "existing" | "auto")}>
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="auto">Automatic — from the register number</SelectItem>
+            <SelectItem value="new">Treat as a new admission</SelectItem>
+            <SelectItem value="existing">Treat as an existing student</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-sub">
+          New admissions must buy the full uniform set (once). Use this for mid-year joiners, transfers, or a register number that doesn&apos;t follow the usual pattern.
+        </p>
+      </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="edit-mobile">Mobile number (optional)</Label>

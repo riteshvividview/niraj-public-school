@@ -24,11 +24,13 @@ import {
 } from "@/components/ui/sheet";
 import { useTranslation } from "@/i18n/context";
 import { uniformToCartItem } from "@/lib/cart-items";
-import { getUniformItemsByClass } from "@/lib/data-source";
+import { getClassLevelsBySchool, getMyNewAdmissionStatus, getNewAdmissionItemsFor, getUniformItemsByClass } from "@/lib/data-source";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/store/auth-store";
 import { lineId, useCart } from "@/store/cart-store";
 import { EssentialsReviewBar } from "../_components/review-bar";
+import { ExtraItemRequests } from "./_components/extra-item-requests";
+import { NewAdmissionSet } from "./_components/new-admission-set";
 
 const UNSELECT_VALUE = "__unselect__";
 
@@ -93,11 +95,22 @@ export default function UniformPage() {
   const { t } = useTranslation();
   const { profile } = useAuth();
   const cart = useCart();
-  const { data: swrItems } = useSWR(
-    profile ? ["uniform:catalogue", profile.schoolId, profile.classLevelId, profile.gender] : null,
-    () => getUniformItemsByClass(profile!.schoolId, profile!.classLevelId, profile!.gender),
-  );
-  const items = swrItems ?? null;
+  // Whether this student is a NEW admission is decided on the server (register-number year, the school's
+  // academic-year start, any staff override). If that call fails, fall back to the normal list — the
+  // payment step enforces the real rule either way.
+  const { data: status, error: statusError } = useSWR(profile ? ["na-status", profile.id] : null, () => getMyNewAdmissionStatus());
+  const { data: swrItems } = useSWR(profile ? ["uniform:catalogue+na", profile.schoolId, profile.classLevelId, profile.gender] : null, async () => {
+    const levels = await getClassLevelsBySchool(profile!.schoolId);
+    const classOrder = levels.find((level) => level.id === profile!.classLevelId)?.order ?? 0;
+    // The class's regular items, plus the new-admission items that apply to this class and gender.
+    const [regular, extra] = await Promise.all([
+      getUniformItemsByClass(profile!.schoolId, profile!.classLevelId, profile!.gender),
+      getNewAdmissionItemsFor(profile!.schoolId, classOrder, profile!.gender),
+    ]);
+    return [...regular, ...extra];
+  });
+  const items = status || statusError ? (swrItems ?? null) : null;
+  const mode: "set" | "requests" | "normal" = status?.isNew ? (status.setBought ? "requests" : "set") : "normal";
 
   useEffect(() => {
     if (!items) return;
@@ -132,6 +145,10 @@ export default function UniformPage() {
           </div>
         ) : items.length === 0 ? (
           <EmptyState icon={Shirt} title={t.common.noItemsYet} />
+        ) : mode === "set" ? (
+          <NewAdmissionSet items={items} />
+        ) : mode === "requests" ? (
+          <ExtraItemRequests items={items} userId={profile.id} />
         ) : (
           <div className="space-y-3">
             {items.map((item) => {
@@ -147,7 +164,7 @@ export default function UniformPage() {
                   <ItemCard
                     key={item.id}
                     name={item.name}
-                    meta={item.description}
+                    meta={item.newAdmission ? t.newAdmission.optional : item.description}
                     price={only.price}
                     selected={Boolean(confirmed)}
                     onToggleSelected={(selected) =>
@@ -161,7 +178,7 @@ export default function UniformPage() {
                 <ItemCard
                   key={item.id}
                   name={item.name}
-                  meta={item.description}
+                  meta={item.newAdmission ? t.newAdmission.optional : item.description}
                   price={displayPrice}
                   selected={Boolean(confirmed)}
                   trailing={

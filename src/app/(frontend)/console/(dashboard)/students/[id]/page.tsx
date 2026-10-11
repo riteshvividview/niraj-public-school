@@ -24,11 +24,13 @@ import { AddressBlock } from "@/components/console/address-display";
 import { RecordEventRow } from "@/components/console/record-event-list";
 import { deleteStudent, getReceiptsByUser, getRecordEventsByStudent, getUserProfileById } from "@/lib/data-source";
 import { formatDate, formatTime } from "@/lib/format";
-import { classLevelsCacheUpdater, useClassLevels } from "@/lib/hooks/console-data";
+import { isNewAdmission } from "@/lib/academic-year";
+import { classLevelsCacheUpdater, useClassLevels, useNewAdmissionInfo } from "@/lib/hooks/console-data";
 import {
   EditStudentForm,
   electiveLabel,
   firstLanguageOf,
+  NewAdmissionBadge,
   ResetPasswordForm,
   secondLanguageOf,
 } from "../_components/student-shared";
@@ -117,6 +119,7 @@ export default function StudentDetailPage() {
     mutate: mutateStudent,
   } = useSWR(["console:student", studentId], () => getUserProfileById(studentId));
   const { classLevels, mutateClassLevels } = useClassLevels(student?.schoolId ?? "");
+  const newAdmissionInfo = useNewAdmissionInfo(student?.schoolId ?? "");
   const { data: receiptsData } = useSWR(["console:student-receipts", studentId], () =>
     getReceiptsByUser(studentId),
   );
@@ -178,9 +181,12 @@ export default function StudentDetailPage() {
               <UserAvatar name={student.name} avatarUrl={student.avatarUrl} size="lg" />
               <div>
                 <h1 className="font-heading text-2xl font-bold text-ink">{student.name}</h1>
-                <p className="text-sm text-sub">
-                  {student.registerNumber} · {classLabel ?? "—"}
-                  {student.section ? ` · Sec ${student.section}` : ""}
+                <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-sub">
+                  <span>
+                    {student.registerNumber} · {classLabel ?? "—"}
+                    {student.section ? ` · Sec ${student.section}` : ""}
+                  </span>
+                  <NewAdmissionBadge student={student} info={newAdmissionInfo} />
                 </p>
               </div>
             </div>
@@ -213,6 +219,20 @@ export default function StudentDetailPage() {
                 <div className="divide-y divide-line">
                   <InfoRow label="Name" value={student.name} />
                   <InfoRow label="Register Number" value={student.registerNumber} />
+                  <InfoRow
+                    label="New admission"
+                    value={
+                      student.newAdmissionOverride === "new"
+                        ? "Yes — set by staff"
+                        : student.newAdmissionOverride === "existing"
+                          ? "No — set by staff"
+                          : newAdmissionInfo
+                            ? isNewAdmission({ registerNumber: student.registerNumber }, new Date(), newAdmissionInfo.startMonth)
+                              ? `Yes — register number is from ${newAdmissionInfo.academicYear}`
+                              : "No"
+                            : "—"
+                    }
+                  />
                   <InfoRow label="Class" value={classLabel ?? "—"} />
                   <InfoRow label="Section" value={student.section ?? "—"} />
                   <InfoRow

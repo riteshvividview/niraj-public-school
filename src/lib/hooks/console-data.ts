@@ -15,7 +15,7 @@ import {
   getPaymentCoverageBySchool,
   getOpenSupportCount,
   getPendingBookChangeCount,
-  getPendingExchangeCount,
+  countPendingExtraItemRequests, getNewAdmissionSummary, getPendingExchangeCount,
   getPaymentsBySchool,
   getProgramReportBySchool,
   getSchools,
@@ -100,6 +100,22 @@ export function usePendingExchangeCount(schoolId: string): number {
 /** Same idea as usePendingExchangeCount, for the "Subject Change Requests" nav badge. */
 export function usePendingBookChangeCount(schoolId: string): number {
   const { data } = useSWR(schoolId ? ["console:book-change-pending", schoolId] : null, () => getPendingBookChangeCount(schoolId), {
+    refreshInterval: 60_000,
+  });
+  return data ?? 0;
+}
+
+/** The school's academic year (and its start month) — lets the Students screens badge new admissions. One shared fetch. */
+export function useNewAdmissionInfo(schoolId: string): { startMonth: number; academicYear: string } | undefined {
+  const { data } = useSWR(schoolId ? ["console:new-admission-info", schoolId] : null, () => getNewAdmissionSummary(schoolId, true), {
+    refreshInterval: 10 * 60_000,
+  });
+  return data ? { startMonth: data.startMonth, academicYear: data.academicYear } : undefined;
+}
+
+/** Same idea as usePendingExchangeCount, for the "Extra Item Requests" nav badge. */
+export function usePendingExtraItemCount(schoolId: string): number {
+  const { data } = useSWR(schoolId ? ["console:extra-pending", schoolId] : null, () => countPendingExtraItemRequests(schoolId), {
     refreshInterval: 60_000,
   });
   return data ?? 0;

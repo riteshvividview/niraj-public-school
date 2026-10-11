@@ -15,3 +15,4 @@ export * from "./support";
 export * from "./record-event";
 export * from "./address";
 export * from "./payment";
+export * from "./extra-item";

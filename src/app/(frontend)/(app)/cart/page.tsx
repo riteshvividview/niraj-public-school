@@ -9,7 +9,10 @@ import { PendingPaymentBanner } from "@/components/shared/pending-payment-banner
 import { PriceSummary } from "@/components/shared/price-summary";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/i18n/context";
+import useSWR from "swr";
 import { buildPriceSummaryLines, groupItemsByKind } from "@/lib/cart-items";
+import { getMyNewAdmissionStatus } from "@/lib/data-source";
+import { useAuth } from "@/store/auth-store";
 import { formatCurrencyINR } from "@/lib/format";
 import { useCart } from "@/store/cart-store";
 import type { CartItem } from "@/types";
@@ -59,8 +62,12 @@ export default function CartPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const cart = useCart();
+  const { profile } = useAuth();
+  // A new-admission student who hasn't bought their set yet buys the uniform as ONE set (decided by the server).
+  const { data: naStatus } = useSWR(profile ? ["na-status", profile.id] : null, () => getMyNewAdmissionStatus());
 
   const grouped = groupItemsByKind(cart.items);
+  const uniformIsASet = Boolean(naStatus?.isNew && !naStatus.setBought);
   const categoryLabels = {
     books: t.essentials.books,
     uniform: t.essentials.uniform,
@@ -106,11 +113,13 @@ export default function CartPage() {
                       <CartLineRow
                         key={item.id}
                         item={item}
-                        onRemove={() => cart.setIncluded(item, false)}
+                        // A new student's uniform is one set — it can't be broken up, so removing any piece removes the set.
+                        onRemove={() => (uniformIsASet ? grouped.uniform.forEach((line) => cart.remove(line.id)) : cart.setIncluded(item, false))}
                         changeSizeLabel={t.cart.changeSize}
                       />
                     ))}
                   </div>
+                  {uniformIsASet ? <p className="mt-1.5 text-xs text-sub">{t.newAdmission.cartSetLocked}</p> : null}
                 </div>
               ) : null}
               {grouped.programs.length > 0 ? (

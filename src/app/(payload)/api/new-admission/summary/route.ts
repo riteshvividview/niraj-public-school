@@ -18,6 +18,10 @@ export async function GET(request: Request) {
   const pool = (payload.db as unknown as { pool: Queryable }).pool;
   const startMonth = await getAcademicYearStartMonth(payload, schoolId);
   const now = new Date();
+  // `light` = just the academic year (used by the Students page to badge new admissions) — skips the roster scan.
+  if (new URL(request.url).searchParams.get("light")) {
+    return NextResponse.json({ academicYear: academicYearLabel(academicYearStart(now, startMonth)), startMonth, totalStudents: 0, newCount: 0, setBoughtCount: 0, overrides: 0, waiting: [] });
+  }
   const students = (
     await pool.query(
       `SELECT u.id, u.name, u.username, u.new_admission_override AS override, u.class_level_id,

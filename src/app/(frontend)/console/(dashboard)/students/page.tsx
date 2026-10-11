@@ -68,6 +68,7 @@ import {
   classLevelsCacheUpdater,
   useClassLevels,
   useConsoleSchoolId,
+  useNewAdmissionInfo,
 } from "@/lib/hooks/console-data";
 import { oppositeLanguage } from "@/lib/academic-language";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
@@ -78,6 +79,7 @@ import {
   firstLanguageOf,
   LANGUAGE_OPTIONS,
   LanguageAndSpecializationFields,
+  NewAdmissionBadge,
   secondLanguageOf,
   STREAM_OPTIONS,
 } from "./_components/student-shared";
@@ -720,6 +722,7 @@ function StudentFilterBar({
 }
 
 function StudentRow({ student, classLabel }: { student: UserProfile; classLabel: string }) {
+  const newAdmissionInfo = useNewAdmissionInfo(student.schoolId);
   const { mutate } = useSWRConfig();
   const firstLang = firstLanguageOf(student);
   const secondLang = secondLanguageOf(student);
@@ -739,6 +742,7 @@ function StudentRow({ student, classLabel }: { student: UserProfile; classLabel:
         <p className="truncate font-medium text-ink">{student.name}</p>
         <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-sub">
           <span>{student.registerNumber}</span>
+          <NewAdmissionBadge student={student} info={newAdmissionInfo} />
           <span>·</span>
           <span>{classLabel}</span>
           {student.section ? (

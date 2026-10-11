@@ -102,6 +102,8 @@ export interface UniformItemInput {
   /** Not needed for a new-admission item. */
   classLevelId?: string;
   newAdmission?: boolean;
+  /** Take the item out of every list (kept for past orders). */
+  retired?: boolean;
   newAdmissionFromOrder?: number | null;
   newAdmissionToOrder?: number | null;
   name: string;
@@ -109,7 +111,8 @@ export interface UniformItemInput {
   description?: string;
   /** One row per size a student can pick (label is free text — "Standard", "S", "32", etc.), each with its own price. */
   sizeOptions: UniformSizeOption[];
-  gender?: Gender;
+  /** null = for everyone (clears a previously set gender when editing). */
+  gender?: Gender | null;
 }
 
 /** Console — Catalogue Manager. */
@@ -139,6 +142,7 @@ export async function updateUniformItem(
     ...(patch.description !== undefined ? { description: patch.description } : {}),
     ...(patch.sizeOptions !== undefined ? { sizeOptions: patch.sizeOptions } : {}),
     ...(patch.gender !== undefined ? { gender: patch.gender } : {}),
+    ...(patch.retired !== undefined ? { retired: patch.retired } : {}),
     ...(patch.newAdmissionFromOrder !== undefined ? { newAdmissionFromOrder: patch.newAdmissionFromOrder } : {}),
     ...(patch.newAdmissionToOrder !== undefined ? { newAdmissionToOrder: patch.newAdmissionToOrder } : {}),
   });

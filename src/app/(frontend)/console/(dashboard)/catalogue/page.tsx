@@ -42,6 +42,7 @@ import {
   updateUniformItem,
 } from "@/lib/data-source";
 import { BookContentsDialog } from "./_components/book-contents-dialog";
+import { NewAdmissionSection } from "./_components/new-admission-section";
 import { useClassLevels, useConsoleSchoolId } from "@/lib/hooks/console-data";
 import type {
   AcademicLanguage,
@@ -750,6 +751,8 @@ export default function CatalogueManagerPage() {
           <UniformManager schoolId={schoolId} classLevelId={effectiveClassLevelId} />
         </div>
       ) : null}
+
+      {schoolId ? <NewAdmissionSection schoolId={schoolId} /> : null}
     </div>
   );
 }

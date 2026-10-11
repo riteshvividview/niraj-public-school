@@ -414,7 +414,7 @@ export default function StockPage() {
                       <p className="font-medium text-ink">{line.label}</p>
                       <p className="text-xs text-sub capitalize">{line.kind}</p>
                     </TableCell>
-                    <TableCell>{classLevelById.get(line.classLevelId) ?? "—"}</TableCell>
+                    <TableCell>{classLevelById.get(line.classLevelId) ?? (line.classLevelId === "" ? "New admission (all classes)" : "—")}</TableCell>
                     <TableCell>{line.sizeLabel ?? "—"}</TableCell>
                     <TableCell>{formatCurrencyINR(line.price)}</TableCell>
                     <TableCell>

@@ -209,6 +209,42 @@ export interface Dictionary {
     paymentsLink: string;
   };
 
+  newAdmission: {
+    setTitle: string;
+    setDescription: string;
+    required: string;
+    optional: string;
+    addSet: string;
+    removeSet: string;
+    setInCart: string;
+    setTotal: string;
+    setNote: string;
+    extrasTitle: string;
+    extrasDescription: string;
+    request: string;
+    requestTitle: string;
+    requestDescription: string;
+    sizeLabel: string;
+    noteLabel: string;
+    notePlaceholder: string;
+    sendRequest: string;
+    requestSent: string;
+    myRequests: string;
+    statusPending: string;
+    statusApproved: string;
+    statusRejected: string;
+    statusCancelled: string;
+    statusUsed: string;
+    addToCart: string;
+    inCart: string;
+    cancelRequest: string;
+    schoolNote: string;
+    approvedTitle: string;
+    setBought: string;
+    cartSetLocked: string;
+    cartRemoveSet: string;
+  };
+
   paymentsPage: {
     title: string;
     subtitle: string;

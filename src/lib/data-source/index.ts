@@ -16,3 +16,4 @@ export * from "./records";
 export * from "./address";
 export * from "./payments";
 export * from "./payment-attempts";
+export * from "./new-admission";

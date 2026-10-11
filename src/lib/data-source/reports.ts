@@ -10,7 +10,7 @@ import { getOrdersBySchool } from "./orders";
 import { getPaymentsBySchool } from "./receipts";
 import { getPrograms } from "./programs";
 import { getStudentsBySchool } from "./users";
-import { getUniformItemsByClass, getUniformItemsBySchool } from "./uniform";
+import { getNewAdmissionItemsFor, getUniformItemsByClass, getUniformItemsBySchool } from "./uniform";
 
 export type { ReportFilter } from "@/lib/reports-aggregate";
 
@@ -269,8 +269,10 @@ export async function getPaymentCoverageBySchool(
     const key = `${classLevelId}|${gender ?? ""}`;
     let promise = estimatedUniformCostCache.get(key);
     if (!promise) {
-      promise = getUniformItemsByClass(schoolId, classLevelId, gender).then((items) =>
-        items.reduce((sum, item) => {
+      // Regular class items + the new-admission items that apply (they sit outside the class lists, but a student could still buy them).
+      const classOrder = classLevels.find((level) => level.id === classLevelId)?.order ?? 0;
+      promise = Promise.all([getUniformItemsByClass(schoolId, classLevelId, gender), getNewAdmissionItemsFor(schoolId, classOrder, gender)]).then(([regular, extra]) =>
+        [...regular, ...extra].reduce((sum, item) => {
           if (item.sizeOptions.length === 0) return sum;
           return sum + item.sizeOptions.reduce((s, o) => s + o.price, 0) / item.sizeOptions.length;
         }, 0),

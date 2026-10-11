@@ -8,6 +8,7 @@ import {
   History,
   LayoutDashboard,
   LogOut,
+  PackagePlus,
   PackageSearch,
   Receipt,
   Repeat,
@@ -19,7 +20,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
-import { useConsoleSchoolId, useEssentialsStock, useOpenSupportCount, usePendingBookChangeCount, usePendingExchangeCount } from "@/lib/hooks/console-data";
+import { useConsoleSchoolId, useEssentialsStock, useOpenSupportCount, usePendingBookChangeCount, usePendingExchangeCount, usePendingExtraItemCount } from "@/lib/hooks/console-data";
 import { cn } from "@/lib/utils";
 import { useConsoleAuth } from "@/store/console-auth-store";
 
@@ -38,6 +39,7 @@ const NAV_ITEMS = [
   { href: "/console/payments", label: "Payments", icon: Receipt },
   { href: "/console/payment-attempts", label: "Payment Attempts", icon: Wallet },
   { href: "/console/exchange-requests", label: "Exchange Requests", icon: Repeat },
+  { href: "/console/extra-item-requests", label: "Extra Item Requests", icon: PackagePlus },
   { href: "/console/subject-change-requests", label: "Subject Change Requests", icon: BookOpenCheck },
   { href: "/console/support", label: "Parent Support", icon: Headset },
   { href: "/console/records", label: "Records & History", icon: History },
@@ -72,12 +74,14 @@ function NavLinks({
   const consoleSchoolId = useConsoleSchoolId();
   const pendingExchanges = usePendingExchangeCount(consoleSchoolId);
   const pendingBookChanges = usePendingBookChangeCount(consoleSchoolId);
+  const pendingExtraItems = usePendingExtraItemCount(consoleSchoolId);
   const openSupport = useOpenSupportCount(consoleSchoolId);
   const navItems = useNavItems();
   const badgeCounts: Record<string, number> = {
     "/console/stock": lowStockCount,
     "/console/exchange-requests": pendingExchanges,
     "/console/subject-change-requests": pendingBookChanges,
+    "/console/extra-item-requests": pendingExtraItems,
     "/console/support": openSupport,
   };
   return (
