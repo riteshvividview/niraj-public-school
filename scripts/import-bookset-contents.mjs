@@ -61,7 +61,8 @@ function parseWorkbook(file) {
       subjectCarry = "";
       continue;
     }
-    if (c[0] === "S.No") {
+    // (one file has a blank-looking "S.No" cell on the stationery header — match on the heading text too)
+    if (c[0] === "S.No" || (c[0] === "" && /^stationery$/i.test(c[1]) && /type of book/i.test(c[2]))) {
       if (/name of the book/i.test(c[2])) {
         mode = { kind: "textbook", layout: "senior", subject: 1, name: 2, publisher: 3, qty: 4 };
         subjectCarry = "";
@@ -111,6 +112,35 @@ function parseWorkbook(file) {
   return items;
 }
 
+/**
+ * Cross-checks what the sheet itself says (grade, language, group, elective in
+ * its heading) against what the file NAME says, so a mis-named file can never be
+ * imported into the wrong book set. Returns a list of disagreements.
+ */
+function headerProblems(file, d) {
+  const wb = XLSX.readFile(path.join(DIR, file));
+  const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, blankrows: false });
+  const head = rows.slice(0, 8).map((r) => r.map(clean).join(" ")).join(" | ").toLowerCase();
+  const problems = [];
+  const grade = head.match(/(?:grade|class)\s*[–-]\s*(\d+)/);
+  if (d.classLabel.startsWith("Class ")) {
+    if (!grade || `Class ${grade[1]}` !== d.classLabel) problems.push(`heading says "${grade ? "Class " + grade[1] : "no class"}", file name says "${d.classLabel}"`);
+  } else if (!new RegExp("\\b" + d.classLabel.toLowerCase() + "\\b").test(head)) problems.push(`heading doesn't mention ${d.classLabel}`);
+  const langs = ["hindi", "telugu"].filter((l) => head.includes(l));
+  if (d.language) {
+    if (langs.length !== 1 || langs[0] !== d.language) problems.push(`heading language [${langs.join(",") || "none"}] ≠ file name "${d.language}"`);
+  } else if (langs.length) problems.push(`heading mentions ${langs.join(",")} but file name has no language`);
+  const streams = ["science", "economics"].filter((x) => head.includes(x + " group"));
+  if (d.stream) {
+    if (streams.length !== 1 || streams[0] !== d.stream) problems.push(`heading group [${streams.join(",") || "none"}] ≠ file name "${d.stream}"`);
+  } else if (streams.length) problems.push(`heading mentions ${streams.join(",")} group but file name has none`);
+  const els = [["ena", /with ena/], ["homeScience", /with home science/], ["roboticsAI", /with robotics/]].filter(([, re]) => re.test(head)).map(([k]) => k);
+  if (d.elective) {
+    if (els.length !== 1 || els[0] !== d.elective) problems.push(`heading elective [${els.join(",") || "none"}] ≠ file name "${d.elective}"`);
+  } else if (els.length) problems.push(`heading mentions elective ${els.join(",")} but file name has none`);
+  return problems;
+}
+
 const newId = () => randomBytes(12).toString("hex");
 
 async function main() {
@@ -133,10 +163,17 @@ async function main() {
         (b.stream ?? null) === d.stream &&
         (b.elective ?? null) === d.elective,
     );
-    if (hits.length === 1) matched.push({ file, book: hits[0], items });
+    const problems = hits.length === 1 ? headerProblems(file, d) : [];
+    if (problems.length) unmatched.push({ file, reason: "HEADING DISAGREES WITH FILE NAME: " + problems.join("; "), d, count: items.length });
+    else if (hits.length === 1) matched.push({ file, book: hits[0], items });
     else unmatched.push({ file, reason: hits.length === 0 ? "no matching book set in the catalogue" : "more than one matching book set", d, count: items.length });
   }
 
+  const seen = new Set();
+  for (const m of matched) {
+    if (seen.has(m.book.id)) throw new Error(`Two files map to the same book set: ${m.book.class_label} ${m.book.title}`);
+    seen.add(m.book.id);
+  }
   console.log(`\n${files.length} files · ${matched.length} match a book set · ${unmatched.length} skipped\n`);
   for (const m of matched) {
     const by = (s) => m.items.filter((i) => i.section === s).length;
@@ -157,8 +194,10 @@ async function main() {
   const client = await pool.connect();
   try {
     await client.query("begin");
+    const only = process.argv.find((a) => a.startsWith("--only="))?.slice(7);
     for (const m of matched) {
       if (m.items.length === 0) continue;
+      if (only && !m.file.includes(only)) continue;
       await client.query("delete from books_contents where _parent_id = $1", [m.book.id]);
       let order = 0;
       for (const it of m.items) {
