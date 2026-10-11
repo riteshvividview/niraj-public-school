@@ -109,8 +109,9 @@ export default function UniformPage() {
     ]);
     return [...regular, ...extra];
   });
-  const items = status || statusError ? (swrItems ?? null) : null;
   const mode: "set" | "requests" | "normal" = status?.isNew ? (status.setBought ? "requests" : "set") : "normal";
+  // New-admission items are for NEW admissions only — an existing student never sees them (not even as optional).
+  const items = status || statusError ? (swrItems ? (mode === "normal" ? swrItems.filter((item) => !item.newAdmission) : swrItems) : null) : null;
 
   useEffect(() => {
     if (!items) return;
@@ -164,7 +165,7 @@ export default function UniformPage() {
                   <ItemCard
                     key={item.id}
                     name={item.name}
-                    meta={item.newAdmission ? t.newAdmission.optional : item.description}
+                    meta={item.description}
                     price={only.price}
                     selected={Boolean(confirmed)}
                     onToggleSelected={(selected) =>
@@ -178,7 +179,7 @@ export default function UniformPage() {
                 <ItemCard
                   key={item.id}
                   name={item.name}
-                  meta={item.newAdmission ? t.newAdmission.optional : item.description}
+                  meta={item.description}
                   price={displayPrice}
                   selected={Boolean(confirmed)}
                   trailing={

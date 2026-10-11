@@ -63,6 +63,8 @@ export async function priceCart(payload: Payload, studentId: string, requested: 
   const classLevelDoc = (await payload.findByID({ collection: "class-levels", id: classLevelId, depth: 0 }).catch(() => null)) as Doc | null;
   const classOrder = Number(classLevelDoc?.order ?? 0);
 
+  const naStatus = await getNewAdmissionStatus(payload, studentId);
+
   const seen = new Set<string>();
   const items: PaymentItem[] = [];
   for (const line of requested) {
@@ -94,6 +96,8 @@ export async function priceCart(payload: Payload, studentId: string, requested: 
       const gone = new CartError("A uniform item in your cart is no longer available. Please review your cart.");
       if (!item || item.retired || relId(item.school) !== schoolId) throw gone;
       if (item.newAdmission) {
+        // New-admission items are for new admissions only — an existing student can't buy them at all.
+        if (!naStatus.isNew) throw gone;
         // A new-admission item belongs to no class — it applies by gender and class range.
         const applies = newAdmissionItemApplies(
           { gender: item.gender as string | undefined, fromOrder: item.newAdmissionFromOrder as number | null, toOrder: item.newAdmissionToOrder as number | null },
@@ -134,23 +138,27 @@ export async function priceCart(payload: Payload, studentId: string, requested: 
 
   const total = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   if (!(total > 0)) throw new CartError("There is nothing to pay for in this cart.");
-  const rules = await enforceUniformRules(payload, studentId, items);
+  const rules = await enforceUniformRules(payload, studentId, items, naStatus);
   return { items, total, ...rules };
 }
 
 /**
  * The new-admission rules for uniform lines (see lib/server/uniform/new-admission.ts):
- *   • an EXISTING student buys uniform items freely, as before;
+ *   • an EXISTING student buys their class's uniform items freely, as before (new-admission items are not offered to them);
  *   • a NEW student who has not bought their set yet must buy the FULL set together — every
  *     regular item for their class + every new-admission item that applies, nothing missing
  *     and nothing extra — and can do so only once;
  *   • a NEW student who already has the set may buy a single extra item only when staff have
  *     approved a request for exactly that item and size.
  */
-async function enforceUniformRules(payload: Payload, studentId: string, items: PaymentItem[]): Promise<{ newAdmissionSet: boolean; extraRequestIds: string[] }> {
+async function enforceUniformRules(
+  payload: Payload,
+  studentId: string,
+  items: PaymentItem[],
+  status: Awaited<ReturnType<typeof getNewAdmissionStatus>>,
+): Promise<{ newAdmissionSet: boolean; extraRequestIds: string[] }> {
   const uniform = items.filter((item) => item.kind === "uniform");
   if (uniform.length === 0) return { newAdmissionSet: false, extraRequestIds: [] };
-  const status = await getNewAdmissionStatus(payload, studentId);
   if (!status.isNew) return { newAdmissionSet: false, extraRequestIds: [] };
 
   if (!status.setBought) {

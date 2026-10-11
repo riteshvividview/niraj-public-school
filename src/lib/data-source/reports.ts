@@ -10,6 +10,8 @@ import { getOrdersBySchool } from "./orders";
 import { getPaymentsBySchool } from "./receipts";
 import { getPrograms } from "./programs";
 import { getStudentsBySchool } from "./users";
+import { DEFAULT_ACADEMIC_YEAR_START_MONTH, isNewAdmission } from "@/lib/academic-year";
+import { getNewAdmissionSummary } from "./new-admission";
 import { getNewAdmissionItemsFor, getUniformItemsByClass, getUniformItemsBySchool } from "./uniform";
 
 export type { ReportFilter } from "@/lib/reports-aggregate";
@@ -224,11 +226,13 @@ export interface PaymentCoverageSummary {
 export async function getPaymentCoverageBySchool(
   schoolId: string,
 ): Promise<{ byClass: PaymentCoverageRow[]; students: CoverageStudent[]; summary: PaymentCoverageSummary }> {
-  const [students, classLevels, payments] = await Promise.all([
+  const [students, classLevels, payments, newAdmissionInfo] = await Promise.all([
     getStudentsBySchool(schoolId),
     getClassLevelsBySchool(schoolId),
     getPaymentsBySchool(schoolId),
+    getNewAdmissionSummary(schoolId, true).catch(() => null),
   ]);
+  const startMonth = newAdmissionInfo?.startMonth ?? DEFAULT_ACADEMIC_YEAR_START_MONTH;
 
   const anyPaidIds = new Set(payments.map((payment) => payment.receipt.userId));
   const booksPaidIds = new Set<string>();
@@ -265,13 +269,16 @@ export async function getPaymentCoverageBySchool(
     return promise;
   };
   const estimatedUniformCostCache = new Map<string, Promise<number>>();
-  const estimatedUniformCost = (classLevelId: string, gender: Gender | undefined) => {
-    const key = `${classLevelId}|${gender ?? ""}`;
+  const estimatedUniformCost = (classLevelId: string, gender: Gender | undefined, isNew: boolean) => {
+    const key = `${classLevelId}|${gender ?? ""}|${isNew ? "new" : "existing"}`;
     let promise = estimatedUniformCostCache.get(key);
     if (!promise) {
-      // Regular class items + the new-admission items that apply (they sit outside the class lists, but a student could still buy them).
+      // The class's regular items, plus — for a NEW admission only — the new-admission items that apply to them.
       const classOrder = classLevels.find((level) => level.id === classLevelId)?.order ?? 0;
-      promise = Promise.all([getUniformItemsByClass(schoolId, classLevelId, gender), getNewAdmissionItemsFor(schoolId, classOrder, gender)]).then(([regular, extra]) =>
+      promise = Promise.all([
+        getUniformItemsByClass(schoolId, classLevelId, gender),
+        isNew ? getNewAdmissionItemsFor(schoolId, classOrder, gender) : Promise.resolve([]),
+      ]).then(([regular, extra]) =>
         [...regular, ...extra].reduce((sum, item) => {
           if (item.sizeOptions.length === 0) return sum;
           return sum + item.sizeOptions.reduce((s, o) => s + o.price, 0) / item.sizeOptions.length;
@@ -329,7 +336,13 @@ export async function getPaymentCoverageBySchool(
               stream: student.stream,
               elective: student.elective,
             }),
-        hasPaidUniform ? Promise.resolve(0) : estimatedUniformCost(student.classLevelId, student.gender),
+        hasPaidUniform
+          ? Promise.resolve(0)
+          : estimatedUniformCost(
+              student.classLevelId,
+              student.gender,
+              isNewAdmission({ registerNumber: student.registerNumber, override: student.newAdmissionOverride ?? null }, new Date(), startMonth),
+            ),
       ]);
 
       return {
