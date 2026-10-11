@@ -1,5 +1,4 @@
 import { APIError, type CollectionAfterChangeHook, type CollectionBeforeChangeHook, type CollectionConfig } from "payload";
-import { authenticated } from "../access/authenticated";
 import { denyAll, readOwnOrStaff, staffOnly } from "../access/request-access";
 import { actorFromUser, recordEvent } from "@/lib/server/record-events";
 import { collectedEmail, type EmailBookSet } from "@/lib/email/templates";
@@ -343,11 +342,13 @@ export const Orders: CollectionConfig = {
   // school staff can update (marking items collected at the counter); nobody
   // can delete over REST, and the database refuses deletes too (see the
   // record_history migration).
-  access: { read: readOwnOrStaff, create: authenticated, update: staffOnly, delete: denyAll },
+  access: { read: readOwnOrStaff, create: denyAll, update: staffOnly, delete: denyAll },
   hooks: { beforeChange: [enforceStudentOrderRules, syncBookParts], afterChange: [logOrderHistory, notifyOnCollection] },
   fields: [
     { name: "user", type: "relationship", relationTo: "users", required: true },
     { name: "school", type: "relationship", relationTo: "schools", required: true },
+    // The confirmed payment this order came from (see collections/Payments.ts).
+    { name: "payment", type: "relationship", relationTo: "payments" },
     {
       name: "items",
       type: "array",
@@ -389,7 +390,7 @@ export const Orders: CollectionConfig = {
       name: "paymentMethod",
       type: "select",
       required: true,
-      options: ["upi", "card", "netbanking"],
+      options: ["upi", "card", "netbanking", "other"],
     },
     {
       name: "status",

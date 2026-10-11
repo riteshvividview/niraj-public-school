@@ -1,11 +1,12 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Receipt as ReceiptIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Receipt as ReceiptIcon, Wallet } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import useSWR, { preload } from "swr";
 import { AppHeader } from "@/components/shared/app-header";
 import { EmptyState } from "@/components/shared/empty-state";
+import { PendingPaymentBanner } from "@/components/shared/pending-payment-banner";
 import { StatusBadge, toBadgeStatus } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/i18n/context";
@@ -73,6 +74,11 @@ export default function ReceiptsListPage() {
     <>
       <AppHeader title={t.receiptsPage.title} showAvatar />
       <div className="w-full space-y-4 p-4 pb-8 sm:p-6 lg:p-8">
+        <PendingPaymentBanner />
+        <Link href="/payments" className="inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline">
+          <Wallet className="size-4" />
+          {t.receiptsPage.paymentsLink}
+        </Link>
         {records === null ? null : records.length === 0 ? (
           <EmptyState
             icon={ReceiptIcon}

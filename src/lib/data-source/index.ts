@@ -14,3 +14,5 @@ export * from "./book-changes";
 export * from "./support";
 export * from "./records";
 export * from "./address";
+export * from "./payments";
+export * from "./payment-attempts";

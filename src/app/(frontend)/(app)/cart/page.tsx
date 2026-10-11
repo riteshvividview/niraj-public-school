@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppHeader } from "@/components/shared/app-header";
 import { EmptyState } from "@/components/shared/empty-state";
+import { PendingPaymentBanner } from "@/components/shared/pending-payment-banner";
 import { PriceSummary } from "@/components/shared/price-summary";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/i18n/context";
@@ -71,6 +72,7 @@ export default function CartPage() {
     <>
       <AppHeader title={t.cart.title} backHref="/essentials" showAvatar hideCart />
       <div className="w-full space-y-4 p-4 pb-8 sm:space-y-5 sm:p-6 lg:p-8">
+        <PendingPaymentBanner />
         {cart.count === 0 ? (
           <EmptyState
             icon={ShoppingCart}

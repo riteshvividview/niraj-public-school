@@ -27,6 +27,7 @@ import {
 } from "@/lib/data-source";
 import { formatDate } from "@/lib/format";
 import { useConsoleAuth } from "@/store/console-auth-store";
+import { PaymentSettingsCard } from "./_components/payment-settings-card";
 import { RequestNotificationsCard } from "./_components/request-notifications-card";
 import type { ConsoleStaffProfile } from "@/types";
 
@@ -306,6 +307,7 @@ export default function AdministrationPage() {
       </Card>
 
       <RequestNotificationsCard staffList={staffList} />
+      <PaymentSettingsCard />
 
       <Card>
         <CardHeader>

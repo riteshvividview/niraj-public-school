@@ -55,7 +55,7 @@ const CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)"];
 const PENDING_COLOR = "var(--destructive)";
 
 const CATEGORY_LABELS = { books: "Books", uniform: "Uniform & Kit", programs: "Programs & Events" } as const;
-const METHOD_LABELS = { upi: "UPI", card: "Card", netbanking: "Net Banking" } as const;
+const METHOD_LABELS = { upi: "UPI", card: "Card", netbanking: "Net Banking", other: "Other" } as const;
 
 function StatTile({ label, value, href }: { label: string; value: string; href?: string }) {
   const body = (

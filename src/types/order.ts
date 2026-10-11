@@ -1,6 +1,6 @@
 import type { CartItem } from "./cart";
 
-export type PaymentMethod = "upi" | "card" | "netbanking";
+export type PaymentMethod = "upi" | "card" | "netbanking" | "other";
 export type OrderStatus = "paid" | "pending" | "failed" | "refunded";
 
 /**

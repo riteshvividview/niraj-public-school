@@ -1,6 +1,6 @@
 import type { CartItem, Order, OrderStatus, PaymentMethod } from "@/types";
 import { fromOrderParts, toOrderParts, type PayloadOrderPart } from "./order-parts-mapper";
-import { payloadCreate, payloadFind, payloadFindById, payloadUpdate } from "./payload-rest";
+import { payloadFind, payloadFindById, payloadUpdate } from "./payload-rest";
 
 interface PayloadOrderItem {
   /** Real Payload `orders_items` row id — the stable per-item key, unlike a synthesized one. */
@@ -49,34 +49,6 @@ function toOrder(doc: PayloadOrderDoc): Order {
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };
-}
-
-export interface CreateOrderInput {
-  userId: string;
-  schoolId: string;
-  items: CartItem[];
-  totalAmount: number;
-  paymentMethod: PaymentMethod;
-}
-
-/** Checkout — see src/app/(frontend)/(app)/checkout/payment/page.tsx. */
-export async function createOrder(input: CreateOrderInput): Promise<Order> {
-  const doc = await payloadCreate<PayloadOrderDoc>("orders", {
-    user: input.userId,
-    school: input.schoolId,
-    items: input.items.map((item) => ({
-      kind: item.kind,
-      refId: item.refId,
-      label: item.label,
-      meta: item.meta,
-      unitPrice: item.unitPrice,
-      quantity: item.quantity,
-    })),
-    totalAmount: input.totalAmount,
-    paymentMethod: input.paymentMethod,
-    status: "paid",
-  });
-  return toOrder(doc);
 }
 
 /** Console — Reports Dashboard. */

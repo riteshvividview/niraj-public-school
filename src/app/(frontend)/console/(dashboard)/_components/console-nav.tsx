@@ -14,6 +14,7 @@ import {
   ScanLine,
   ShieldCheck,
   Users,
+  Wallet,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -35,6 +36,7 @@ const NAV_ITEMS = [
   { href: "/console/students", label: "Students", icon: Users },
   { href: "/console/scan", label: "Receipt / QR Scanner", icon: ScanLine },
   { href: "/console/payments", label: "Payments", icon: Receipt },
+  { href: "/console/payment-attempts", label: "Payment Attempts", icon: Wallet },
   { href: "/console/exchange-requests", label: "Exchange Requests", icon: Repeat },
   { href: "/console/subject-change-requests", label: "Subject Change Requests", icon: BookOpenCheck },
   { href: "/console/support", label: "Parent Support", icon: Headset },

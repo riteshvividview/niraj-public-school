@@ -10,6 +10,7 @@ import { Books } from "./src/collections/Books";
 import { ClassLevels } from "./src/collections/ClassLevels";
 import { EssentialsStock } from "./src/collections/EssentialsStock";
 import { ExchangeRequests } from "./src/collections/ExchangeRequests";
+import { Payments } from "./src/collections/Payments";
 import { Media } from "./src/collections/Media";
 import { Orders } from "./src/collections/Orders";
 import { PayloadAdmins } from "./src/collections/PayloadAdmins";
@@ -42,6 +43,7 @@ export default buildConfig({
     Orders,
     Receipts,
     ExchangeRequests,
+    Payments,
     BookChangeRequests,
     SupportRequests,
     RecordEvents,

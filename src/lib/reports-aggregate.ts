@@ -166,17 +166,21 @@ export function paymentMethodBreakdownOf(payments: PaymentRecord[], filter?: Rep
     upi: { revenue: 0, count: 0 },
     card: { revenue: 0, count: 0 },
     netbanking: { revenue: 0, count: 0 },
+    other: { revenue: 0, count: 0 },
   };
   for (const payment of filterPayments(payments, filter)) {
     const method = payment.order.paymentMethod;
     totals[method].revenue += payment.order.totalAmount;
     totals[method].count += 1;
   }
-  return (["upi", "card", "netbanking"] as const).map((method) => ({
-    method,
-    revenue: totals[method].revenue,
-    count: totals[method].count,
-  }));
+  // "other" (wallet, EMI…) only appears once a real gateway has produced one.
+  return (["upi", "card", "netbanking", "other"] as const)
+    .filter((method) => method !== "other" || totals.other.count > 0)
+    .map((method) => ({
+      method,
+      revenue: totals[method].revenue,
+      count: totals[method].count,
+    }));
 }
 
 // ---- Oldest pending ----------------------------------------------------------

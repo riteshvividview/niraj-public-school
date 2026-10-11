@@ -1,5 +1,4 @@
 import type { CollectionAfterChangeHook, CollectionConfig, Payload } from "payload";
-import { authenticated } from "../access/authenticated";
 import { denyAll, readOwnOrStaff, staffOnly } from "../access/request-access";
 import { actorFromUser, recordEvent } from "@/lib/server/record-events";
 import { readyToCollectEmail } from "@/lib/email/templates";
@@ -120,7 +119,7 @@ const logReceiptHistory: CollectionAfterChangeHook = async ({ doc, previousDoc, 
 export const Receipts: CollectionConfig = {
   slug: "receipts",
   // See Orders.ts's comment — receipts are permanent records too.
-  access: { read: readOwnOrStaff, create: authenticated, update: staffOnly, delete: denyAll },
+  access: { read: readOwnOrStaff, create: denyAll, update: staffOnly, delete: denyAll },
   hooks: { afterChange: [logReceiptHistory, notifyReadyToCollect] },
   fields: [
     { name: "order", type: "relationship", relationTo: "orders", required: true },

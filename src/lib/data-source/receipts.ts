@@ -2,7 +2,7 @@ import { groupItemsByKind } from "@/lib/cart-items";
 import { toAddress, type PayloadAddressGroup } from "./address-mapper";
 import type { Order, PaymentRecord, Receipt, ReceiptRecord, RedemptionStatus } from "@/types";
 import { toOrderParts, type PayloadOrderPart } from "./order-parts-mapper";
-import { payloadCreate, payloadFind, payloadFindById, payloadFindPage, payloadUpdate } from "./payload-rest";
+import { payloadFind, payloadFindById, payloadFindPage, payloadUpdate } from "./payload-rest";
 
 interface PayloadOrderItem {
   id: string;
@@ -100,44 +100,6 @@ function toReceiptRecord(doc: PayloadReceiptDoc): ReceiptRecord | null {
     updatedAt: doc.updatedAt,
   };
   return { order: toOrder(doc.order), receipt };
-}
-
-// Excludes visually-ambiguous characters (0/O, 1/I) — this code is meant to
-// be read off a screen and typed in by hand at a counter.
-const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-
-function generateReceiptCode(): string {
-  let code = "";
-  for (let i = 0; i < 8; i++) {
-    code += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
-  }
-  return code;
-}
-
-/** Checkout — issued right after createOrder for the same order. */
-export async function createReceiptForOrder(order: Order): Promise<Receipt> {
-  const now = new Date().toISOString();
-  const qrPayload = generateReceiptCode();
-  const doc = await payloadCreate<PayloadReceiptDoc & { order: string }>("receipts", {
-    order: order.id,
-    user: order.userId,
-    school: order.schoolId,
-    qrPayload,
-    redemptionStatus: "ready",
-    issuedAt: now,
-  });
-  return {
-    id: doc.id,
-    orderId: order.id,
-    userId: order.userId,
-    schoolId: order.schoolId,
-    qrPayload,
-    redemptionStatus: "ready",
-    issuedAt: now,
-    redeemedAt: null,
-    createdAt: now,
-    updatedAt: now,
-  };
 }
 
 /** Parent — Home page's "you have receipts" banner. Cheap existence check, not a full fetch. */

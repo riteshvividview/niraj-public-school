@@ -18,6 +18,26 @@ export const Schools: CollectionConfig = {
     { name: "logoUrl", type: "text" },
     { name: "contactPhone", type: "text", required: true },
     { name: "contactEmail", type: "text", required: true },
+    // Payment safety settings — see src/lib/server/payments. Administrator-only.
+    //   duplicate window: a repeat of the SAME items within N minutes of a paid order is
+    //   stopped with "you already paid for this" (0 = off).
+    //   pending timeout: how long a started-but-unfinished payment blocks a second attempt.
+    {
+      name: "paymentDuplicateWindowMinutes",
+      type: "number",
+      defaultValue: 30,
+      min: 0,
+      max: 1440,
+      access: { read: administratorOnlyField, update: administratorOnlyField, create: administratorOnlyField },
+    },
+    {
+      name: "paymentPendingTimeoutMinutes",
+      type: "number",
+      defaultValue: 30,
+      min: 5,
+      max: 1440,
+      access: { read: administratorOnlyField, update: administratorOnlyField, create: administratorOnlyField },
+    },
     // Extra inbox for exchange / subject-change request notifications, on top
     // of every active administrator — set from the console's Administration
     // tab. Administrator-only to read and write (the collection's own

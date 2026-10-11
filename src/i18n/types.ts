@@ -162,6 +162,27 @@ export interface Dictionary {
     upi: string;
     card: string;
     netbanking: string;
+    other: string;
+    duplicateTitle: string;
+    duplicateDescription: string;
+    duplicateNoReceipt: string;
+    viewReceipt: string;
+    pendingTitle: string;
+    pendingDescription: string;
+    checkStatus: string;
+    cancelPayment: string;
+    continuePayment: string;
+    confirming: string;
+    notConfirmedTitle: string;
+    notConfirmedDescription: string;
+    myPayments: string;
+    testModeNote: string;
+    unavailable: string;
+    devDieToggle: string;
+    startFailed: string;
+    checkingStatus: string;
+    stillPending: string;
+    cancelledToast: string;
     payNow: string;
     processing: string;
     failureTitle: string;
@@ -184,6 +205,34 @@ export interface Dictionary {
     titleReceiptWord: string;
     titleProgrammeReceiptWord: string;
     paidAtLabel: string;
+    paymentsLink: string;
+  };
+
+  paymentsPage: {
+    title: string;
+    subtitle: string;
+    emptyTitle: string;
+    emptyDescription: string;
+    statusPaid: string;
+    statusPending: string;
+    statusFailed: string;
+    statusCancelled: string;
+    statusExpired: string;
+    pendingNote: string;
+    failedNote: string;
+    cancelledNote: string;
+    expiredNote: string;
+    lateNote: string;
+    receiptCode: string;
+    viewReceipt: string;
+    checkStatus: string;
+    cancelPayment: string;
+    cancelTitle: string;
+    cancelDescription: string;
+    cancelConfirm: string;
+    keep: string;
+    startedOn: string;
+    refreshed: string;
   };
 
   exchangePage: {
