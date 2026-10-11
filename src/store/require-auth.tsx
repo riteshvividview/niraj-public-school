@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
+import { SplashScreen } from "@/components/shared/splash-screen";
 import { useAuth } from "./auth-store";
 
 /**
@@ -22,8 +23,9 @@ export function RequireAuth({ children }: { children: ReactNode }) {
     }
   }, [isReady, isAuthenticated, router]);
 
+  // Checking the session (or about to redirect to login): show the splash, not a blank page.
   if (!isReady || !isAuthenticated) {
-    return null;
+    return <SplashScreen />;
   }
 
   return <>{children}</>;

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { SplashScreen } from "@/components/shared/splash-screen";
 import { useTranslation } from "@/i18n/context";
 import { useAuth } from "@/store/auth-store";
 
@@ -14,16 +15,25 @@ export default function RootPage() {
   const { hasChosenLanguage, isReady: isLanguageReady } = useTranslation();
   const { isAuthenticated, isReady: isAuthReady } = useAuth();
 
+  // Start fetching the screens we might need right away, in parallel with the session check.
   useEffect(() => {
-    if (!isLanguageReady || !isAuthReady) return;
+    router.prefetch("/language");
+    router.prefetch("/login");
+    router.prefetch("/home");
+  }, [router]);
+
+  useEffect(() => {
+    if (!isLanguageReady) return;
+    // A first-time visitor has no language saved and can't be logged in: go straight to the
+    // language screen without waiting for the server (the session check may be slow on a cold start).
     if (!hasChosenLanguage) {
       router.replace("/language");
-    } else if (isAuthenticated) {
-      router.replace("/home");
-    } else {
-      router.replace("/login");
+      return;
     }
+    if (!isAuthReady) return;
+    router.replace(isAuthenticated ? "/home" : "/login");
   }, [isLanguageReady, isAuthReady, hasChosenLanguage, isAuthenticated, router]);
 
-  return null;
+  // Never a blank white page: the splash is in the first HTML and stays until the redirect happens.
+  return <SplashScreen />;
 }

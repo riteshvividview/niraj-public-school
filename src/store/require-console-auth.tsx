@@ -1,5 +1,6 @@
 "use client";
 
+import { SplashScreen } from "@/components/shared/splash-screen";
 import { useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 import { useConsoleAuth } from "./console-auth-store";
@@ -16,7 +17,7 @@ export function RequireConsoleAuth({ children }: { children: ReactNode }) {
   }, [isReady, isAuthenticated, router]);
 
   if (!isReady || !isAuthenticated) {
-    return null;
+    return <SplashScreen />;
   }
 
   return <>{children}</>;
