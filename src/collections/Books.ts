@@ -17,6 +17,21 @@ export const Books: CollectionConfig = {
     { name: "author", type: "text" },
     { name: "price", type: "number", required: true },
     { name: "coverImageUrl", type: "text" },
+    // What is inside the set. No prices here — only the set itself is priced.
+    // Copied onto each order (orders.items.parts) so staff can tick items off.
+    {
+      name: "contents",
+      type: "array",
+      fields: [
+        { name: "section", type: "select", required: true, options: ["textbook", "notebook", "stationery"] },
+        { name: "subject", type: "text" },
+        { name: "name", type: "text", required: true },
+        { name: "publisher", type: "text" },
+        { name: "detail", type: "text" },
+        { name: "quantity", type: "number", required: true, defaultValue: 1 },
+        { name: "starred", type: "checkbox", defaultValue: false },
+      ],
+    },
     // Optional variant fields — unset means "applies to every student in
     // this class". Some grades' book fee varies by academic language and/or
     // stream/elective (see the school's real price sheet); grades without

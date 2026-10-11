@@ -17,14 +17,13 @@ import {
 import { StatusBadge, toBadgeStatus } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { deriveReceiptTitle, groupItemsByKind } from "@/lib/cart-items";
 import { getReceiptByCode, markReceiptRedeemed, updateOrderItemsCollected } from "@/lib/data-source";
 import { useConsoleSchoolId } from "@/lib/hooks/console-data";
-import { cn } from "@/lib/utils";
-import type { OrderItem, PaymentRecord, ReceiptRecord } from "@/types";
+import { CollectionControls } from "./_components/collection-controls";
+import type { PaymentRecord, ReceiptRecord } from "@/types";
 
 type LookupResult =
   | { kind: "invalid" }
@@ -35,12 +34,6 @@ function isTicketRecord(record: ReceiptRecord): boolean {
   const grouped = groupItemsByKind(record.order.items);
   return grouped.programs.length === record.order.items.length && grouped.programs.length > 0;
 }
-
-const CATEGORY_LABELS: Record<"books" | "uniform" | "programs", string> = {
-  books: "Books",
-  uniform: "Uniform & Kit",
-  programs: "Programs",
-};
 
 export default function ScannerPage() {
   const schoolId = useConsoleSchoolId();
@@ -212,161 +205,6 @@ export default function ScannerPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleCheckIn} disabled={isRedeeming}>
-              Confirm
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
-  );
-}
-
-/**
- * Per-item collected/uncollected checkboxes plus one "Mark all collected"
- * button per category (Books / Uniform & Kit). Every toggle only changes
- * local state — nothing is written until "Save changes" is clicked, which
- * sends every pending change in a single request rather than one per
- * click. Un-checking an already-collected item (a staff correction, e.g.
- * "payment showed successful but didn't actually go through") asks for
- * confirmation before the toggle is even staged, since it's a reversal.
- */
-function CollectionControls({
-  record,
-  isSaving,
-  onSave,
-}: {
-  record: ReceiptRecord;
-  isSaving: boolean;
-  onSave: (changes: Record<string, boolean>) => void;
-}) {
-  const grouped = groupItemsByKind(record.order.items) as Record<"books" | "uniform" | "programs", OrderItem[]>;
-  const categories = (["books", "uniform"] as const).filter((key) => grouped[key].length > 0);
-  const [pending, setPending] = useState<Record<string, boolean>>({});
-  const [uncollectTarget, setUncollectTarget] = useState<OrderItem | null>(null);
-
-  if (categories.length === 0) return null;
-
-  function isCollected(item: OrderItem): boolean {
-    return item.id in pending ? pending[item.id] : Boolean(item.collectedAt);
-  }
-
-  function setPendingFor(item: OrderItem, collected: boolean) {
-    setPending((prev) => {
-      const next = { ...prev };
-      // Persisted state matches the request again — nothing to save for this row.
-      if (collected === Boolean(item.collectedAt)) {
-        delete next[item.id];
-      } else {
-        next[item.id] = collected;
-      }
-      return next;
-    });
-  }
-
-  function handleToggle(item: OrderItem, checked: boolean) {
-    if (!checked && isCollected(item) && item.collectedAt) {
-      // Reversing an already-persisted collection — confirm first.
-      setUncollectTarget(item);
-      return;
-    }
-    setPendingFor(item, checked);
-  }
-
-  const changedCount = Object.keys(pending).length;
-
-  return (
-    <div className="space-y-4">
-      {categories.map((category) => {
-        const items = grouped[category];
-        const stillUncollected = items.filter((item) => !isCollected(item));
-        return (
-          <div key={category} className="space-y-2 rounded-xl border border-line p-3">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-semibold text-ink">{CATEGORY_LABELS[category]}</span>
-              {stillUncollected.length > 0 ? (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => stillUncollected.forEach((item) => setPendingFor(item, true))}
-                >
-                  Mark all {CATEGORY_LABELS[category].toLowerCase()} collected
-                </Button>
-              ) : (
-                <span className="flex items-center gap-1 text-xs font-medium text-section-essentials">
-                  <CheckCircle2 className="size-3.5" /> All collected
-                </span>
-              )}
-            </div>
-            <ul className="divide-y divide-line">
-              {items.map((item) => {
-                const collected = isCollected(item);
-                const isDirty = item.id in pending;
-                return (
-                  <li key={item.id} className="flex items-center gap-3 py-2 text-sm">
-                    <Checkbox
-                      checked={collected}
-                      onCheckedChange={(checked) => handleToggle(item, checked === true)}
-                      aria-label={`Mark ${item.label} collected`}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-ink">{item.label}</p>
-                      {item.meta ? <p className="truncate text-xs text-sub">{item.meta}</p> : null}
-                    </div>
-                    <span
-                      className={cn(
-                        "shrink-0 text-xs font-medium",
-                        isDirty ? "text-section-programs" : collected ? "text-section-essentials" : "text-sub",
-                      )}
-                    >
-                      {isDirty
-                        ? collected
-                          ? "Will mark collected"
-                          : "Will mark uncollected"
-                        : collected
-                          ? `Collected ${item.collectedAt ? new Date(item.collectedAt).toLocaleDateString() : ""}`
-                          : "Not collected"}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        );
-      })}
-
-      {changedCount > 0 ? (
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-line bg-muted/50 p-3">
-          <span className="text-sm text-sub">
-            {changedCount} pending change{changedCount === 1 ? "" : "s"}
-          </span>
-          <div className="flex gap-2">
-            <Button size="sm" variant="ghost" disabled={isSaving} onClick={() => setPending({})}>
-              Discard
-            </Button>
-            <Button size="sm" disabled={isSaving} onClick={() => onSave(pending)}>
-              Save changes
-            </Button>
-          </div>
-        </div>
-      ) : null}
-
-      <AlertDialog open={uncollectTarget !== null} onOpenChange={(open) => !open && setUncollectTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Mark &quot;{uncollectTarget?.label}&quot; as uncollected?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Use this only to correct a mistake (e.g. it was marked collected but the parent never actually
-              picked it up). This won&apos;t take effect until you click &quot;Save changes&quot;.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (uncollectTarget) setPendingFor(uncollectTarget, false);
-                setUncollectTarget(null);
-              }}
-            >
               Confirm
             </AlertDialogAction>
           </AlertDialogFooter>

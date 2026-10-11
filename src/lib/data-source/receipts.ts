@@ -1,6 +1,7 @@
 import { groupItemsByKind } from "@/lib/cart-items";
 import { toAddress, type PayloadAddressGroup } from "./address-mapper";
 import type { Order, PaymentRecord, Receipt, ReceiptRecord, RedemptionStatus } from "@/types";
+import { toOrderParts, type PayloadOrderPart } from "./order-parts-mapper";
 import { payloadCreate, payloadFind, payloadFindById, payloadFindPage, payloadUpdate } from "./payload-rest";
 
 interface PayloadOrderItem {
@@ -12,6 +13,7 @@ interface PayloadOrderItem {
   unitPrice: number;
   quantity: number;
   collectedAt?: string | null;
+  parts?: PayloadOrderPart[] | null;
 }
 
 interface PayloadOrderDoc {
@@ -65,6 +67,7 @@ function toOrderItems(items: PayloadOrderDoc["items"]): Order["items"] {
     unitPrice: item.unitPrice,
     quantity: item.quantity,
     collectedAt: item.collectedAt ?? null,
+    parts: toOrderParts(item.parts),
   }));
 }
 

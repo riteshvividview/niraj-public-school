@@ -1,4 +1,5 @@
 import type { CartItem, Order, OrderStatus, PaymentMethod } from "@/types";
+import { fromOrderParts, toOrderParts, type PayloadOrderPart } from "./order-parts-mapper";
 import { payloadCreate, payloadFind, payloadFindById, payloadUpdate } from "./payload-rest";
 
 interface PayloadOrderItem {
@@ -11,6 +12,7 @@ interface PayloadOrderItem {
   unitPrice: number;
   quantity: number;
   collectedAt?: string | null;
+  parts?: PayloadOrderPart[] | null;
 }
 
 interface PayloadOrderDoc {
@@ -39,6 +41,7 @@ function toOrder(doc: PayloadOrderDoc): Order {
       unitPrice: item.unitPrice,
       quantity: item.quantity,
       collectedAt: item.collectedAt ?? null,
+      parts: toOrderParts(item.parts),
     })),
     totalAmount: doc.totalAmount,
     paymentMethod: doc.paymentMethod,
@@ -112,7 +115,9 @@ export async function getOrderById(id: string): Promise<Order | null> {
 /**
  * Console — Receipt / QR Scanner's "Save changes" button. `changes` maps
  * item id -> desired collected state (true = mark collected, false = undo
- * a mistaken mark) — the Scanner batches every toggle a staff member makes
+ * a mistaken mark). A key may also be the id of one item inside a book set
+ * (an order line's `parts`); a line key on a book set applies to every item
+ * in it, and the server then derives the set's own collected state — the Scanner batches every toggle a staff member makes
  * locally and calls this once, rather than one REST call per click. Sends
  * the full items array back (Payload array-field PATCH semantics upsert by
  * row `id`), so untouched rows pass through unchanged. The Orders
@@ -127,9 +132,18 @@ export async function updateOrderItemsCollected(
   const order = await getOrderById(orderId);
   if (!order) throw new Error("Order not found.");
   const now = new Date().toISOString();
-  const items = order.items.map((item) =>
-    item.id in changes ? { ...item, collectedAt: changes[item.id] ? now : null } : item,
-  );
+  const items = order.items.map((item) => {
+    const hasParts = (item.parts?.length ?? 0) > 0;
+    if (!hasParts) return item.id in changes ? { ...item, collectedAt: changes[item.id] ? now : null } : item;
+    const parts = (item.parts ?? []).map((part) => {
+      const want = part.id in changes ? changes[part.id] : item.id in changes ? changes[item.id] : undefined;
+      if (want === undefined) return part;
+      // Already in the wanted state: keep its original timestamp.
+      if (want === Boolean(part.collectedAt)) return part;
+      return { ...part, collectedAt: want ? now : null };
+    });
+    return { ...item, parts };
+  });
   const doc = await payloadUpdate<PayloadOrderDoc>("orders", orderId, {
     items: items.map((item) => ({
       id: item.id,
@@ -140,6 +154,7 @@ export async function updateOrderItemsCollected(
       unitPrice: item.unitPrice,
       quantity: item.quantity,
       collectedAt: item.collectedAt,
+      parts: fromOrderParts(item.parts),
     })),
   });
   return toOrder(doc);

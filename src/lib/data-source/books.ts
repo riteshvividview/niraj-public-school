@@ -1,5 +1,16 @@
-import type { AcademicLanguage, Book, Elective, Stream } from "@/types";
+import type { AcademicLanguage, Book, BookContentItem, Elective, Stream } from "@/types";
 import { payloadCreate, payloadDelete, payloadFind, payloadFindById, payloadUpdate } from "./payload-rest";
+
+interface PayloadBookContent {
+  id?: string;
+  section: BookContentItem["section"];
+  subject?: string | null;
+  name: string;
+  publisher?: string | null;
+  detail?: string | null;
+  quantity: number;
+  starred?: boolean | null;
+}
 
 interface PayloadBookDoc {
   id: string;
@@ -13,6 +24,7 @@ interface PayloadBookDoc {
   language?: AcademicLanguage | null;
   stream?: Stream | null;
   elective?: Elective | null;
+  contents?: PayloadBookContent[] | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -30,6 +42,16 @@ function toBook(doc: PayloadBookDoc): Book {
     language: doc.language ?? undefined,
     stream: doc.stream ?? undefined,
     elective: doc.elective ?? undefined,
+    contents: (doc.contents ?? []).map((c, i) => ({
+      id: c.id ?? String(i),
+      section: c.section,
+      subject: c.subject ?? undefined,
+      name: c.name,
+      publisher: c.publisher ?? undefined,
+      detail: c.detail ?? undefined,
+      quantity: c.quantity,
+      starred: Boolean(c.starred),
+    })),
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };
@@ -111,6 +133,26 @@ export async function updateBook(id: string, patch: Partial<BookInput>): Promise
     ...(patch.language !== undefined ? { language: patch.language } : {}),
     ...(patch.stream !== undefined ? { stream: patch.stream } : {}),
     ...(patch.elective !== undefined ? { elective: patch.elective } : {}),
+  });
+  return doc ? toBook(doc) : null;
+}
+
+/**
+ * Console — Catalogue Manager. Replaces what is listed inside a book set (no
+ * prices — only the set is priced). Orders already placed keep the list they
+ * were placed with; this only affects orders from now on.
+ */
+export async function updateBookContents(id: string, contents: Omit<BookContentItem, "id">[]): Promise<Book | null> {
+  const doc = await payloadUpdate<PayloadBookDoc>("books", id, {
+    contents: contents.map((c) => ({
+      section: c.section,
+      subject: c.subject || null,
+      name: c.name,
+      publisher: c.publisher || null,
+      detail: c.detail || null,
+      quantity: c.quantity,
+      starred: c.starred,
+    })),
   });
   return doc ? toBook(doc) : null;
 }

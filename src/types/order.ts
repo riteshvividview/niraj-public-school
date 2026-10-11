@@ -10,6 +10,24 @@ export type OrderStatus = "paid" | "pending" | "failed" | "refunded";
  */
 export interface OrderItem extends CartItem {
   collectedAt: string | null;
+  /**
+   * Book sets only: what is inside the set, copied onto the order when it was
+   * placed, each with its own collected state. Absent for other lines.
+   */
+  parts?: OrderItemPart[];
+}
+
+/** One item inside a purchased book set. */
+export interface OrderItemPart {
+  id: string;
+  section: "textbook" | "notebook" | "stationery";
+  subject?: string;
+  name: string;
+  publisher?: string;
+  detail?: string;
+  quantity: number;
+  starred: boolean;
+  collectedAt: string | null;
 }
 
 /** Mirrors the future Payload `orders` collection. Built in Phase 6. */

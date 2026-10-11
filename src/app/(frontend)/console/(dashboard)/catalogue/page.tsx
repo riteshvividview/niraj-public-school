@@ -41,6 +41,7 @@ import {
   updateBook,
   updateUniformItem,
 } from "@/lib/data-source";
+import { BookContentsDialog } from "./_components/book-contents-dialog";
 import { useClassLevels, useConsoleSchoolId } from "@/lib/hooks/console-data";
 import type {
   AcademicLanguage,
@@ -267,6 +268,7 @@ function BooksManager({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Book | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Book | null>(null);
+  const [contentsTarget, setContentsTarget] = useState<Book | null>(null);
 
   async function handleDelete() {
     if (!deleteTarget) return;
@@ -322,6 +324,9 @@ function BooksManager({
                   </TableCell>
                   <TableCell>₹{book.price}</TableCell>
                   <TableCell className="space-x-1 text-right">
+                    <Button variant="ghost" size="sm" onClick={() => setContentsTarget(book)}>
+                      Items ({book.contents?.length ?? 0})
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -359,6 +364,12 @@ function BooksManager({
         schoolId={schoolId}
         classLevelId={classLevelId}
         editing={editing}
+        onSaved={refresh}
+      />
+      <BookContentsDialog
+        book={contentsTarget}
+        open={contentsTarget !== null}
+        onOpenChange={(open) => !open && setContentsTarget(null)}
         onSaved={refresh}
       />
       <ConfirmDeleteDialog

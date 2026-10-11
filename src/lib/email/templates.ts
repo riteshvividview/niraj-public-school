@@ -310,16 +310,83 @@ export function readyToCollectEmail({
   });
 }
 
+/** One item inside a book set, for the collected / not-collected lists. */
+export interface EmailBookPart {
+  name: string;
+  subject?: string | null;
+  detail?: string | null;
+  quantity: number;
+  /** "Given in class" items (star-marked on the school's list). */
+  starred?: boolean;
+}
+
+/** A purchased book set with what has / hasn't been handed over. */
+export interface EmailBookSet {
+  title: string;
+  meta?: string | null;
+  collected: EmailBookPart[];
+  pending: EmailBookPart[];
+}
+
+function escHtml(value: string): string {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function bookPartRows(parts: EmailBookPart[], done: boolean): string {
+  const mark = done ? "✔" : "○";
+  const color = done ? COLORS.brand2 : COLORS.accent;
+  return parts
+    .map(
+      (part) => `<tr>
+        <td style="width:22px;padding:5px 0 5px 12px;vertical-align:top;font-size:14px;font-weight:700;color:${color};">${mark}</td>
+        <td style="padding:5px 12px 5px 4px;font-size:13px;color:${COLORS.ink};line-height:1.45;">
+          ${escHtml(part.name)}${part.quantity > 1 ? ` <span style="color:${COLORS.sub};">× ${part.quantity}</span>` : ""}
+          ${part.subject ? `<span style="color:${COLORS.sub};"> · ${escHtml(part.subject)}</span>` : ""}
+          ${part.detail ? `<span style="color:${COLORS.sub};"> · ${escHtml(part.detail)}</span>` : ""}
+          ${part.starred ? `<span style="color:${COLORS.sub};"> · given in class</span>` : ""}
+        </td>
+      </tr>`,
+    )
+    .join("");
+}
+
+function bookSetHtml(set: EmailBookSet): string {
+  const total = set.collected.length + set.pending.length;
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:12px 0;border:1px solid ${COLORS.line};border-radius:12px;">
+    <tr>
+      <td colspan="2" style="padding:12px 14px;background:#f7f9fc;border-radius:12px 12px 0 0;">
+        <span style="font-size:14px;font-weight:700;color:${COLORS.ink};">📚 ${escHtml(set.title)}</span>
+        ${set.meta ? `<div style="font-size:12px;color:${COLORS.sub};margin-top:2px;">${escHtml(set.meta)}</div>` : ""}
+        <div style="font-size:12px;font-weight:700;color:${set.pending.length === 0 ? COLORS.brand2 : COLORS.accent};margin-top:4px;">${set.collected.length} of ${total} items collected</div>
+      </td>
+    </tr>
+    ${
+      set.collected.length > 0
+        ? `<tr><td colspan="2" style="padding:10px 14px 2px;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${COLORS.brand2};">✔ Collected</td></tr>${bookPartRows(set.collected, true)}`
+        : ""
+    }
+    ${
+      set.pending.length > 0
+        ? `<tr><td colspan="2" style="padding:10px 14px 2px;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${COLORS.accent};">○ Not collected yet</td></tr>${bookPartRows(set.pending, false)}`
+        : ""
+    }
+    <tr><td colspan="2" style="height:8px;line-height:8px;font-size:0;">&nbsp;</td></tr>
+  </table>`;
+}
+
 export function collectedEmail({
   receiptCode,
   justCollectedItems,
   stillPendingItems,
+  bookSets = [],
 }: {
   receiptCode: string;
   justCollectedItems: EmailItemLine[];
   stillPendingItems: EmailItemLine[];
+  /** Book sets with a per-item breakdown (what was handed over, what is still to come). */
+  bookSets?: EmailBookSet[];
 }): string {
-  const allDone = stillPendingItems.length === 0;
+  const allDone = stillPendingItems.length === 0 && bookSets.every((set) => set.pending.length === 0);
   const title = allDone ? "All Items Collected!" : "Items Collected";
 
   return wrapper({
@@ -334,18 +401,33 @@ export function collectedEmail({
       </p>
       <p style="font-size:13px;color:${COLORS.sub};margin:0 0 18px;">Receipt code: <strong style="color:${COLORS.ink};font-family:'Courier New',monospace;">${receiptCode}</strong></p>
 
-      <div style="font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:${COLORS.brand2};margin:10px 0 6px;">✔️ Just collected</div>
-      ${itemsTableHtml(justCollectedItems)}
+      ${
+        justCollectedItems.length > 0
+          ? `<div style="font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:${COLORS.brand2};margin:10px 0 6px;">✔️ Just collected</div>
+             ${itemsTableHtml(justCollectedItems)}`
+          : ""
+      }
 
       ${
-        stillPendingItems.length > 0
-          ? `<div style="font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:${COLORS.accent};margin:20px 0 6px;">⏳ Still pending collection</div>
-             ${itemsTableHtml(stillPendingItems, { struck: false })}
+        bookSets.length > 0
+          ? `<div style="font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:${COLORS.ink};margin:10px 0 2px;">📚 Your book set — item by item</div>
+             ${bookSets.map(bookSetHtml).join("")}`
+          : ""
+      }
+
+      ${
+        !allDone
+          ? `${
+               stillPendingItems.length > 0
+                 ? `<div style="font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:${COLORS.accent};margin:20px 0 6px;">⏳ Still pending collection</div>
+                    ${itemsTableHtml(stillPendingItems, { struck: false })}`
+                 : ""
+             }
              ${infoBanner({
                icon: "📍",
                bg: "#fff7e6",
                border: "#f5deb0",
-               text: `You still have items waiting at the counter. Bring the same receipt code (<strong>${receiptCode}</strong>) whenever you're ready to collect the rest.`,
+               text: `You still have items waiting at the school (the ones marked "Not collected yet" above). Bring the same receipt code (<strong>${receiptCode}</strong>) whenever you're ready to collect the rest.`,
              })}`
           : `${infoBanner({
               icon: "🎉",
