@@ -1,23 +1,28 @@
 import type { PaymentProvider } from "../types";
-import { razorpayProvider } from "./razorpay";
+import { hdfcProvider } from "./hdfc";
 import { simulatedProvider } from "./simulated";
 
-const ALL: Record<string, PaymentProvider> = { simulated: simulatedProvider, razorpay: razorpayProvider };
+const ALL: Record<string, PaymentProvider> = { simulated: simulatedProvider, hdfc: hdfcProvider };
 
 /**
- * Which provider is live. PAYMENT_PROVIDER wins when set ("simulated" | "razorpay");
- * otherwise Razorpay as soon as its keys exist, else the simulated stand-in. A
- * provider that is chosen but missing its keys is returned as-is and reported as
- * not configured — it never silently falls back to taking "pretend" payments.
+ * Which provider is live. PAYMENT_PROVIDER wins when set ("simulated" | "hdfc");
+ * otherwise HDFC as soon as its keys exist, else the simulated stand-in. A provider
+ * that is chosen but missing its keys is returned as-is and reported as not
+ * configured — it never silently falls back to taking "pretend" payments.
  */
 export function getActiveProvider(): PaymentProvider {
   const wanted = (process.env.PAYMENT_PROVIDER ?? "").trim().toLowerCase();
   if (wanted && ALL[wanted]) return ALL[wanted];
-  if (razorpayProvider.isConfigured()) return razorpayProvider;
+  if (hdfcProvider.isConfigured()) return hdfcProvider;
   return simulatedProvider;
 }
 
 /** A payment keeps the provider it started with — status checks and webhooks must use that one. */
 export function getProviderById(id: string): PaymentProvider | null {
   return ALL[id] ?? null;
+}
+
+/** Real providers that can send us webhooks. */
+export function getWebhookProviders(): PaymentProvider[] {
+  return Object.values(ALL).filter((provider) => !provider.testMode);
 }

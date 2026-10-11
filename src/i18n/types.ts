@@ -183,6 +183,7 @@ export interface Dictionary {
     checkingStatus: string;
     stillPending: string;
     cancelledToast: string;
+    redirecting: string;
     payNow: string;
     processing: string;
     failureTitle: string;

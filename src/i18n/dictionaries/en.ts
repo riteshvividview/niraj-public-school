@@ -168,6 +168,7 @@ const en: Dictionary = {
     checkingStatus: "Checking…",
     stillPending: "Still waiting for confirmation.",
     cancelledToast: "Payment cancelled.",
+    redirecting: "Taking you to the secure payment page…",
     payNow: "Pay Now",
     processing: "Processing your payment…",
     failureTitle: "Payment failed",

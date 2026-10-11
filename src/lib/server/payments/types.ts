@@ -2,7 +2,7 @@
  * Server-only. Shared shapes for the payment layer.
  *
  * The app talks to money only through a PaymentProvider (simulated today,
- * Razorpay ready for the keys). Everything else — pricing, duplicate checks,
+ * HDFC SmartGateway ready for the keys). Everything else — pricing, duplicate checks,
  * the pending/paid life cycle, creating the order + receipt — is provider-neutral
  * and lives in service.ts.
  */
@@ -51,24 +51,16 @@ export type ProviderOutcome =
 /** What the browser must do to take the money. */
 export type CheckoutInstructions =
   | { type: "simulated" }
-  | {
-      type: "razorpay";
-      keyId: string;
-      orderId: string;
-      /** Smallest currency unit (paise). */
-      amount: number;
-      currency: string;
-      name: string;
-      description: string;
-      prefill: { name?: string; email?: string; contact?: string };
-      timeoutSeconds: number;
-    };
+  /** Send the parent to the bank's hosted payment page; they come back to the return URL. */
+  | { type: "redirect"; url: string };
 
 export interface CheckoutContext {
   payment: PaymentRow;
   student: { name: string; email?: string; mobileNumber?: string };
   schoolName: string;
   timeoutSeconds: number;
+  /** Where the provider sends the parent back to after the payment page. */
+  returnUrl: string;
 }
 
 export interface WebhookEvent {
@@ -87,8 +79,8 @@ export interface PaymentProvider {
   isConfigured(): boolean;
   /** Registers the payment with the provider; returns its order id and the browser instructions. */
   createCheckout(ctx: CheckoutContext): Promise<{ providerOrderId: string; checkout: CheckoutInstructions }>;
-  /** Browser instructions for a payment that is already registered (resuming a pending one) — no network. */
-  resumeCheckout(ctx: CheckoutContext): CheckoutInstructions;
+  /** Browser instructions for a payment that is already registered (resuming a pending one). May ask the provider for a fresh link. */
+  resumeCheckout(ctx: CheckoutContext): Promise<CheckoutInstructions>;
   /** The browser says "paid" — verify that claim (signature / provider lookup). null = does not verify. */
   verifyClientConfirmation(payment: PaymentRow, payload: Record<string, unknown>): Promise<ProviderOutcome | null>;
   /** Ask the provider what happened to this payment. */

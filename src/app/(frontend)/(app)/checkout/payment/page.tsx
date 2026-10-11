@@ -14,9 +14,8 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useTranslation } from "@/i18n/context";
 import { formatTemplate } from "@/i18n/format";
-import { confirmPayment, checkPaymentStatus, getMyPayments, getPaymentConfig, simulateGateway, startPayment } from "@/lib/data-source";
+import { getMyPayments, getPaymentConfig, simulateGateway, startPayment } from "@/lib/data-source";
 import { formatCurrencyINR, formatDate, formatTime } from "@/lib/format";
-import { loadRazorpay } from "@/lib/razorpay-client";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/store/auth-store";
 import { useCart } from "@/store/cart-store";
@@ -62,6 +61,7 @@ export default function PaymentPage() {
   const [unconfirmed, setUnconfirmed] = useState<PaymentAttempt | null>(null);
   const [devForceFailure, setDevForceFailure] = useState(false);
   const [devScreenDies, setDevScreenDies] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const finishing = useRef(false);
 
   const { data: config } = useSWR(profile ? "payment-config" : null, () => getPaymentConfig());
@@ -70,6 +70,18 @@ export default function PaymentPage() {
   });
   const pending = payments?.find((payment) => payment.status === "pending") ?? null;
   const testMode = config?.testMode ?? true;
+
+  // Coming back with the browser's Back button from the bank's page: the page is restored mid-"processing" — reset it.
+  useEffect(() => {
+    const onShow = (event: PageTransitionEvent) => {
+      if (!event.persisted) return;
+      setRedirecting(false);
+      setIsProcessing(false);
+      void refreshPayments();
+    };
+    window.addEventListener("pageshow", onShow);
+    return () => window.removeEventListener("pageshow", onShow);
+  }, [refreshPayments]);
 
   // Nothing to pay for — bounce back to Cart. Skipped while a payment is in flight / just succeeded,
   // since clearing the cart on success briefly makes count 0 right before navigating to the receipt.
@@ -102,16 +114,6 @@ export default function PaymentPage() {
     router.push(payment.receipt ? `/receipts/${payment.receipt.id}` : "/receipts");
   }
 
-  async function checkNow(payment: PaymentAttempt) {
-    const updated = await checkPaymentStatus(payment.id);
-    refreshPayments();
-    if (updated.status === "paid") {
-      await finishPaid(updated, (updated.method as PaymentMethod) ?? "upi");
-      return true;
-    }
-    return false;
-  }
-
   async function runCheckout(payment: PaymentAttempt, checkout: CheckoutInstructions) {
     if (checkout.type === "simulated") {
       // Test mode: this plays the gateway. One option mimics money taken but the screen dying.
@@ -131,49 +133,12 @@ export default function PaymentPage() {
       return;
     }
 
-    // Real provider (Razorpay): open its payment window.
-    const Razorpay = await loadRazorpay();
-    await new Promise<void>((resolve) => {
-      const instance = new Razorpay({
-        key: checkout.keyId,
-        order_id: checkout.orderId,
-        amount: checkout.amount,
-        currency: checkout.currency,
-        name: checkout.name,
-        description: checkout.description,
-        prefill: checkout.prefill,
-        timeout: checkout.timeoutSeconds,
-        handler: async (response) => {
-          try {
-            const updated = await confirmPayment(payment.id, response as unknown as Record<string, unknown>);
-            refreshPayments();
-            if (updated.status === "paid") await finishPaid(updated, (updated.method as PaymentMethod) ?? "upi");
-            else {
-              setUnconfirmed(updated);
-              setIsProcessing(false);
-            }
-          } catch {
-            setUnconfirmed(payment);
-            setIsProcessing(false);
-          }
-          resolve();
-        },
-        modal: {
-          ondismiss: async () => {
-            // Closed without finishing — it may still have gone through; ask before assuming.
-            try {
-              if (!(await checkNow(payment))) setUnconfirmed(null);
-            } catch {
-              /* the pending banner below stays and lets the parent check */
-            }
-            setIsProcessing(false);
-            resolve();
-          },
-        },
-      });
-      instance.on("payment.failed", (response) => setError(response.error?.description ?? t.payment.failureDescription));
-      instance.open();
-    });
+    // Real provider: send the parent to the bank's hosted payment page. They come back to
+    // /checkout/return, which asks the server (and so the bank) what happened — and if they never
+    // come back, the bank's confirmation / My payments settles it.
+    setRedirecting(true);
+    window.location.assign(checkout.url);
+    await new Promise(() => undefined); // keep "processing" up while the browser navigates away
   }
 
   async function handlePay() {
@@ -320,7 +285,7 @@ export default function PaymentPage() {
         ) : null}
 
         <Button className="w-full" disabled={(testMode && !method) || isProcessing || Boolean(pending)} onClick={handlePay}>
-          {isProcessing ? t.payment.processing : error ? t.payment.tryAgain : t.payment.payNow}
+          {redirecting ? t.payment.redirecting : isProcessing ? t.payment.processing : error ? t.payment.tryAgain : t.payment.payNow}
         </Button>
       </div>
 

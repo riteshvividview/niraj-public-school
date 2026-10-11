@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getAppUrl } from "@/lib/app-url";
 import { failure, requireStudent } from "@/lib/server/payments/route-helpers";
 import { startPayment, toViews } from "@/lib/server/payments/service";
 import type { RequestedLine } from "@/lib/server/payments/pricing";
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
       }))
     : [];
   try {
-    const result = await startPayment(actor.payload, actor.user.id, lines);
+    const result = await startPayment(actor.payload, actor.user.id, lines, getAppUrl(request));
     if (result.kind === "duplicate") {
       return NextResponse.json(
         { code: "duplicate", error: "You already paid for these items a moment ago.", amount: result.amount, paidAt: result.paidAt, receiptId: result.receiptId, receiptCode: result.receiptCode },

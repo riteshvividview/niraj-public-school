@@ -168,6 +168,7 @@ const te: Dictionary = {
     checkingStatus: "తనిఖీ చేస్తున్నాం…",
     stillPending: "ఇంకా నిర్ధారణ కోసం వేచి ఉన్నాం.",
     cancelledToast: "చెల్లింపు రద్దు చేయబడింది.",
+    redirecting: "సురక్షిత చెల్లింపు పేజీకి తీసుకెళ్తున్నాం…",
     payNow: "ఇప్పుడే చెల్లించండి",
     processing: "మీ చెల్లింపు ప్రాసెస్ అవుతోంది…",
     failureTitle: "చెల్లింపు విఫలమైంది",

@@ -5,7 +5,7 @@ export interface PaymentResult {
 }
 
 /**
- * Stands in for a real gateway (Razorpay/Stripe — see CLAUDE.md, out of
+ * Stands in for a real gateway (HDFC SmartGateway — see CLAUDE.md, out of
  * scope until a later, non-Phase-1-10 build stage). Isolated on purpose:
  * swapping in a real gateway later means replacing this function's body,
  * not touching the checkout UI that calls it. The failure message shown to

@@ -3,7 +3,7 @@ import type { Payload } from "payload";
 import { isUniqueViolation, relId } from "@/lib/server/request-actor";
 import { recordEvent, type RecordEventInput } from "@/lib/server/record-events";
 import { fingerprintOf, priceCart, type RequestedLine, CartError } from "./pricing";
-import { getActiveProvider, getProviderById } from "./providers";
+import { getActiveProvider, getProviderById, getWebhookProviders } from "./providers";
 import type { CheckoutInstructions, PaymentRow, PaymentStatus, ProviderOutcome } from "./types";
 
 /**
@@ -344,7 +344,8 @@ export type StartResult =
   | { kind: "pending-other"; payment: PaymentRow }
   | { kind: "duplicate"; amount: number; paidAt: string; receiptId?: string; receiptCode?: string };
 
-export async function startPayment(payload: Payload, studentId: string, requested: RequestedLine[]): Promise<StartResult> {
+/** `appUrl` is this site's own address — where the bank sends the parent back to after paying. */
+export async function startPayment(payload: Payload, studentId: string, requested: RequestedLine[], appUrl: string): Promise<StartResult> {
   const provider = getActiveProvider();
   if (!provider.isConfigured()) throw new PaymentError("Online payments aren't available right now. Please contact the school.", 503);
 
@@ -365,13 +366,19 @@ export async function startPayment(payload: Payload, studentId: string, requeste
     student: { name: String(student.name), email: (student.email as string | undefined) || undefined, mobileNumber: (student.mobileNumber as string | undefined) || undefined },
     schoolName: String(school?.name ?? "School"),
     timeoutSeconds: settings.pendingTimeoutMinutes * 60,
+    returnUrl: `${appUrl.replace(/\/+$/, "")}/checkout/return?payment=${payment.id}`,
   });
 
   if (current && current.status === "pending") {
     // Same cart → carry on with the SAME payment (never a second one). Different cart → finish or cancel the first.
     if (current.itemsFingerprint === fingerprint) {
       const live = getProviderById(current.provider) ?? provider;
-      return { kind: "resumed", payment: current, checkout: live.resumeCheckout(ctxFor(current)) };
+      try {
+        return { kind: "resumed", payment: current, checkout: await live.resumeCheckout(ctxFor(current)) };
+      } catch (error) {
+        console.error("[payments] could not resume a payment with the provider:", error);
+        throw new PaymentError("We couldn't reach the payment provider. Nothing new has been charged. Please try again in a moment.", 502);
+      }
     }
     return { kind: "pending-other", payment: current };
   }
@@ -474,10 +481,16 @@ export async function cancelPayment(payload: Payload, studentId: string, payment
 // ---- webhook ----------------------------------------------------------------------
 
 export async function handleWebhook(payload: Payload, rawBody: string, headers: Headers): Promise<"ok" | "invalid"> {
-  const provider = getProviderById("razorpay");
-  if (!provider) return "invalid";
-  const event = provider.verifyWebhook(rawBody, headers);
-  if (!event) return "invalid";
+  let provider = null as ReturnType<typeof getWebhookProviders>[number] | null;
+  let event = null as ReturnType<ReturnType<typeof getWebhookProviders>[number]["verifyWebhook"]>;
+  for (const candidate of getWebhookProviders()) {
+    event = candidate.verifyWebhook(rawBody, headers);
+    if (event) {
+      provider = candidate;
+      break;
+    }
+  }
+  if (!provider || !event) return "invalid";
 
   let row: PaymentRow | null = null;
   if (event.paymentId) row = await loadPayment(payload, event.paymentId);
@@ -491,7 +504,10 @@ export async function handleWebhook(payload: Payload, rawBody: string, headers: 
     row = found.docs[0] ? toRow(found.docs[0] as unknown as Doc) : null;
   }
   if (!row) return "ok"; // not one of ours (or not recorded yet) — acknowledge so the provider stops retrying
-  await applyOutcome(payload, row, event.outcome, "provider webhook");
+  // A webhook only tells us WHERE to look. Before any money is trusted, re-read the payment from the provider.
+  let outcome = event.outcome;
+  if (outcome.state === "paid") outcome = await provider.fetchStatus(row); // throws → 500 → the provider retries later
+  await applyOutcome(payload, row, outcome, "provider webhook");
   return "ok";
 }
 

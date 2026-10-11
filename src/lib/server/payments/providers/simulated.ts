@@ -18,7 +18,7 @@ export const simulatedProvider: PaymentProvider = {
     return { providerOrderId: `sim_${payment.id}`, checkout: { type: "simulated" } };
   },
 
-  resumeCheckout() {
+  async resumeCheckout() {
     return { type: "simulated" };
   },
 

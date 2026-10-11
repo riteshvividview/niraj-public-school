@@ -27,17 +27,8 @@ export interface PaymentAttempt {
 /** What the browser must do to take the money — decided by the server / provider. */
 export type CheckoutInstructions =
   | { type: "simulated" }
-  | {
-      type: "razorpay";
-      keyId: string;
-      orderId: string;
-      amount: number;
-      currency: string;
-      name: string;
-      description: string;
-      prefill: { name?: string; email?: string; contact?: string };
-      timeoutSeconds: number;
-    };
+  /** Send the parent to the bank's hosted payment page; they come back to /checkout/return. */
+  | { type: "redirect"; url: string };
 
 export interface PaymentConfig {
   provider: string;

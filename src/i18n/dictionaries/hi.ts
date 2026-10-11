@@ -168,6 +168,7 @@ const hi: Dictionary = {
     checkingStatus: "जाँच हो रही है…",
     stillPending: "अभी भी पुष्टि का इंतज़ार है।",
     cancelledToast: "भुगतान रद्द किया गया।",
+    redirecting: "आपको सुरक्षित भुगतान पेज पर ले जा रहे हैं…",
     payNow: "अभी भुगतान करें",
     processing: "आपका भुगतान प्रोसेस हो रहा है…",
     failureTitle: "भुगतान विफल",

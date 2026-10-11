@@ -67,8 +67,9 @@ export function PaymentSettingsCard() {
           {provider?.testMode ? (
             <p className="text-sub">
               No real payment provider is connected, so checkout runs in <strong className="text-ink">test mode</strong> and no real money moves. To go
-              live, add the provider&apos;s keys to the server settings (<code>RAZORPAY_KEY_ID</code>, <code>RAZORPAY_KEY_SECRET</code>,{" "}
-              <code>RAZORPAY_WEBHOOK_SECRET</code>) and restart — nothing else needs to change.
+              live, add the HDFC SmartGateway details to the server settings (<code>HDFC_API_KEY</code>, <code>HDFC_MERCHANT_ID</code>,{" "}
+              <code>HDFC_PAYMENT_PAGE_CLIENT_ID</code>, <code>HDFC_WEBHOOK_USERNAME</code>, <code>HDFC_WEBHOOK_PASSWORD</code>) and restart — nothing
+              else needs to change.
             </p>
           ) : null}
           {provider && !provider.available ? (
@@ -76,12 +77,19 @@ export function PaymentSettingsCard() {
               Online payments are switched OFF for parents until these are set: <strong>{provider.missingKeys.join(", ")}</strong>.
             </p>
           ) : null}
+          {provider && !provider.testMode && provider.sandbox ? (
+            <p className="text-section-programs">This is pointed at the bank&apos;s <strong>sandbox</strong> — payments are not real until <code>HDFC_BASE_URL</code> is removed.</p>
+          ) : null}
+          {provider && !provider.testMode && provider.webhookMissing.length > 0 ? (
+            <p className="text-section-programs">
+              Still to set for the webhook: <strong>{provider.webhookMissing.join(", ")}</strong>. Payments work without it, but a payment whose screen closed can
+              then only be confirmed when the parent opens My payments.
+            </p>
+          ) : null}
           {provider && !provider.testMode ? (
             <div className="space-y-1.5">
               <p className="text-sub">
-                In the provider&apos;s dashboard, add this webhook address
-                {provider.webhookEvents.length ? ` and tick these events: ${provider.webhookEvents.join(", ")}` : ""}. The webhook is what confirms a payment
-                when the parent&apos;s screen closed before it finished.
+                {provider.webhookNote} The webhook is what confirms a payment when the parent&apos;s screen closed before it finished.
               </p>
               <div className="flex items-center gap-2">
                 <code className="min-w-0 flex-1 truncate rounded bg-muted px-2 py-1.5 text-xs">{provider.webhookUrl}</code>

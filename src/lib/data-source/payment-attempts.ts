@@ -105,8 +105,10 @@ export interface PaymentProviderInfo {
   testMode: boolean;
   available: boolean;
   missingKeys: string[];
+  webhookMissing: string[];
   webhookUrl: string;
-  webhookEvents: string[];
+  webhookNote: string;
+  sandbox?: boolean;
 }
 
 export async function getPaymentProviderInfo(): Promise<PaymentProviderInfo> {
