@@ -127,7 +127,7 @@ export async function POST(request: Request) {
         current: selectionLabels(current),
         requested: selectionLabels(requested),
         reason,
-        consoleUrl: `${getAppUrl(request)}/console/subject-change-requests`,
+        consoleUrl: `${getAppUrl(request)}/console/requests?tab=subject-changes`,
       }),
     );
   } catch (error) {

@@ -2,20 +2,17 @@
 
 import {
   BookMarked,
-  BookOpenCheck,
   CalendarClock,
   Headset,
   History,
+  Inbox,
   LayoutDashboard,
   LogOut,
-  PackagePlus,
   PackageSearch,
   Receipt,
-  Repeat,
   ScanLine,
   ShieldCheck,
   Users,
-  Wallet,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -37,10 +34,7 @@ const NAV_ITEMS = [
   { href: "/console/students", label: "Students", icon: Users },
   { href: "/console/scan", label: "Receipt / QR Scanner", icon: ScanLine },
   { href: "/console/payments", label: "Payments", icon: Receipt },
-  { href: "/console/payment-attempts", label: "Payment Attempts", icon: Wallet },
-  { href: "/console/exchange-requests", label: "Exchange Requests", icon: Repeat },
-  { href: "/console/extra-item-requests", label: "Extra Item Requests", icon: PackagePlus },
-  { href: "/console/subject-change-requests", label: "Subject Change Requests", icon: BookOpenCheck },
+  { href: "/console/requests", label: "Requests", icon: Inbox },
   { href: "/console/support", label: "Parent Support", icon: Headset },
   { href: "/console/records", label: "Records & History", icon: History },
   {
@@ -80,10 +74,8 @@ function NavLinks({
   const navItems = useNavItems();
   const badgeCounts: Record<string, number> = {
     "/console/stock": lowStockCount,
-    "/console/exchange-requests": pendingExchanges,
-    "/console/subject-change-requests": pendingBookChanges,
-    "/console/extra-item-requests": pendingExtraItems,
-    "/console/payment-attempts": overview?.paymentsNeedingReview ?? 0,
+    // Exchanges, extra items, subject changes and payment attempts share one tab — its badge is everything waiting.
+    "/console/requests": pendingExchanges + pendingBookChanges + pendingExtraItems + (overview?.paymentsNeedingReview ?? 0),
     "/console/support": openSupport,
   };
   return (

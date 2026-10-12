@@ -181,7 +181,7 @@ export async function POST(request: Request) {
         reasonLabel: REASON_LABELS[reason],
         note: note || undefined,
         priceDifference,
-        consoleUrl: `${getAppUrl(request)}/console/exchange-requests`,
+        consoleUrl: `${getAppUrl(request)}/console/requests?tab=exchange`,
       }),
     );
   } catch (error) {

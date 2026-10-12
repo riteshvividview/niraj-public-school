@@ -83,7 +83,7 @@ export async function POST(request: Request) {
         itemLabel: String(item.name),
         size,
         note: note || undefined,
-        consoleUrl: `${getAppUrl(request)}/console/extra-item-requests`,
+        consoleUrl: `${getAppUrl(request)}/console/requests?tab=extra-items`,
       }),
     );
   } catch (error) {

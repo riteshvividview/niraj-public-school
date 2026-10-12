@@ -97,10 +97,10 @@ export function StudentConnections({ studentId }: { studentId: string }) {
             ) : null}
             {empty ? <p className="text-sm text-sub">No requests or payment attempts yet.</p> : null}
             <div className="grid gap-4 md:grid-cols-2">
-              <Group title="Payment attempts" href="/console/payment-attempts" rows={data.payments} />
-              <Group title="Exchange requests" href="/console/exchange-requests" rows={data.exchanges} />
-              <Group title="Subject changes" href="/console/subject-change-requests" rows={data.subjectChanges} />
-              <Group title="Extra item requests" href="/console/extra-item-requests" rows={data.extraItems} />
+              <Group title="Payment attempts" href="/console/requests?tab=payment-attempts" rows={data.payments} />
+              <Group title="Exchange requests" href="/console/requests?tab=exchange" rows={data.exchanges} />
+              <Group title="Subject changes" href="/console/requests?tab=subject-changes" rows={data.subjectChanges} />
+              <Group title="Extra item requests" href="/console/requests?tab=extra-items" rows={data.extraItems} />
               <Group title="Parent queries" href="/console/support" rows={data.support} />
             </div>
           </>

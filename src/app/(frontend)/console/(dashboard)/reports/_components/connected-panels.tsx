@@ -39,12 +39,12 @@ export function NeedsAttentionPanel() {
       </CardHeader>
       <CardContent>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-          <AttentionTile href="/console/exchange-requests" icon={Repeat} label="Exchange requests" count={data?.requests.exchanges} />
-          <AttentionTile href="/console/subject-change-requests" icon={BookOpenCheck} label="Subject changes" count={data?.requests.subjectChanges} />
-          <AttentionTile href="/console/extra-item-requests" icon={PackagePlus} label="Extra item requests" count={data?.requests.extraItems} />
+          <AttentionTile href="/console/requests?tab=exchange" icon={Repeat} label="Exchange requests" count={data?.requests.exchanges} />
+          <AttentionTile href="/console/requests?tab=subject-changes" icon={BookOpenCheck} label="Subject changes" count={data?.requests.subjectChanges} />
+          <AttentionTile href="/console/requests?tab=extra-items" icon={PackagePlus} label="Extra item requests" count={data?.requests.extraItems} />
           <AttentionTile href="/console/support" icon={Headset} label="Parent queries" count={data?.requests.support} />
-          <AttentionTile href="/console/payment-attempts" icon={AlertTriangle} label="Payments to review" count={data?.paymentsNeedingReview} />
-          <AttentionTile href="/console/payment-attempts" icon={Wallet} label="Payments in progress" count={data?.payments30d.pending} />
+          <AttentionTile href="/console/requests?tab=payment-attempts" icon={AlertTriangle} label="Payments to review" count={data?.paymentsNeedingReview} />
+          <AttentionTile href="/console/requests?tab=payment-attempts" icon={Wallet} label="Payments in progress" count={data?.payments30d.pending} />
         </div>
       </CardContent>
     </Card>
@@ -107,7 +107,7 @@ export function FeaturePanels() {
                 <span className="text-section-pay">{attempts.failed} failed</span>
                 <span className="text-sub">{attempts.abandoned} abandoned</span>
               </div>
-              <Link href="/console/payment-attempts" className="inline-flex items-center gap-1 text-sm text-brand hover:underline">
+              <Link href="/console/requests?tab=payment-attempts" className="inline-flex items-center gap-1 text-sm text-brand hover:underline">
                 Open payment attempts <ArrowRight className="size-3.5" />
               </Link>
             </>
