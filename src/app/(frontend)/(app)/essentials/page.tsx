@@ -7,7 +7,9 @@ import useSWR from "swr";
 import { AppHeader } from "@/components/shared/app-header";
 import { formatTemplate } from "@/i18n/format";
 import { useTranslation } from "@/i18n/context";
-import { getBooksByClass, getUniformItemsByClass } from "@/lib/data-source";
+import { assignedBookSetOf } from "@/lib/book-set";
+import { getBooksByClass } from "@/lib/data-source";
+import { useUniformCatalogue } from "@/lib/hooks/use-uniform-catalogue";
 import { useAuth } from "@/store/auth-store";
 import { lineId, useCart } from "@/store/cart-store";
 
@@ -46,19 +48,23 @@ export default function EssentialsHubPage() {
   // selection/confirmation (and cart seeding) happens on the books page's
   // own selection step, since which book set applies depends on choices
   // made there, not just the student's saved profile defaults.
+  // The book set is the one ASSIGNED to the student: their SECOND language (academicLanguage alone can be
+  // the first language), stream and elective — the same rule the Books page uses. Using the raw
+  // academicLanguage here picked the wrong set and showed "0 of 1 selected" with the right book in the cart.
+  const assigned = profile ? assignedBookSetOf(profile) : undefined;
   const { data: books } = useSWR(
-    profile ? ["essentials-hub:books", profile.schoolId, profile.classLevelId, profile.academicLanguage, profile.stream, profile.elective] : null,
+    profile ? ["essentials-hub:books", profile.schoolId, profile.classLevelId, assigned?.secondLanguage, assigned?.stream, assigned?.elective] : null,
     () =>
       getBooksByClass(profile!.schoolId, profile!.classLevelId, {
-        language: profile!.academicLanguage,
-        stream: profile!.stream,
-        elective: profile!.elective,
+        language: assigned?.secondLanguage,
+        stream: assigned?.stream,
+        elective: assigned?.elective,
       }),
   );
-  const { data: uniformItems } = useSWR(
-    profile ? ["essentials-hub:uniform", profile.schoolId, profile.classLevelId, profile.gender] : null,
-    () => getUniformItemsByClass(profile!.schoolId, profile!.classLevelId, profile!.gender),
-  );
+  // The same uniform list the Uniform page shows (a new admission's set includes the new-admission items) —
+  // the cart is reconciled against THIS list, so the set is never dropped from the cart.
+  const { items: uniformItems } = useUniformCatalogue();
+  const uniformLoaded = uniformItems !== null;
 
   // Reconciling the cart is a side effect of the uniform catalogue loading,
   // not part of the fetch itself — runs whenever a fresh result comes in.
@@ -98,15 +104,15 @@ export default function EssentialsHubPage() {
             icon={Shirt}
             title={t.essentials.uniform}
             statusLabel={
-              uniformItems === undefined
+              !uniformLoaded
                 ? "…"
                 : formatTemplate(t.essentials.confirmedCount, {
                     selected: uniformConfirmed,
-                    total: uniformItems.length,
+                    total: uniformItems!.length,
                   })
             }
             isComplete={
-              uniformItems !== undefined && uniformConfirmed === uniformItems.length && uniformItems.length > 0
+              uniformLoaded && uniformConfirmed === uniformItems.length && uniformItems.length > 0
             }
           />
         </div>

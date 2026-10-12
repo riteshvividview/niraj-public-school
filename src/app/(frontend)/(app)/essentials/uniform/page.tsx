@@ -2,7 +2,6 @@
 
 import { Ruler, Shirt } from "lucide-react";
 import { useEffect } from "react";
-import useSWR from "swr";
 import { AppHeader } from "@/components/shared/app-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ItemCard } from "@/components/shared/item-card";
@@ -24,7 +23,7 @@ import {
 } from "@/components/ui/sheet";
 import { useTranslation } from "@/i18n/context";
 import { uniformToCartItem } from "@/lib/cart-items";
-import { getClassLevelsBySchool, getMyNewAdmissionStatus, getNewAdmissionItemsFor, getUniformItemsByClass } from "@/lib/data-source";
+import { useUniformCatalogue } from "@/lib/hooks/use-uniform-catalogue";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/store/auth-store";
 import { lineId, useCart } from "@/store/cart-store";
@@ -95,23 +94,7 @@ export default function UniformPage() {
   const { t } = useTranslation();
   const { profile } = useAuth();
   const cart = useCart();
-  // Whether this student is a NEW admission is decided on the server (register-number year, the school's
-  // academic-year start, any staff override). If that call fails, fall back to the normal list — the
-  // payment step enforces the real rule either way.
-  const { data: status, error: statusError } = useSWR(profile ? ["na-status", profile.id] : null, () => getMyNewAdmissionStatus());
-  const { data: swrItems } = useSWR(profile ? ["uniform:catalogue+na", profile.schoolId, profile.classLevelId, profile.gender] : null, async () => {
-    const levels = await getClassLevelsBySchool(profile!.schoolId);
-    const classOrder = levels.find((level) => level.id === profile!.classLevelId)?.order ?? 0;
-    // The class's regular items, plus the new-admission items that apply to this class and gender.
-    const [regular, extra] = await Promise.all([
-      getUniformItemsByClass(profile!.schoolId, profile!.classLevelId, profile!.gender),
-      getNewAdmissionItemsFor(profile!.schoolId, classOrder, profile!.gender),
-    ]);
-    return [...regular, ...extra];
-  });
-  const mode: "set" | "requests" | "normal" = status?.isNew ? (status.setBought ? "requests" : "set") : "normal";
-  // New-admission items are for NEW admissions only — an existing student never sees them (not even as optional).
-  const items = status || statusError ? (swrItems ? (mode === "normal" ? swrItems.filter((item) => !item.newAdmission) : swrItems) : null) : null;
+  const { items, mode } = useUniformCatalogue();
 
   useEffect(() => {
     if (!items) return;
