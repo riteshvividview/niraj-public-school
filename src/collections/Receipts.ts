@@ -29,24 +29,14 @@ async function decrementEssentialsStock(
     if (item.kind !== "book" && item.kind !== "uniform") continue;
     const variantKey = item.kind === "uniform" ? (item.meta ?? "") : "";
 
-    const existing = await payload.find({
-      collection: "essentials-stock",
-      where: {
-        school: { equals: schoolId },
-        kind: { equals: item.kind },
-        refId: { equals: item.refId },
-        variantKey: { equals: variantKey },
-      },
-      limit: 1,
-    });
-    const row = existing.docs[0];
-    if (!row) continue;
-
-    await payload.update({
-      collection: "essentials-stock",
-      id: row.id,
-      data: { quantityOnHand: (row.quantityOnHand as number) - item.quantity },
-    });
+    // One atomic statement: two payments at the same moment both subtract, neither overwrites the other.
+    // A product with no stock row yet is simply not tracked (zero rows updated).
+    const pool = (payload.db as unknown as { pool: { query: (text: string, values?: unknown[]) => Promise<unknown> } }).pool;
+    await pool.query(
+      `UPDATE essentials_stock SET quantity_on_hand = quantity_on_hand - $5, updated_at = now()
+        WHERE school_id = $1 AND kind = $2 AND ref_id = $3 AND variant_key = $4`,
+      [schoolId, item.kind, item.refId, variantKey, item.quantity],
+    );
   }
 }
 

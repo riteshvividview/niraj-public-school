@@ -1,5 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { authenticated } from "../access/authenticated";
+import { staffOnly } from "../access/request-access";
 
 /**
  * Backs upload fields elsewhere (currently just Users.avatar). Files go to
@@ -12,7 +13,7 @@ import { authenticated } from "../access/authenticated";
 export const Media: CollectionConfig = {
   slug: "media",
   admin: { useAsTitle: "filename" },
-  access: { read: () => true, create: authenticated, update: authenticated, delete: authenticated },
+  access: { read: () => true, create: authenticated, update: staffOnly, delete: staffOnly },
   upload: {
     staticDir: "media",
     imageSizes: [{ name: "avatar", width: 256, height: 256, position: "centre" }],

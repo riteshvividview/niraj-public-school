@@ -1,14 +1,13 @@
 import type { CollectionConfig } from "payload";
+import { staffOnly } from "../access/request-access";
 
 /** Mirrors src/types/book.ts Book. */
 export const Books: CollectionConfig = {
   slug: "books",
   admin: { useAsTitle: "title" },
-  // Fully open: the School Console's Catalogue Manager (see
-  // .claude/DECISIONS.md "Phase 9 access control") writes here over
-  // unauthenticated REST — none of the app's three auth systems produce a
-  // real Payload session yet.
-  access: { read: () => true, create: () => true, update: () => true, delete: () => true },
+  // Anyone can read the catalogue (the parent app and login page need it); only school staff (a real
+  // payload-admins session) can create, change or delete it.
+  access: { read: () => true, create: staffOnly, update: staffOnly, delete: staffOnly },
   fields: [
     { name: "school", type: "relationship", relationTo: "schools", required: true },
     { name: "classLevel", type: "relationship", relationTo: "class-levels", required: true },

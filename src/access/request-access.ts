@@ -16,6 +16,13 @@ export const readOwnOrStaff: Access = ({ req: { user } }) => {
   return { user: { equals: user.id } };
 };
 
+/** A staff member sees everyone; a student/parent sees only their own account record. */
+export const staffOrSelf: Access = ({ req: { user } }) => {
+  if (!user) return false;
+  if (user.collection === "payload-admins") return true;
+  return { id: { equals: user.id } };
+};
+
 export const denyAll: Access = () => false;
 
 /** Only a logged-in school staff member (a `payload-admins` session). */

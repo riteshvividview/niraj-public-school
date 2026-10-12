@@ -1,4 +1,5 @@
 import type { CollectionConfig } from "payload";
+import { staffOnly } from "../access/request-access";
 
 /**
  * Mirrors src/types/school.ts ClassLevel. Kept as its own collection (not
@@ -11,7 +12,7 @@ import type { CollectionConfig } from "payload";
 export const ClassLevels: CollectionConfig = {
   slug: "class-levels",
   admin: { useAsTitle: "label" },
-  access: { read: () => true, create: () => true, update: () => true, delete: () => true },
+  access: { read: () => true, create: staffOnly, update: staffOnly, delete: staffOnly },
   fields: [
     { name: "school", type: "relationship", relationTo: "schools", required: true },
     { name: "label", type: "text", required: true },

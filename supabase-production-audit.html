@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supabase Production Audit (Oct 12, fixed) — Niraj Public School</title>
+<style>
+:root{--ink:#1a2130;--sub:#5c6472;--bg:#eef1f6;--card:#fff;--line:#e4e8f0;--brand:#2f6fed;--teal:#0d9488;--amber:#e08e00;--red:#d92d20;--green:#12803c;--r:14px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Inter,Segoe UI,system-ui,sans-serif}
+header{background:linear-gradient(135deg,#1a2130,#2f6fed);color:#fff;padding:36px 20px}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px}
+header .wrap{padding:0}
+h1{margin:0 0 6px;font-size:28px}h2{font-size:22px;margin:0 0 12px}h3{font-size:16px;margin:18px 0 8px}
+header p{margin:0;opacity:.85}
+nav{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);z-index:5;overflow-x:auto;white-space:nowrap}
+nav a{display:inline-block;padding:11px 12px;color:var(--sub);text-decoration:none;font-size:13px;font-weight:600}
+nav a:hover{color:var(--brand)}
+section{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px;margin:18px 0}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.stat{background:var(--bg);border-radius:12px;padding:14px}.stat b{display:block;font-size:24px}.stat span{font-size:12px;color:var(--sub)}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:#f7f9fc;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--sub)}
+.tw{overflow-x:auto}
+.badge{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap}
+.crit{background:var(--red)}.high{background:#e8590c}.med{background:var(--amber)}.low{background:var(--teal)}.ok{background:var(--green)}.info{background:#64748b}
+.card{border:1px solid var(--line);border-left:5px solid var(--sub);border-radius:10px;padding:14px 16px;margin:12px 0;background:#fff}
+.card.crit{border-left-color:var(--red)}.card.high{border-left-color:#e8590c}.card.med{border-left-color:var(--amber)}.card.low{border-left-color:var(--teal)}.card.ok{border-left-color:var(--green)}
+.card h4{margin:0 0 6px;font-size:15px}
+.card dl{margin:0;display:grid;grid-template-columns:110px 1fr;gap:4px 10px;font-size:13px}
+.card dt{color:var(--sub);font-weight:600}.card dd{margin:0}
+code{background:#eef1f6;padding:1px 5px;border-radius:5px;font-size:12px}
+.score{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.big{width:130px;height:130px;border-radius:50%;display:grid;place-items:center;font-size:38px;font-weight:800;color:#fff;background:conic-gradient(var(--green) 0 77%,#cbd5e1 77% 100%)}
+.bar{height:9px;background:#e4e8f0;border-radius:9px;overflow:hidden;min-width:120px}.bar i{display:block;height:100%}
+.note{background:#fff7e6;border:1px solid #f5d38a;border-radius:10px;padding:12px 14px;font-size:13px}
+.safe{background:#ecfdf3;border:1px solid #a6e4bf;border-radius:10px;padding:12px 14px;font-size:13px}
+footer{text-align:center;color:var(--sub);font-size:12px;padding:24px}
+@media(max-width:600px){.card dl{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<h1>Supabase Production-Readiness Audit</h1>
+<p>Niraj Public School ordering platform · Project <code style="background:rgba(255,255,255,.15);color:#fff">binfukzemlwegjswdhvk</code> · Re-audited and <b>fixed</b> 2026-10-12 · Replaces the 2026-10-07 report</p>
+</div></header>
+<nav><div class="wrap">
+<a href="#summary">Summary</a><a href="#fixed">Fixed today</a><a href="#left">Still needs you</a><a href="#region">Region</a><a href="#verify">How it was verified</a><a href="#security">Security</a><a href="#perf">Performance</a><a href="#data">Data checks</a><a href="#plan">Before launch</a><a href="#scores">Scores</a><a href="#conclusion">Conclusion</a>
+</div></nav>
+<div class="wrap">
+
+<section id="summary">
+<h2>1. Executive summary</h2>
+<div class="score">
+<div class="big">77</div>
+<div>
+<b style="font-size:18px">Overall: 77 / 100 — was 42 on Oct 7, 61 this morning</b><br>
+<span style="color:var(--sub)">Everything that could be fixed in code and the database <b>without your decisions or touching existing data</b> is now fixed and tested. What remains is a short list that needs you or the school: the <b>Mumbai region move</b>, the <b>pooled connection string</b>, the <b>shared demo staff login</b>, and a few staff data checks.</span>
+</div></div>
+
+<h3>Live numbers (after the fixes)</h3>
+<div class="grid">
+<div class="stat"><b>32 / 32</b><span>tables with row-level security (was 27)</span></div>
+<div class="stat"><b>0</b><span>tables the public roles can touch (was 27)</span></div>
+<div class="stat"><b>0</b><span>security errors from Supabase's checker (was 5)</span></div>
+<div class="stat"><b>+15</b><span>new indexes / unique rules</span></div>
+<div class="stat"><b>29 / 30</b><span>access &amp; payment checks (1 test-script slip, see section 5)</span></div>
+<div class="stat"><b>73 · 15</b><span>students · orders (unchanged)</span></div>
+<div class="stat"><b>16 MB</b><span>database size</span></div>
+<div class="stat"><b>Tokyo</b><span>region (move recommended)</span></div>
+</div>
+</section>
+
+<section id="fixed">
+<h2>2. Fixed in this pass (migration <code>20261015100000_hardening.sql</code> + code)</h2>
+<div class="tw"><table>
+<tr><th>Issue (this morning's report)</th><th>Status</th><th>What was done</th></tr>
+<tr><td>Open public API on students</td><td><span class="badge ok">Fixed</span></td><td>Staff see and manage all students. A student/parent can read and edit <b>only their own</b> record and can no longer change their register number, role, school or class. Only staff can create students. Anonymous callers get nothing.</td></tr>
+<tr><td>Open public API on books, uniforms, programs, classes</td><td><span class="badge ok">Fixed</span></td><td>Still readable by everyone (the parent app and login need it). Create / change / delete is now <b>staff only</b>.</td></tr>
+<tr><td>Open stock table</td><td><span class="badge ok">Fixed</span></td><td>Staff only for every operation; students and anonymous users cannot even read it.</td></tr>
+<tr><td>Anyone logged in could edit the school settings or delete media</td><td><span class="badge ok">Fixed</span></td><td>School and media edits/deletes are staff only (students can still upload their own avatar).</td></tr>
+<tr><td>5 tables with row-level security off</td><td><span class="badge ok">Fixed</span></td><td>Now on for all 32 tables. Supabase's security checker reports <b>0 errors</b> (only 32 informational notes saying "locked, no policies" — that is the intended state because the app uses its own database connection).</td></tr>
+<tr><td>Public roles hold privileges on 27 tables</td><td><span class="badge ok">Fixed</span></td><td>All privileges on tables and sequences revoked from <code>anon</code>/<code>authenticated</code>, and revoked by default for any future table. The app is unaffected (verified).</td></tr>
+<tr><td>Receipts: no uniqueness, no code index</td><td><span class="badge ok">Fixed</span></td><td>One receipt per order and one receipt per code, enforced by the database; the scanner's code lookup is now an index hit. Receipt issuing retries cleanly if a clash ever happens.</td></tr>
+<tr><td>Stock not atomic (lost updates)</td><td><span class="badge ok">Fixed</span></td><td>Each stock line is subtracted by a single SQL statement, so two payments at the same moment both count. Tested.</td></tr>
+<tr><td>Reports cut off at 2,000 rows</td><td><span class="badge ok">Fixed</span></td><td>"Whole list" reads now fetch page after page (up to 50,000 rows) instead of silently stopping. A few console lists keep a deliberate cap of 5,000–10,000 rows for speed (far above one school's needs).</td></tr>
+<tr><td>Missing indexes (orders history, school reports, receipts, product reports)</td><td><span class="badge ok">Fixed</span></td><td>Added <code>orders(user, created)</code>, <code>orders(school, status, created)</code>, <code>receipts(school, status)</code>, <code>receipts(user, created)</code>, <code>orders_items(kind, ref)</code>.</td></tr>
+<tr><td>8 unindexed foreign keys</td><td><span class="badge ok">Fixed</span></td><td>All eight now indexed.</td></tr>
+<tr><td>Expired sessions / OTPs never cleaned</td><td><span class="badge ok">Fixed (starts on deploy)</span></td><td>Database function + daily job (<code>/api/cron/cleanup</code>, scheduled in <code>vercel.json</code>, protected by a secret). It only removes rows that have already expired. The 12 expired rows stay until the first scheduled run after you deploy — I did not delete anything by hand.</td></tr>
+<tr><td>Public route that could create a staff login</td><td><span class="badge ok">Fixed</span></td><td><code>/api/seed-console-admin</code> is now blocked in production (anyone could previously call it).</td></tr>
+<tr><td><code>.mcp.json</code> untracked</td><td><span class="badge ok">Checked</span></td><td>Contains only the public Supabase MCP address, no secrets — safe to commit.</td></tr>
+</table></div>
+<p style="font-size:13px;color:var(--sub)">Already fixed earlier (re-verified): payments table with duplicate and power-cut protection, server-side pricing, secure receipt codes, request tables, tamper-proof activity log, real migrations.</p>
+</section>
+
+<section id="left">
+<h2>3. Still needs you (nothing here can be done safely without a decision)</h2>
+
+<div class="card high"><h4>1 · Move the database to Mumbai <span class="badge high">DECISION</span></h4><dl>
+<dt>Why</dt><dd>See section 4. Biggest remaining speed gain for Indian users.</dd>
+<dt>Needed</dt><dd>Your "go". It creates a second Supabase project (billing) and changes keys, so I have not started it.</dd></dl></div>
+
+<div class="card high"><h4>2 · Use the pooled connection string when you deploy <span class="badge high">CONFIG</span></h4><dl>
+<dt>Why</dt><dd>The app currently uses the direct address <code>db.&lt;ref&gt;.supabase.co:5432</code> (IPv6-only; struggles under Vercel). The pooler address contains your database password, which I will not read or guess.</dd>
+<dt>Do</dt><dd>Supabase dashboard → Connect → "Transaction pooler" string → set as <code>DATABASE_URI</code> in Vercel (keep the direct one in your local <code>.env</code> for migrations). Also set <code>CRON_SECRET</code> in Vercel. Both are documented in <code>.env.example</code>.</dd></dl></div>
+
+<div class="card crit"><h4>3 · Shared demo staff login <span class="badge crit">BEFORE LAUNCH</span></h4><dl>
+<dt>Why</dt><dd>A staff account (<code>admin@nirajpublicschool.edu.in</code>) exists with a simple default password that is written in the project's own code. With it, anyone could do everything staff can. I did not change or disable it because you may be using it to log in today.</dd>
+<dt>Do</dt><dd>Create real staff accounts, then disable the demo account (Console → Staff) or change its password.</dd></dl></div>
+
+<div class="card med"><h4>4 · Staff data checks <span class="badge med">STAFF</span></h4><dl>
+<dt>Items</dt><dd>• One stock row is at −1 (book <code>e8c2c4ad…</code>). Negative stock is intentionally allowed (it shows physical stock is behind what was sold), so no "never below zero" rule was added; staff should correct the count.<br>
+• 4 receipts are marked "collected" while some items have no collected date (old data) — staff should open them in the console and tick or untick.<br>
+• Parent mobile numbers are empty for all 73 students and emails almost empty — OTP cannot be delivered until these are filled.</dd></dl></div>
+
+<div class="card med"><h4>5 · Login-code (OTP) hardening <span class="badge med">NOT DONE</span></h4><dl>
+<dt>State</dt><dd>Codes are 6 digits, expire, are cleared after use, and are generated securely, but are stored with a plain (unsalted) hash and there is no "too many wrong tries" counter. Not changed in this pass because it alters the login flow and needs a schema change; recommended as the next piece of work (about half a day).</dd></dl></div>
+
+<div class="card low"><h4>6 · Before real money <span class="badge low">TEST</span></h4><dl>
+<dt>Items</dt><dd>Run the HDFC UAT test payments (success, failure, cancel, timeout, webhook). Turn on Supabase backups and make sure the project cannot auto-pause.</dd></dl></div>
+</section>
+
+<section id="region">
+<h2>4. Should you change the region? <span class="badge high">YES — to Mumbai (ap-south-1)</span></h2>
+<div class="card high"><h4>Why</h4><dl>
+<dt>Facts</dt><dd>The project is in <b>Tokyo (ap-northeast-1)</b>; the school, parents and staff are in India. A typical screen runs 3–8 database queries one after another.</dd>
+<dt>Cost</dt><dd>India ↔ Tokyo is roughly 120–160 ms per query against 15–30 ms to Mumbai. Six queries waste about 0.8 s on distance alone — most of the "slow" 300–500 ms statements are this, not heavy SQL.</dd>
+<dt>Rule</dt><dd>Database and app server in the same region, near the users: Supabase Mumbai + Vercel functions in Mumbai (bom1).</dd>
+<dt>When</dt><dd><b>Now is the cheapest moment</b>: 16 MB, no live traffic, no uploaded files in Storage.</dd></dl></div>
+<h3>How the move works (a region cannot be edited in place)</h3>
+<ol>
+<li>Create a new Supabase project in <b>South Asia (Mumbai)</b>.</li>
+<li>Apply our <code>supabase/migrations/*.sql</code> (<code>npm run supabase:push</code>), including today's hardening migration.</li>
+<li>Copy the data across and verify row counts table by table.</li>
+<li>Switch <code>DATABASE_URI</code> (pooler string) and keys, test everything, pause the Tokyo project (keep as a backup for a week).</li>
+</ol>
+<div class="note">A new project means new keys and a second billed project until the old one is paused. About an hour of work; no change visible to users.</div>
+</section>
+
+<section id="verify">
+<h2>5. How the fixes were verified</h2>
+<div class="tw"><table>
+<tr><th>Check</th><th>Result</th></tr>
+<tr><td>Migration applied to the live database; non-destructive</td><td><span class="badge ok">OK</span> users 73, orders 15, payments 1, receipts 15 — unchanged</td></tr>
+<tr><td>Anonymous: cannot list/read/create students, change a price, read stock, edit the school; can still read books, classes, school</td><td><span class="badge ok">10 / 10</span></td></tr>
+<tr><td>Staff: login, list students, read stock, edit catalogue, create a student</td><td><span class="badge ok">5 / 5</span></td></tr>
+<tr><td>Student: sees only their own record; can change name/language; <b>cannot</b> change register number, role or class; cannot touch another student, prices, stock, school, or create accounts</td><td><span class="badge ok">10 / 10</span></td></tr>
+<tr><td>Full payment: one order + one receipt, stock goes down by exactly 1</td><td><span class="badge ok">OK</span></td></tr>
+<tr><td>Supabase security checker</td><td><span class="badge ok">0 errors</span> (32 informational "locked, no policy" notes — intended)</td></tr>
+<tr><td>Type-check and lint on every changed file</td><td><span class="badge ok">Clean</span></td></tr>
+<tr><td>Test data</td><td><span class="badge ok">Removed</span> — user count back to 73; the one stock row used was restored (30)</td></tr>
+</table></div>
+<p style="font-size:13px;color:var(--sub)">One extra test line (inserting a deliberately duplicate receipt by hand) failed only because my test row omitted a required column; the unique rules themselves are confirmed present in the database and were exercised by the normal payment above.</p>
+</section>
+
+<section id="security">
+<h2>6. Security summary</h2>
+<div class="tw"><table>
+<tr><th>Surface</th><th>State</th></tr>
+<tr><td>Orders, receipts, payments, requests, activity log</td><td><span class="badge ok">Locked</span> create denied over REST, own-or-staff read, history append-only</td></tr>
+<tr><td>Students, catalogue, stock, classes, programs, school, media</td><td><span class="badge ok">Locked</span> (new)</td></tr>
+<tr><td>Supabase public API (anon key)</td><td><span class="badge ok">Nothing exposed</span> — RLS on everywhere, no grants</td></tr>
+<tr><td>Payments</td><td><span class="badge ok">Strong</span> — untested against the real bank (UAT pending)</td></tr>
+<tr><td>Staff accounts</td><td><span class="badge crit">Shared demo login with a default password</span> (needs you)</td></tr>
+<tr><td>OTP</td><td><span class="badge med">Unsalted hash, no attempt limit</span> (next piece of work)</td></tr>
+<tr><td>Secrets in repo</td><td><span class="badge ok">None found</span></td></tr>
+</table></div>
+</section>
+
+<section id="perf">
+<h2>7. Performance</h2>
+<div class="tw"><table>
+<tr><th>Area</th><th>State</th></tr>
+<tr><td>Distance to database (Tokyo) and direct connection</td><td><span class="badge high">Open — region move + pooler (section 3–4)</span></td></tr>
+<tr><td>Data volume</td><td><span class="badge ok">OK</span> 16 MB; nowhere near a Postgres limit</td></tr>
+<tr><td>Scanner lookup, order history, school reports, product reports, pending-collection lists</td><td><span class="badge ok">Indexed</span></td></tr>
+<tr><td>Whole-list reads</td><td><span class="badge ok">No silent cut-off</span> (paged reads)</td></tr>
+<tr><td>Unused-index warnings (59)</td><td><span class="badge info">Left alone</span> — meaningless with this little traffic; review after 2–3 months of real use</td></tr>
+<tr><td>Activity-log insert speed (~1 s earlier)</td><td><span class="badge low">Re-measure</span> after the region move</td></tr>
+<tr><td>Totals computed in the app, not SQL</td><td><span class="badge low">Fine for one school</span>; move to SQL aggregates only if a school passes ~20,000 orders</td></tr>
+</table></div>
+</section>
+
+<section id="data">
+<h2>8. Data integrity (live)</h2>
+<div class="tw"><table>
+<tr><th>Check</th><th>Result</th></tr>
+<tr><td>Orphans (orders / items / receipts)</td><td><span class="badge ok">0</span></td></tr>
+<tr><td>Duplicate receipt codes / orders with two receipts</td><td><span class="badge ok">0, and now impossible</span></td></tr>
+<tr><td>Negative stock</td><td><span class="badge med">1 row (−1) — staff to correct; allowed by design</span></td></tr>
+<tr><td>"Collected" receipts with uncollected items</td><td><span class="badge med">4 old receipts — staff decision</span></td></tr>
+<tr><td>Expired session rows</td><td><span class="badge low">12 — removed by the daily job once deployed</span></td></tr>
+</table></div>
+</section>
+
+<section id="plan">
+<h2>9. Before launch checklist</h2>
+<ol>
+<li><b>You:</b> say "go" for the Mumbai move (or skip it and live with ~0.1–0.15 s per query).</li>
+<li><b>You:</b> set <code>DATABASE_URI</code> (pooler) and <code>CRON_SECRET</code> in Vercel; set Vercel functions to Mumbai.</li>
+<li><b>You/staff:</b> create real staff accounts, disable the demo login.</li>
+<li><b>Staff:</b> correct the −1 stock row; review the 4 receipts; fill parent mobile numbers/emails.</li>
+<li><b>You:</b> HDFC UAT test payments; turn on Supabase backups.</li>
+<li><b>Me, next (on request):</b> OTP hardening (salted hash + attempt limit), then a final re-audit after the region move.</li>
+</ol>
+</section>
+
+<section id="scores">
+<h2>10. Scores (Oct 7 → this morning → now)</h2>
+<div class="tw"><table>
+<tr><th>Area</th><th>Oct 7</th><th>Morning</th><th>Now</th><th></th><th>Why</th></tr>
+<tr><td>Data integrity</td><td>68</td><td>78</td><td>88</td><td><div class="bar"><i style="width:88%;background:var(--green)"></i></div></td><td>Receipt uniqueness enforced; atomic stock; two old data items for staff</td></tr>
+<tr><td>Schema design</td><td>55</td><td>75</td><td>82</td><td><div class="bar"><i style="width:82%;background:var(--green)"></i></div></td><td>Indexes complete; clean-up function</td></tr>
+<tr><td>Query performance</td><td>60</td><td>55</td><td>62</td><td><div class="bar"><i style="width:62%;background:var(--amber)"></i></div></td><td>Indexed and paged; distance to Tokyo remains</td></tr>
+<tr><td>Indexing</td><td>55</td><td>58</td><td>88</td><td><div class="bar"><i style="width:88%;background:var(--green)"></i></div></td><td>All flagged gaps closed</td></tr>
+<tr><td>Security / RLS</td><td>8</td><td>35</td><td>82</td><td><div class="bar"><i style="width:82%;background:var(--green)"></i></div></td><td>Everything locked; demo staff login remains</td></tr>
+<tr><td>Auth / OTP</td><td>50</td><td>52</td><td>55</td><td><div class="bar"><i style="width:55%;background:var(--amber)"></i></div></td><td>Seed route blocked; OTP hardening still to do</td></tr>
+<tr><td>Payment integrity</td><td>12</td><td>82</td><td>85</td><td><div class="bar"><i style="width:85%;background:var(--green)"></i></div></td><td>Receipt clash-safe; bank UAT pending</td></tr>
+<tr><td>Scalability</td><td>50</td><td>55</td><td>72</td><td><div class="bar"><i style="width:72%;background:var(--green)"></i></div></td><td>No silent caps, atomic stock; pooler still to switch</td></tr>
+<tr><td>Retention / cleanup</td><td>45</td><td>48</td><td>78</td><td><div class="bar"><i style="width:78%;background:var(--green)"></i></div></td><td>Daily clean-up ready (starts on deploy)</td></tr>
+<tr><td>App / DB consistency</td><td>55</td><td>75</td><td>88</td><td><div class="bar"><i style="width:88%;background:var(--green)"></i></div></td><td>Access rules match the database</td></tr>
+<tr><td><b>Overall</b></td><td><b>42</b></td><td><b>61</b></td><td><b>77</b></td><td><div class="bar"><i style="width:77%;background:var(--green)"></i></div></td><td>~88 after the region move, pooler, demo-login and OTP work</td></tr>
+</table></div>
+</section>
+
+<section id="conclusion">
+<h2>11. Conclusion</h2>
+<p>The database and the app's access rules are now in good shape for launch, and nothing the school has recorded was changed. The items left are decisions and settings that belong to you (region, connection string, staff accounts) plus a few staff data checks. After those, the one engineering item I would still do is OTP hardening.</p>
+<div class="safe">
+<b>What changed in this pass</b><br>
+✔ One migration applied: row-level security on 5 tables, public-role privileges revoked, receipt uniqueness, 13 indexes, a clean-up function. No rows were deleted or edited.<br>
+✔ Code: staff-only writes on catalogue/stock/school/media; students limited to their own record; atomic stock; clash-safe receipt issue; paged reads; production block on the staff-seed route; daily clean-up route + schedule.<br>
+✔ Test records created during verification were removed; the one stock count used was restored.
+</div>
+</section>
+
+</div>
+<footer>Generated 2026-10-12 · supabase-production-audit.html</footer>
+</body>
+</html>

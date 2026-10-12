@@ -1,5 +1,5 @@
 import { APIError, type CollectionAfterChangeHook, type CollectionBeforeChangeHook, type CollectionBeforeDeleteHook, type CollectionConfig } from "payload";
-import { staffOnly, staffOnlyField, staffOrOwnerField } from "../access/request-access";
+import { staffOnly, staffOnlyField, staffOrOwnerField, staffOrSelf } from "../access/request-access";
 import { isPlausiblePhone } from "@/lib/contact-links";
 import { PINCODE_PATTERN } from "@/lib/address";
 import { actorFromUser, recordEvent } from "@/lib/server/record-events";
@@ -139,6 +139,14 @@ const logAddressChange: CollectionAfterChangeHook = async ({ doc, previousDoc, o
   return doc;
 };
 
+/** A student editing their own account can never change their register number (the login). */
+const lockIdentity: CollectionBeforeChangeHook = ({ data, originalDoc, req, operation }) => {
+  if (operation === "update" && req.user?.collection === "users" && originalDoc) {
+    data.username = (originalDoc as { username?: string }).username;
+  }
+  return data;
+};
+
 export const Users: CollectionConfig = {
   slug: "users",
   auth: {
@@ -150,8 +158,10 @@ export const Users: CollectionConfig = {
     tokenExpiration: 60 * 60 * 24 * 7, // 7 days — a student shouldn't need to re-login often
   },
   admin: { useAsTitle: "name" },
-  hooks: { beforeChange: [normalizeAddress], afterChange: [logAddressChange], beforeDelete: [keepStudentsWithHistory] },
-  access: { read: () => true, create: () => true, update: () => true, delete: staffOnly },
+  hooks: { beforeChange: [lockIdentity, normalizeAddress], afterChange: [logAddressChange], beforeDelete: [keepStudentsWithHistory] },
+  // Staff manage every account; a student can read and edit only their own, and cannot change who they are
+  // (register number, role, school, class — see staffOnlyField below and lockIdentity).
+  access: { read: staffOrSelf, create: staffOnly, update: staffOrSelf, delete: staffOnly },
   fields: [
     { name: "name", type: "text", required: true },
     { name: "avatar", type: "upload", relationTo: "media" },
@@ -171,14 +181,15 @@ export const Users: CollectionConfig = {
       name: "role",
       type: "select",
       required: true,
+      access: { create: staffOnlyField, update: staffOnlyField },
       defaultValue: "student",
       options: [
         { label: "Parent", value: "parent" },
         { label: "Student", value: "student" },
       ],
     },
-    { name: "school", type: "relationship", relationTo: "schools", required: true },
-    { name: "classLevel", type: "relationship", relationTo: "class-levels", required: true },
+    { name: "school", type: "relationship", relationTo: "schools", required: true, access: { create: staffOnlyField, update: staffOnlyField } },
+    { name: "classLevel", type: "relationship", relationTo: "class-levels", required: true, access: { create: staffOnlyField, update: staffOnlyField } },
     {
       name: "preferredLanguage",
       type: "select",

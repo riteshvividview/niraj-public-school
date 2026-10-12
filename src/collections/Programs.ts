@@ -1,12 +1,13 @@
 import type { CollectionConfig } from "payload";
+import { staffOnly } from "../access/request-access";
 
 /** Mirrors src/types/program.ts Program. */
 export const Programs: CollectionConfig = {
   slug: "programs",
   admin: { useAsTitle: "title" },
-  // Fully open — see Books.ts's comment; the Program Manager writes here
-  // over unauthenticated REST.
-  access: { read: () => true, create: () => true, update: () => true, delete: () => true },
+  // Anyone can read the catalogue (the parent app and login page need it); only school staff (a real
+  // payload-admins session) can create, change or delete it.
+  access: { read: () => true, create: staffOnly, update: staffOnly, delete: staffOnly },
   fields: [
     { name: "school", type: "relationship", relationTo: "schools", required: true },
     { name: "title", type: "text", required: true },

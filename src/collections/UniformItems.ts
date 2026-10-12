@@ -1,12 +1,13 @@
 import type { CollectionConfig } from "payload";
+import { staffOnly } from "../access/request-access";
 
 /** Mirrors src/types/uniform-item.ts UniformItem. */
 export const UniformItems: CollectionConfig = {
   slug: "uniform-items",
   admin: { useAsTitle: "name" },
-  // Fully open — see Books.ts's comment; the Catalogue Manager writes here
-  // over unauthenticated REST.
-  access: { read: () => true, create: () => true, update: () => true, delete: () => true },
+  // Anyone can read the catalogue (the parent app and login page need it); only school staff (a real
+  // payload-admins session) can create, change or delete it.
+  access: { read: () => true, create: staffOnly, update: staffOnly, delete: staffOnly },
   fields: [
     { name: "school", type: "relationship", relationTo: "schools", required: true },
     // Every class-list item belongs to one class. A "new admission item" is common to

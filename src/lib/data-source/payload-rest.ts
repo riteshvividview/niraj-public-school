@@ -27,7 +27,9 @@ const API_BASE = "/api";
  * `limit`; `warnIfTruncated` below turns that into a loud console warning
  * instead of a quietly-wrong dashboard once a school's data outgrows this.
  */
-const DEFAULT_FIND_LIMIT = 2000;
+const DEFAULT_FIND_LIMIT = 1000;
+/** A page is 1000 rows; 50 pages = 50,000 rows, far beyond one school. Past that, switch the call to payloadFindPage. */
+const MAX_PAGES = 50;
 
 interface PayloadListResponse<T> {
   docs: T[];
@@ -63,13 +65,27 @@ export async function payloadFind<T>(
   Object.entries(where).forEach(([field, value]) => {
     whereParams[`where[${field}][equals]`] = String(value);
   });
-  const limit = typeof extra.limit === "number" ? extra.limit : DEFAULT_FIND_LIMIT;
-  const query = toQueryString({ depth: 0, limit, ...whereParams, ...extra });
-  const res = await fetch(`${API_BASE}/${collection}?${query}`, { cache: "no-store" });
-  if (!res.ok) return [];
-  const data = (await res.json()) as PayloadListResponse<T>;
-  warnIfTruncated(collection, data, limit);
-  return data.docs;
+  const explicitLimit = typeof extra.limit === "number";
+  const limit = explicitLimit ? (extra.limit as number) : DEFAULT_FIND_LIMIT;
+  const fetchPage = async (page: number) => {
+    const query = toQueryString({ depth: 0, limit, ...whereParams, ...extra, ...(page > 1 ? { page } : {}) });
+    const res = await fetch(`${API_BASE}/${collection}?${query}`, { cache: "no-store" });
+    return res.ok ? ((await res.json()) as PayloadListResponse<T> & { hasNextPage?: boolean }) : null;
+  };
+  const first = await fetchPage(1);
+  if (!first) return [];
+  // "Whole collection" calls keep reading until nothing is left, so a report is never silently cut short.
+  // (A caller that asks for an explicit limit gets exactly that.)
+  const docs = [...first.docs];
+  let last = first;
+  for (let page = 2; !explicitLimit && last.hasNextPage && page <= MAX_PAGES; page++) {
+    const next = await fetchPage(page);
+    if (!next) break;
+    docs.push(...next.docs);
+    last = next;
+  }
+  warnIfTruncated(collection, { docs, totalDocs: first.totalDocs }, explicitLimit ? limit : 1);
+  return docs;
 }
 
 export interface PayloadPage<T> {

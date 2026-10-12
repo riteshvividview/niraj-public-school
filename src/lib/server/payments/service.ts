@@ -221,11 +221,17 @@ async function ensureOrder(payload: Payload, paymentId: string): Promise<{ order
       const code = generateReceiptCode();
       const clash = await payload.count({ collection: "receipts", where: { qrPayload: { equals: code } } });
       if (clash.totalDocs > 0) continue;
-      receipt = (await payload.create({
-        collection: "receipts",
-        data: { order: orderId, user: row.userId, school: row.schoolId, qrPayload: code, redemptionStatus: "ready", issuedAt: new Date().toISOString() },
-        depth: 0,
-      })) as unknown as Doc;
+      try {
+        receipt = (await payload.create({
+          collection: "receipts",
+          data: { order: orderId, user: row.userId, school: row.schoolId, qrPayload: code, redemptionStatus: "ready", issuedAt: new Date().toISOString() },
+          depth: 0,
+        })) as unknown as Doc;
+      } catch (error) {
+        if (!isUniqueViolation(error)) throw error;
+        // The database refused a duplicate: either the code was taken a moment ago (try another) or another request already issued this order's receipt (use it).
+        receipt = ((await payload.find({ collection: "receipts", where: { order: { equals: orderId } }, limit: 1, depth: 0 })).docs[0] ?? null) as unknown as Doc | null;
+      }
     }
     if (!receipt) throw new PaymentError("Could not issue the receipt. Please contact the school — your payment is safe.", 500);
   }
