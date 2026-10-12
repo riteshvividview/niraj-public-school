@@ -139,6 +139,11 @@ const en: Dictionary = {
     emptyDescription: "Head back to Essentials to select books or uniform.",
     proceedToPayment: "Proceed to Payment",
     changeSize: "Change size",
+    clearCart: "Clear cart",
+    clearTitle: "Clear your cart?",
+    clearDescription: "Everything in your cart will be removed. You can add items again from Essentials or Programs.",
+    clearConfirm: "Yes, clear it",
+    clearKeep: "Keep my cart",
   },
 
   payment: {

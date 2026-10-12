@@ -154,6 +154,11 @@ export interface Dictionary {
     emptyDescription: string;
     proceedToPayment: string;
     changeSize: string;
+    clearCart: string;
+    clearTitle: string;
+    clearDescription: string;
+    clearConfirm: string;
+    clearKeep: string;
   };
 
   payment: {

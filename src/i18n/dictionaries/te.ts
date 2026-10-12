@@ -139,6 +139,11 @@ const te: Dictionary = {
     emptyDescription: "పుస్తకాలు లేదా యూనిఫారంను ఎంచుకోవడానికి అవసరమైనవి విభాగానికి తిరిగి వెళ్లండి.",
     proceedToPayment: "చెల్లింపుకు కొనసాగండి",
     changeSize: "సైజు మార్చండి",
+    clearCart: "కార్ట్‌ను ఖాళీ చేయండి",
+    clearTitle: "కార్ట్‌ను ఖాళీ చేయాలా?",
+    clearDescription: "మీ కార్ట్‌లోని అన్నీ తొలగించబడతాయి. మీరు Essentials లేదా Programs నుండి మళ్లీ చేర్చవచ్చు.",
+    clearConfirm: "అవును, ఖాళీ చేయండి",
+    clearKeep: "కార్ట్‌ను ఉంచండి",
   },
 
   payment: {

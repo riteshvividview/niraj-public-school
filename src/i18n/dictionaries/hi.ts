@@ -139,6 +139,11 @@ const hi: Dictionary = {
     emptyDescription: "किताबें या यूनिफ़ॉर्म चुनने के लिए आवश्यक सामग्री पर वापस जाएं।",
     proceedToPayment: "भुगतान की ओर बढ़ें",
     changeSize: "साइज़ बदलें",
+    clearCart: "कार्ट खाली करें",
+    clearTitle: "कार्ट खाली करें?",
+    clearDescription: "आपके कार्ट की सारी चीज़ें हट जाएँगी। आप Essentials या Programs से दोबारा जोड़ सकते हैं।",
+    clearConfirm: "हाँ, खाली करें",
+    clearKeep: "कार्ट रहने दें",
   },
 
   payment: {

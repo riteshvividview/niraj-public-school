@@ -1,6 +1,7 @@
 "use client";
 
-import { ShoppingCart, X } from "lucide-react";
+import { ShoppingCart, Trash2, X } from "lucide-react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppHeader } from "@/components/shared/app-header";
@@ -8,6 +9,16 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { ListSkeleton } from "@/components/shared/loading-skeletons";
 import { PendingPaymentBanner } from "@/components/shared/pending-payment-banner";
 import { PriceSummary } from "@/components/shared/price-summary";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/i18n/context";
 import useSWR from "swr";
@@ -64,6 +75,7 @@ export default function CartPage() {
   const router = useRouter();
   const cart = useCart();
   const { profile } = useAuth();
+  const [clearOpen, setClearOpen] = useState(false);
   // A new-admission student who hasn't bought their set yet buys the uniform as ONE set (decided by the server).
   const { data: naStatus } = useSWR(profile ? ["na-status", profile.id] : null, () => getMyNewAdmissionStatus());
 
@@ -101,7 +113,8 @@ export default function CartPage() {
                   </h2>
                   <div className="divide-y divide-line rounded-lg border border-line/60 bg-card">
                     {grouped.books.map((item) => (
-                      <CartLineRow key={item.id} item={item} />
+                      // The book set can be taken out too (e.g. a parent who only wants uniform) — it is added back from Essentials → Books.
+                      <CartLineRow key={item.id} item={item} onRemove={() => cart.setIncluded(item, false)} />
                     ))}
                   </div>
                 </div>
@@ -147,6 +160,22 @@ export default function CartPage() {
             <Button className="w-full" onClick={() => router.push("/checkout/payment")}>
               {t.cart.proceedToPayment}
             </Button>
+            <Button variant="ghost" className="w-full gap-2 text-sub hover:text-destructive" onClick={() => setClearOpen(true)}>
+              <Trash2 className="size-4" />
+              {t.cart.clearCart}
+            </Button>
+            <AlertDialog open={clearOpen} onOpenChange={setClearOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t.cart.clearTitle}</AlertDialogTitle>
+                  <AlertDialogDescription>{t.cart.clearDescription}</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{t.cart.clearKeep}</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => cart.clear()}>{t.cart.clearConfirm}</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </>
         )}
       </div>
