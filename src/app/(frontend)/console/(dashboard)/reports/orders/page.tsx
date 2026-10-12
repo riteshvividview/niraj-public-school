@@ -18,7 +18,9 @@ import { downloadCsv } from "@/lib/export-utils";
 import { collectionStatusOf, overviewOf } from "@/lib/reports-aggregate";
 import { deriveReceiptTitle } from "@/lib/cart-items";
 import { formatCurrencyINR } from "@/lib/format";
-import { useClassLevels, useConsoleSchoolId } from "@/lib/hooks/console-data";
+import { isNewAdmission } from "@/lib/academic-year";
+import { collectionStatusText } from "@/lib/export-collection";
+import { useClassLevels, useConsoleSchoolId, useNewAdmissionInfo } from "@/lib/hooks/console-data";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 
 const ALL_VALUE = "__all__";
@@ -108,6 +110,7 @@ function OrdersDrillDown() {
   const categoryBreakdown = summaryPage ? collectionStatusOf(summaryPage.records) : null;
 
   const classLabelById = new Map(classLevels.map((level) => [level.id, level.label]));
+  const startMonth = useNewAdmissionInfo(schoolId)?.startMonth ?? 4;
 
   function set<K extends keyof OrdersFilters>(key: K, value: OrdersFilters[K]) {
     setFilters((f) => ({ ...f, [key]: value }));
@@ -144,6 +147,8 @@ function OrdersDrillDown() {
           "Issued Date",
           "Delivery Address",
           "Delivery Phone",
+          "Item Collection",
+          "New Admission",
         ],
       ];
       allRecords.forEach((record) => {
@@ -168,6 +173,8 @@ function OrdersDrillDown() {
             record.receipt.issuedAt.slice(0, 10),
             formatAddress(record.address),
             record.address?.phone ?? record.studentPhone ?? "",
+            collectionStatusText(item),
+            isNewAdmission({ registerNumber: record.registerNumber, override: record.newAdmissionOverride ?? null }, new Date(), startMonth) ? "Yes" : "No",
           ]);
         });
       });

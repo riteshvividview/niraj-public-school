@@ -4,6 +4,7 @@ import { AlertTriangle, PackageSearch } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
+import { TableSkeletonRows } from "@/components/shared/table-skeleton-rows";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -439,6 +440,7 @@ export default function StockPage() {
                   </TableRow>
                 );
               })}
+              {!(books && uniformItems && stockRows && orders) ? <TableSkeletonRows columns={9} rows={6} /> : null}
               {books && uniformItems && stockRows && orders && filteredLines.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={9} className="text-center text-sub">

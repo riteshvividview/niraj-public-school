@@ -1,7 +1,7 @@
 "use client";
 
 import { AddressBlock } from "@/components/console/address-display";
-import { AlertTriangle, CheckCircle2, ScanLine, Search } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2, ScanLine, Search } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import {
@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { deriveReceiptTitle, groupItemsByKind } from "@/lib/cart-items";
 import { getReceiptByCode, markReceiptRedeemed, updateOrderItemsCollected } from "@/lib/data-source";
 import { useConsoleSchoolId, useNewAdmissionInfo } from "@/lib/hooks/console-data";
@@ -43,6 +44,7 @@ export default function ScannerPage() {
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLookingUp, setIsLookingUp] = useState(false);
 
   async function refreshLookup() {
     if (!schoolId) return;
@@ -53,7 +55,14 @@ export default function ScannerPage() {
   async function handleLookup(event: FormEvent) {
     event.preventDefault();
     if (!code.trim() || !schoolId) return;
-    await refreshLookup();
+    setIsLookingUp(true);
+    try {
+      await refreshLookup();
+    } catch {
+      toast.error("Couldn't look that up. Please try again.");
+    } finally {
+      setIsLookingUp(false);
+    }
   }
 
   /** Whole-receipt program check-in — unchanged from before per-item tracking existed. */
@@ -135,9 +144,9 @@ export default function ScannerPage() {
                   className="font-mono tracking-widest uppercase"
                   autoComplete="off"
                 />
-                <Button type="submit" disabled={!code.trim() || !schoolId} className="gap-1.5">
-                  <Search className="size-4" />
-                  Look Up
+                <Button type="submit" disabled={!code.trim() || !schoolId || isLookingUp} className="gap-1.5">
+                  {isLookingUp ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
+                  {isLookingUp ? "Looking up…" : "Look Up"}
                 </Button>
               </div>
             </form>
@@ -149,7 +158,13 @@ export default function ScannerPage() {
             <CardTitle>Result</CardTitle>
           </CardHeader>
           <CardContent>
-            {lookup === null ? (
+            {isLookingUp ? (
+              <div role="status" aria-label="Looking up" className="space-y-3">
+                <Skeleton className="h-16 w-full rounded-xl" />
+                <Skeleton className="h-5 w-1/2" />
+                <Skeleton className="h-40 w-full rounded-xl" />
+              </div>
+            ) : lookup === null ? (
               <p className="text-sm text-sub">Look up a receipt code to see the result here.</p>
             ) : lookup.kind === "invalid" ? (
               <div className="flex items-start gap-3 rounded-xl border border-section-pay bg-section-pay-bg p-4">

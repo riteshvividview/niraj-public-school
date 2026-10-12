@@ -37,7 +37,7 @@ function LineCollectionBadge({ item }: { item: OrderItem }) {
 }
 
 /** One order line, with its collection badge — and, for a book set, every item inside it with its own badge. */
-function ReceiptLine({ item }: { item: OrderItem }) {
+export function ReceiptLine({ item }: { item: OrderItem }) {
   const [open, setOpen] = useState(false);
   const parts = item.parts ?? [];
   return (

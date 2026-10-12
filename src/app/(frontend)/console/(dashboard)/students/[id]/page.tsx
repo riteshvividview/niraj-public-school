@@ -21,6 +21,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { deriveReceiptTitle } from "@/lib/cart-items";
 import { AddressBlock } from "@/components/console/address-display";
+import { ReceiptLine } from "@/components/console/payment-card";
+import { StudentConnections } from "./_components/student-connections";
 import { RecordEventRow } from "@/components/console/record-event-list";
 import { deleteStudent, getReceiptsByUser, getRecordEventsByStudent, getUserProfileById } from "@/lib/data-source";
 import { formatDate, formatTime } from "@/lib/format";
@@ -79,23 +81,7 @@ function ReceiptHistoryCard({ record }: { record: ReceiptRecord }) {
           <p className="text-sub">Payment method: {record.order.paymentMethod.toUpperCase()}</p>
           <ul className="divide-y divide-line">
             {record.order.items.map((item) => (
-              <li key={item.id} className="flex items-center justify-between gap-3 py-1.5">
-                <div className="min-w-0">
-                  <p className="truncate text-ink">{item.label}</p>
-                  {item.meta ? <p className="text-xs text-sub">{item.meta}</p> : null}
-                  {item.quantity > 1 ? <p className="text-xs text-sub">Qty {item.quantity}</p> : null}
-                  {item.kind !== "program" ? (
-                    <p className={`text-xs font-medium ${item.collectedAt ? "text-section-essentials" : "text-warm"}`}>
-                      {item.collectedAt
-                        ? `Collected ${formatDate(item.collectedAt)} · ${formatTime(item.collectedAt)}`
-                        : "Pending collection"}
-                    </p>
-                  ) : null}
-                </div>
-                <span className="shrink-0 font-medium text-ink">
-                  ₹{item.unitPrice * item.quantity}
-                </span>
-              </li>
+              <ReceiptLine key={item.id} item={item} />
             ))}
           </ul>
           {record.receipt.redeemedAt ? (
@@ -284,6 +270,8 @@ export default function StudentDetailPage() {
                 )}
               </CardContent>
             </Card>
+
+            <StudentConnections studentId={student.id} />
 
             <Card className="lg:col-span-2">
               <CardHeader className="flex flex-row items-center justify-between gap-3">

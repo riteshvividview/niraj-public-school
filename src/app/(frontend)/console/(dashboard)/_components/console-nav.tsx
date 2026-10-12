@@ -20,7 +20,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
-import { useConsoleSchoolId, useEssentialsStock, useOpenSupportCount, usePendingBookChangeCount, usePendingExchangeCount, usePendingExtraItemCount } from "@/lib/hooks/console-data";
+import { useConsoleSchoolId, useEssentialsStock, useOpenSupportCount, usePendingBookChangeCount, usePendingExchangeCount, usePendingExtraItemCount, useConsoleOverview } from "@/lib/hooks/console-data";
 import { cn } from "@/lib/utils";
 import { useConsoleAuth } from "@/store/console-auth-store";
 
@@ -75,6 +75,7 @@ function NavLinks({
   const pendingExchanges = usePendingExchangeCount(consoleSchoolId);
   const pendingBookChanges = usePendingBookChangeCount(consoleSchoolId);
   const pendingExtraItems = usePendingExtraItemCount(consoleSchoolId);
+  const { data: overview } = useConsoleOverview(consoleSchoolId);
   const openSupport = useOpenSupportCount(consoleSchoolId);
   const navItems = useNavItems();
   const badgeCounts: Record<string, number> = {
@@ -82,6 +83,7 @@ function NavLinks({
     "/console/exchange-requests": pendingExchanges,
     "/console/subject-change-requests": pendingBookChanges,
     "/console/extra-item-requests": pendingExtraItems,
+    "/console/payment-attempts": overview?.paymentsNeedingReview ?? 0,
     "/console/support": openSupport,
   };
   return (

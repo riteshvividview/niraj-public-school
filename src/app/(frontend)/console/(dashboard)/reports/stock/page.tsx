@@ -80,7 +80,7 @@ export default function StockReportPage() {
       rows.push([
         row.label,
         row.kind,
-        classLevelById.get(row.classLevelId) ?? "",
+        classLevelById.get(row.classLevelId) ?? (row.classLevelId === "" ? "New admission (all classes)" : ""),
         row.issuedQuantity,
         row.quantityOnHand,
         row.isTracked ? "Yes" : "No",
@@ -198,7 +198,7 @@ export default function StockReportPage() {
                     <p className="font-medium text-ink">{row.label}</p>
                     <p className="text-xs text-sub capitalize">{row.kind}</p>
                   </TableCell>
-                  <TableCell>{classLevelById.get(row.classLevelId) ?? "—"}</TableCell>
+                  <TableCell>{classLevelById.get(row.classLevelId) ?? (row.classLevelId === "" ? "New admission (all classes)" : "—")}</TableCell>
                   <TableCell>{row.issuedQuantity}</TableCell>
                   <TableCell>{row.quantityOnHand}</TableCell>
                   <TableCell>

@@ -15,7 +15,7 @@ import {
   getPaymentCoverageBySchool,
   getOpenSupportCount,
   getPendingBookChangeCount,
-  countPendingExtraItemRequests, getNewAdmissionSummary, getPendingExchangeCount,
+  countPendingExtraItemRequests, getConsoleOverview, getNewAdmissionSummary, getPendingExchangeCount,
   getPaymentsBySchool,
   getProgramReportBySchool,
   getSchools,
@@ -103,6 +103,11 @@ export function usePendingBookChangeCount(schoolId: string): number {
     refreshInterval: 60_000,
   });
   return data ?? 0;
+}
+
+/** One shared, auto-refreshing fetch of the cross-feature overview (pending requests, payment attempts, outstanding items, new admissions). */
+export function useConsoleOverview(schoolId: string) {
+  return useSWR(schoolId ? ["console:overview", schoolId] : null, () => getConsoleOverview(schoolId), { refreshInterval: 60_000 });
 }
 
 /** The school's academic year (and its start month) — lets the Students screens badge new admissions. One shared fetch. */

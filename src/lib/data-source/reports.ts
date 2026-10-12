@@ -198,6 +198,8 @@ export interface CoverageStudent {
   /** Catalogue-derived cost of what's NOT yet paid — 0 once a category is paid. Uniform is an average-of-sizes approximation (no stored per-student size). */
   estimatedBooksCost: number;
   estimatedUniformCost: number;
+  /** A new admission this academic year (register-number rule or staff override). */
+  isNewAdmission: boolean;
   /** estimatedBooksCost + estimatedUniformCost — what this student still owes at today's prices. */
   outstandingAmount: number;
 }
@@ -319,6 +321,7 @@ export async function getPaymentCoverageBySchool(
 
   const coverageStudents: CoverageStudent[] = await Promise.all(
     students.map(async (student) => {
+      const studentIsNew = isNewAdmission({ registerNumber: student.registerNumber, override: student.newAdmissionOverride ?? null }, new Date(), startMonth);
       const hasPaidAnything = anyPaidIds.has(student.id);
       const hasPaidBooks = booksPaidIds.has(student.id);
       const hasPaidUniform = uniformPaidIds.has(student.id);
@@ -336,13 +339,7 @@ export async function getPaymentCoverageBySchool(
               stream: student.stream,
               elective: student.elective,
             }),
-        hasPaidUniform
-          ? Promise.resolve(0)
-          : estimatedUniformCost(
-              student.classLevelId,
-              student.gender,
-              isNewAdmission({ registerNumber: student.registerNumber, override: student.newAdmissionOverride ?? null }, new Date(), startMonth),
-            ),
+        hasPaidUniform ? Promise.resolve(0) : estimatedUniformCost(student.classLevelId, student.gender, studentIsNew),
       ]);
 
       return {
@@ -362,6 +359,7 @@ export async function getPaymentCoverageBySchool(
         actualTotalRevenue: actualBooksRevenue + actualUniformRevenue,
         estimatedBooksCost: booksEstimate,
         estimatedUniformCost: uniformEstimate,
+        isNewAdmission: studentIsNew,
         outstandingAmount: booksEstimate + uniformEstimate,
       } satisfies CoverageStudent;
     }),

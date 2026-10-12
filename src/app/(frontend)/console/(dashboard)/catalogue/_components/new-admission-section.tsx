@@ -4,6 +4,7 @@ import { ChevronDown, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
+import { TableSkeletonRows } from "@/components/shared/table-skeleton-rows";
 import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -169,6 +170,7 @@ export function NewAdmissionSection({ schoolId }: { schoolId: string }) {
               </TableRow>
             </TableHeader>
             <TableBody>
+              {items === undefined ? <TableSkeletonRows columns={6} /> : null}
               {(items ?? []).map((item) => (
                 <TableRow key={item.id}>
                   <TableCell>{item.name}</TableCell>

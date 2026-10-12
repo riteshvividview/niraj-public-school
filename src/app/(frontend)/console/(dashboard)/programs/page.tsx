@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
+import { TableSkeletonRows } from "@/components/shared/table-skeleton-rows";
 import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { StatusBadge, toBadgeStatus } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
@@ -325,6 +326,7 @@ export default function ProgramManagerPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {programs === null ? <TableSkeletonRows columns={6} /> : null}
                 {(programs ?? []).map((program) => (
                   <TableRow key={program.id}>
                     <TableCell>{program.title}</TableCell>

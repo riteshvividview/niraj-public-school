@@ -20,6 +20,7 @@ import {
   YAxis,
 } from "recharts";
 import useSWR from "swr";
+import { FeaturePanels, NeedsAttentionPanel } from "./_components/connected-panels";
 import { ConsoleListSkeleton, ConsoleStatSkeleton } from "@/components/shared/console-list-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ import {
   usePaymentCoverage,
   useProgramReport,
   useSchoolPayments,
+  useConsoleOverview,
 } from "@/lib/hooks/console-data";
 import {
   classBreakdownOf,
@@ -124,6 +126,7 @@ export default function ReportsPage() {
     getStockHealthBySchool(schoolId),
   );
   const { data: paymentCoverage } = usePaymentCoverage(schoolId);
+  const { data: overviewData } = useConsoleOverview(schoolId);
   const { data: programReport } = useProgramReport(schoolId, filter);
 
   const overview = useMemo(() => (payments ? overviewOf(payments, filter) : null), [payments, filter]);
@@ -253,6 +256,31 @@ export default function ReportsPage() {
           ],
         },
         {
+          name: "Needs Attention",
+          rows: [
+            ["Item", "Count"],
+            ["Exchange requests waiting", overviewData?.requests.exchanges ?? ""],
+            ["Subject change requests waiting", overviewData?.requests.subjectChanges ?? ""],
+            ["Extra item requests waiting", overviewData?.requests.extraItems ?? ""],
+            ["Parent queries open", overviewData?.requests.support ?? ""],
+            ["Payments needing review", overviewData?.paymentsNeedingReview ?? ""],
+            ["Payments in progress (30 days)", overviewData?.payments30d.pending ?? ""],
+            ["Payments failed (30 days)", overviewData?.payments30d.failed ?? ""],
+            ["Payments abandoned (30 days)", overviewData?.payments30d.abandoned ?? ""],
+          ],
+        },
+        {
+          name: "New Admissions",
+          rows: [
+            ["Academic year", "New students", "Bought the full set", "Still to buy"],
+            [overviewData?.newAdmission.academicYear ?? "", overviewData?.newAdmission.newCount ?? "", overviewData?.newAdmission.setBoughtCount ?? "", overviewData?.newAdmission.waitingCount ?? ""],
+          ],
+        },
+        {
+          name: "Items To Hand Over",
+          rows: [["Book-set item", "Students waiting", "Quantity"], ...(overviewData?.outstandingItems.top ?? []).map((item) => [item.name, item.students, item.quantity])],
+        },
+        {
           name: "Revenue Trend",
           rows: [["Date", "Revenue (INR)", "Orders"], ...(revenueTrend ?? []).map((p) => [p.date, p.revenue, p.orders])],
         },
@@ -279,6 +307,8 @@ export default function ReportsPage() {
           Export full report (.xlsx)
         </Button>
       </div>
+
+      <NeedsAttentionPanel />
 
       <Card>
         <CardHeader>
@@ -437,6 +467,8 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <FeaturePanels />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>

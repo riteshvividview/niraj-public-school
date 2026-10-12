@@ -21,7 +21,9 @@ import { getPaymentsPageBySchool, getStudentSectionsBySchool, type PaymentPageFi
 import { formatAddress } from "@/lib/address";
 import { downloadCsv } from "@/lib/export-utils";
 import { formatDate, formatTime } from "@/lib/format";
-import { useClassLevels, useConsoleSchoolId } from "@/lib/hooks/console-data";
+import { isNewAdmission } from "@/lib/academic-year";
+import { collectionStatusText } from "@/lib/export-collection";
+import { useClassLevels, useConsoleSchoolId, useNewAdmissionInfo } from "@/lib/hooks/console-data";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import type { Order, RedemptionStatus } from "@/types";
 
@@ -108,6 +110,7 @@ export default function PaymentsPage() {
   }, [schoolId, filtersKey, effectivePage, pageData?.totalPages]);
 
   const classLabelById = new Map(classLevels.map((level) => [level.id, level.label]));
+  const startMonth = useNewAdmissionInfo(schoolId)?.startMonth ?? 4;
 
   function set<K extends keyof PaymentFilters>(key: K, value: PaymentFilters[K]) {
     setFilters((f) => ({ ...f, [key]: value }));
@@ -153,6 +156,8 @@ export default function PaymentsPage() {
           "Receipt ID",
           "Delivery Address",
           "Delivery Phone",
+          "Item Collection",
+          "New Admission",
         ],
       ];
       allRecords.forEach((record) => {
@@ -184,6 +189,8 @@ export default function PaymentsPage() {
             record.receipt.id,
             formatAddress(record.address),
             record.address?.phone ?? record.studentPhone ?? "",
+            collectionStatusText(item),
+            isNewAdmission({ registerNumber: record.registerNumber, override: record.newAdmissionOverride ?? null }, new Date(), startMonth) ? "Yes" : "No",
           ]);
         });
       });

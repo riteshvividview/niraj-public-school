@@ -17,3 +17,4 @@ export * from "./address";
 export * from "./payments";
 export * from "./payment-attempts";
 export * from "./new-admission";
+export * from "./console-overview";

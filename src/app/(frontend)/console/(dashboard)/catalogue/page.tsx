@@ -4,6 +4,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
+import { TableSkeletonRows } from "@/components/shared/table-skeleton-rows";
 import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -308,6 +309,7 @@ function BooksManager({
               </TableRow>
             </TableHeader>
             <TableBody>
+              {books === null ? <TableSkeletonRows columns={7} /> : null}
               {(books ?? []).map((book) => (
                 <TableRow key={book.id}>
                   <TableCell>{book.title}</TableCell>
@@ -643,6 +645,7 @@ function UniformManager({
               </TableRow>
             </TableHeader>
             <TableBody>
+              {items === null ? <TableSkeletonRows columns={6} /> : null}
               {(items ?? []).map((item) => (
                 <TableRow key={item.id}>
                   <TableCell>{item.name}</TableCell>

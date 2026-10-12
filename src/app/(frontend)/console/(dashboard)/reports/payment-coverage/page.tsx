@@ -101,6 +101,7 @@ export default function PaymentCoveragePage() {
         "Section",
         "Mobile Number",
         "Delivery Address",
+        "New Admission",
         "Paid Books",
         "Paid Uniform",
         "Coverage",
@@ -120,6 +121,7 @@ export default function PaymentCoveragePage() {
         student.section ?? "",
         student.mobileNumber ?? "",
         formatAddress(student.address),
+        student.isNewAdmission ? "Yes" : "No",
         student.hasPaidBooks ? "Yes" : "No",
         student.hasPaidUniform ? "Yes" : "No",
         COVERAGE_LABELS[student.essentialsCoverage],
@@ -454,7 +456,10 @@ export default function PaymentCoveragePage() {
                 <TableBody>
                   {filteredStudents.map((student) => (
                     <TableRow key={student.id}>
-                      <TableCell className="font-medium text-ink">{student.name}</TableCell>
+                      <TableCell className="font-medium text-ink">
+                        {student.name}
+                        {student.isNewAdmission ? <span className="ml-2 rounded-full bg-section-programs-bg px-2 py-0.5 text-[11px] font-medium text-section-programs">New admission</span> : null}
+                      </TableCell>
                       <TableCell>{student.registerNumber}</TableCell>
                       <TableCell>{classLabelById.get(student.classLevelId) ?? "—"}</TableCell>
                       <TableCell>{student.section ?? "—"}</TableCell>
