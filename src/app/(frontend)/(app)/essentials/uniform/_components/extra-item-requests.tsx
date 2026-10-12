@@ -117,7 +117,7 @@ export function ExtraItemRequests({ items, userId }: { items: UniformItem[]; use
           return (
             <div key={item.id} className="flex items-center gap-3 rounded-lg border border-line/60 bg-card p-4">
               <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-ink">{item.name}</p>
+                <p className="font-medium break-words text-ink">{item.name}</p>
                 <p className="mt-0.5 text-sm font-semibold text-ink">{formatCurrencyINR(item.sizeOptions[0].price, language)}</p>
               </div>
               {existing ? (

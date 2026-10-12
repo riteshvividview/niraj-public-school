@@ -14,6 +14,7 @@ const en: Dictionary = {
     exchange: "Exchange",
     support: "Support",
     profile: "Profile",
+    more: "More",
   },
 
   status: {

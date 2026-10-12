@@ -55,8 +55,8 @@ export function ItemCard({ name, meta, price, selected, onToggleSelected, traili
       )}
     >
       <div className="min-w-0 flex-1">
-        <p className="truncate font-medium text-ink">{name}</p>
-        {meta ? <p className="truncate text-sm text-sub">{meta}</p> : null}
+        <p className="line-clamp-2 font-medium break-words text-ink">{name}</p>
+        {meta ? <p className="line-clamp-2 text-sm break-words text-sub">{meta}</p> : null}
         <p className="mt-0.5 text-sm font-semibold text-ink">{formatCurrencyINR(price, language)}</p>
       </div>
       {trailing}

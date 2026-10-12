@@ -58,7 +58,8 @@ function SizeGuide({ triggerLabel, title, ageLabel, heightLabel }: {
       <SheetTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5">
           <Ruler className="size-4" />
-          {triggerLabel}
+          <span className="hidden sm:inline">{triggerLabel}</span>
+          <span className="sr-only sm:hidden">{triggerLabel}</span>
         </Button>
       </SheetTrigger>
       <SheetContent side="bottom" className="max-h-[80vh]">

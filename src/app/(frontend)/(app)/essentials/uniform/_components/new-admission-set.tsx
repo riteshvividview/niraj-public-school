@@ -55,7 +55,7 @@ export function NewAdmissionSet({ items }: { items: UniformItem[] }) {
         {items.map((item) => (
           <div key={item.id} className="flex items-center gap-3 rounded-lg border border-line/60 bg-card p-4">
             <div className="min-w-0 flex-1">
-              <p className="truncate font-medium text-ink">{item.name}</p>
+              <p className="font-medium break-words text-ink">{item.name}</p>
               <p className="mt-0.5 text-sm font-semibold text-ink">{formatCurrencyINR(priceOf(item), language)}</p>
             </div>
             {item.sizeOptions.length > 1 ? (

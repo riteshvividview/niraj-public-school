@@ -17,6 +17,7 @@ export interface Dictionary {
     exchange: string;
     support: string;
     profile: string;
+    more: string;
   };
 
   /**

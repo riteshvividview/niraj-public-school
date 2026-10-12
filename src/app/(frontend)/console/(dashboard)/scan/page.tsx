@@ -196,7 +196,7 @@ export default function ScannerPage() {
                 }}
               />
             ) : (
-            <div className="relative flex aspect-square w-full max-w-xs items-center justify-center overflow-hidden rounded-2xl bg-ink">
+            <div className="relative flex aspect-[2/1] w-full max-w-xs items-center justify-center overflow-hidden rounded-2xl bg-ink sm:aspect-square">
               <div className="absolute inset-6 rounded-xl border-2 border-white/30">
                 <span className="absolute -top-0.5 -left-0.5 size-6 rounded-tl-xl border-t-2 border-l-2 border-brand" />
                 <span className="absolute -top-0.5 -right-0.5 size-6 rounded-tr-xl border-t-2 border-r-2 border-brand" />

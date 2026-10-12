@@ -70,6 +70,7 @@ import {
   useConsoleSchoolId,
   useNewAdmissionInfo,
 } from "@/lib/hooks/console-data";
+import { cn } from "@/lib/utils";
 import { oppositeLanguage } from "@/lib/academic-language";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import {
@@ -572,9 +573,9 @@ function StudentFilterBar({
     setFilters({ ...filters, [key]: value });
   }
 
-  const hasActiveFilters =
-    filters.search.trim() !== "" ||
-    Object.entries(filters).some(([key, value]) => key !== "search" && value !== ALL_VALUE);
+  const [showFilters, setShowFilters] = useState(false);
+  const activeFilterCount = Object.entries(filters).filter(([key, value]) => key !== "search" && value !== ALL_VALUE).length;
+  const hasActiveFilters = filters.search.trim() !== "" || activeFilterCount > 0;
 
   return (
     <div className="flex flex-wrap items-end gap-3">
@@ -589,6 +590,11 @@ function StudentFilterBar({
           onChange={(e) => set("search", e.target.value)}
         />
       </div>
+      {/* On a phone the seven filters sit behind one button instead of filling the screen. */}
+      <Button type="button" variant="outline" className="md:hidden" onClick={() => setShowFilters((v) => !v)} aria-expanded={showFilters}>
+        Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
+      </Button>
+      <div className={cn("w-full flex-wrap items-end gap-3", showFilters ? "flex" : "hidden", "md:contents")}>
       <div className="w-36 space-y-1.5">
         <Label className="text-xs text-sub">Class</Label>
         <Select value={filters.classLevelId} onValueChange={(v) => set("classLevelId", v)}>
@@ -711,6 +717,7 @@ function StudentFilterBar({
             ))}
           </SelectContent>
         </Select>
+      </div>
       </div>
       {hasActiveFilters ? (
         <Button variant="outline" size="sm" onClick={() => setFilters(EMPTY_FILTERS)}>

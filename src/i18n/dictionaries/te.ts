@@ -14,6 +14,7 @@ const te: Dictionary = {
     exchange: "మార్పిడి",
     support: "సహాయం",
     profile: "ప్రొఫైల్",
+    more: "మరిన్ని",
   },
 
   status: {

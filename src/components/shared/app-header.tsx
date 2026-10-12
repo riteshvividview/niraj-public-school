@@ -23,7 +23,7 @@ export function AppHeader({ title, backHref, right, showAvatar, hideCart }: AppH
   const cart = useCart();
 
   return (
-    <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-line bg-card/90 px-4 py-3 backdrop-blur">
+    <header className="sticky top-0 z-40 flex items-center gap-2 border-b border-line bg-card/90 px-3 py-3 backdrop-blur sm:gap-3 sm:px-4">
       {backHref ? (
         <Link
           href={backHref}
@@ -33,8 +33,8 @@ export function AppHeader({ title, backHref, right, showAvatar, hideCart }: AppH
           <ChevronLeft className="size-5" />
         </Link>
       ) : null}
-      <h1 className="flex-1 truncate font-heading text-lg font-semibold text-ink">{title}</h1>
-      <div className="flex shrink-0 items-center gap-2">
+      <h1 className="min-w-0 flex-1 truncate font-heading text-base font-semibold text-ink sm:text-lg">{title}</h1>
+      <div className="flex shrink-0 items-center gap-1 sm:gap-2">
         {right}
         {profile && !hideCart ? (
           <Link

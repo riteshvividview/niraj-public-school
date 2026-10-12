@@ -8,6 +8,7 @@ import {
   Inbox,
   LayoutDashboard,
   LogOut,
+  Menu,
   PackageSearch,
   Receipt,
   ScanLine,
@@ -15,8 +16,11 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useConsoleSchoolId, useEssentialsStock, useOpenSupportCount, usePendingBookChangeCount, usePendingExchangeCount, usePendingExtraItemCount, useConsoleOverview } from "@/lib/hooks/console-data";
 import { cn } from "@/lib/utils";
 import { useConsoleAuth } from "@/store/console-auth-store";
@@ -60,8 +64,11 @@ function useLowStockCount(): number {
 
 function NavLinks({
   direction = "vertical",
+  onNavigate,
 }: {
   direction?: "vertical" | "horizontal";
+  /** Called when a link is chosen — lets the phone menu close itself. */
+  onNavigate?: () => void;
 }) {
   const pathname = usePathname();
   const lowStockCount = useLowStockCount();
@@ -92,6 +99,7 @@ function NavLinks({
           <Link
             key={href}
             href={href}
+            onClick={onNavigate}
             className={cn(
               "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors",
               isActive
@@ -146,26 +154,45 @@ export function ConsoleSidebar() {
 }
 
 export function ConsoleMobileNav() {
-  const { logout } = useConsoleAuth();
+  const { staff, logout } = useConsoleAuth();
+  const pathname = usePathname();
+  const navItems = useNavItems();
+  const [open, setOpen] = useState(false);
+  const current = navItems.find(({ href }) => pathname === href || pathname.startsWith(`${href}/`));
+
   return (
-    <div className="border-b border-line bg-card md:hidden">
-      <div className="flex items-center justify-between gap-2 px-4 py-3">
-        <p className="min-w-0 truncate font-heading text-sm font-bold text-ink">
-          School Workspace
-        </p>
-        <div className="flex shrink-0 items-center gap-1">
-          <ThemeToggle />
-          <button
-            type="button"
-            onClick={logout}
-            className="cursor-pointer text-sm font-medium text-section-pay transition-colors hover:text-section-pay/80"
-          >
-            Log out
-          </button>
-        </div>
-      </div>
-      <div className="overflow-x-auto px-3 pb-3">
-        <NavLinks direction="horizontal" />
+    <div className="sticky top-0 z-40 border-b border-line bg-card/95 backdrop-blur md:hidden">
+      <div className="flex items-center gap-2 px-3 py-2.5">
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label="Open menu" className="shrink-0">
+              <Menu className="size-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="flex w-72 max-w-[85vw] flex-col gap-0 p-0">
+            <SheetHeader className="border-b border-line p-5 text-left">
+              <SheetTitle className="font-heading text-sm font-bold text-ink">School Workspace</SheetTitle>
+              <p className="text-xs text-sub">Staff Console</p>
+            </SheetHeader>
+            <div className="flex-1 overflow-y-auto p-4">
+              <NavLinks onNavigate={() => setOpen(false)} />
+            </div>
+            <div className="border-t border-line p-4">
+              <p className="truncate text-xs text-sub">{staff?.name}</p>
+              <p className="truncate text-xs text-sub">{staff?.email}</p>
+              <button
+                type="button"
+                onClick={logout}
+                className="mt-2 flex cursor-pointer items-center gap-2 rounded-md text-sm font-medium text-section-pay transition-colors hover:text-section-pay/80"
+              >
+                <LogOut className="size-4" />
+                Log out
+              </button>
+            </div>
+          </SheetContent>
+        </Sheet>
+        <p className="min-w-0 flex-1 truncate font-heading text-sm font-bold text-ink">{current?.label ?? "School Workspace"}</p>
+        <ThemeToggle />
       </div>
     </div>
   );

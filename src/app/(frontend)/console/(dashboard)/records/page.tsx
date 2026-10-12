@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import useSWR from "swr";
 import { RecordEventRow } from "@/components/console/record-event-list";
+import { FilterRow } from "@/components/shared/filter-row";
 import { ConsoleListSkeleton } from "@/components/shared/console-list-skeleton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -125,7 +126,7 @@ function RecordsView() {
           <CardTitle>Activity</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-wrap items-end gap-3">
+          <FilterRow>
             <div className="min-w-48 flex-1 space-y-1.5">
               <Label htmlFor="records-search" className="text-xs text-sub">
                 Search
@@ -179,7 +180,7 @@ function RecordsView() {
                 Clear filters
               </Button>
             ) : null}
-          </div>
+          </FilterRow>
 
           {events !== null ? (
             <p className="text-sm text-sub">

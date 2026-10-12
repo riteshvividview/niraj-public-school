@@ -3,6 +3,7 @@
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import useSWR, { mutate as globalMutate } from "swr";
+import { FilterRow } from "@/components/shared/filter-row";
 import { ConsoleListSkeleton } from "@/components/shared/console-list-skeleton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -109,7 +110,7 @@ export function SubjectChangeRequestsTab() {
             ))}
           </div>
 
-          <div className="flex flex-wrap items-end gap-3">
+          <FilterRow>
             <div className="min-w-48 flex-1 space-y-1.5">
               <Label htmlFor="book-change-search" className="text-xs text-sub">
                 Search
@@ -149,7 +150,7 @@ export function SubjectChangeRequestsTab() {
                 Clear filters
               </Button>
             ) : null}
-          </div>
+          </FilterRow>
 
           {records !== null ? (
             <p className="text-sm text-sub">

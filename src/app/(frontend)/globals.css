@@ -321,3 +321,72 @@
     @apply font-heading;
   }
 }
+
+/* ---- stacked tables -------------------------------------------------------------------------------------------
+   Below 768px a table becomes a list of cards (see StackedTables for where the labels come from). */
+@media (max-width: 767px) {
+  table[data-stack] thead {
+    display: none;
+  }
+  table[data-stack],
+  table[data-stack] tbody {
+    display: block;
+    width: 100%;
+  }
+  table[data-stack] tbody tr {
+    display: block;
+    margin-bottom: 0.75rem;
+    padding: 0.5rem 0.875rem;
+    border: 1px solid var(--color-line, #e4e8f0);
+    border-radius: 0.75rem;
+    background: var(--color-card, #fff);
+  }
+  table[data-stack] tbody td {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.375rem 0;
+    border: 0;
+    text-align: right;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  table[data-stack] tbody td::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    max-width: 45%;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-sub, #5c6472);
+    text-align: left;
+  }
+  /* empty-state rows / cells without a column name: no label, centred */
+  table[data-stack] tbody td[data-label=""]::before {
+    display: none;
+  }
+  table[data-stack] tbody td[data-label=""] {
+    justify-content: center;
+    text-align: center;
+  }
+  /* the row's first cell is its title: full width, no label, bolder */
+  table[data-stack] tbody td:first-child {
+    display: block;
+    text-align: left;
+    font-weight: 600;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
+    border-bottom: 1px solid var(--color-line, #e4e8f0);
+  }
+  table[data-stack] tbody td:first-child::before {
+    display: none;
+  }
+  /* action buttons sit together on their own line */
+  table[data-stack] tbody td[data-label="Actions"] {
+    justify-content: flex-end;
+    padding-top: 0.5rem;
+  }
+  table[data-stack] tbody td[data-label="Actions"]::before {
+    display: none;
+  }
+}

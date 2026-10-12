@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import useSWR, { preload } from "swr";
 import { PaymentCard } from "@/components/console/payment-card";
+import { FilterRow } from "@/components/shared/filter-row";
 import { ConsoleListSkeleton, ConsoleStatSkeleton } from "@/components/shared/console-list-skeleton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -240,7 +241,7 @@ function OrdersDrillDown() {
           <CardTitle>Filters</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-wrap items-end gap-3">
+          <FilterRow>
             <div className="min-w-48 flex-1 space-y-1.5">
               <Label htmlFor="orders-search" className="text-xs text-sub">
                 Search
@@ -321,7 +322,7 @@ function OrdersDrillDown() {
                 Clear filters
               </Button>
             ) : null}
-          </div>
+          </FilterRow>
 
           {records !== null ? (
             <p className="text-sm text-sub">

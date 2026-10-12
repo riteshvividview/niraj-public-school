@@ -14,6 +14,7 @@ const hi: Dictionary = {
     exchange: "अदला-बदली",
     support: "सहायता",
     profile: "प्रोफ़ाइल",
+    more: "और",
   },
 
   status: {

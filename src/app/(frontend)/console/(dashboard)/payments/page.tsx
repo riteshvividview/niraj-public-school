@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight, Download, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import useSWR, { preload } from "swr";
+import { FilterRow } from "@/components/shared/filter-row";
 import { ConsoleListSkeleton } from "@/components/shared/console-list-skeleton";
 import { PaymentCard } from "@/components/console/payment-card";
 import { Button } from "@/components/ui/button";
@@ -223,7 +224,7 @@ export default function PaymentsPage() {
           <CardTitle>All Payments</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-wrap items-end gap-3">
+          <FilterRow>
             <div className="min-w-48 flex-1 space-y-1.5">
               <Label htmlFor="payment-search" className="text-xs text-sub">
                 Search
@@ -323,7 +324,7 @@ export default function PaymentsPage() {
                 Clear filters
               </Button>
             ) : null}
-          </div>
+          </FilterRow>
 
           {records !== null ? (
             <p className="text-sm text-sub">

@@ -50,9 +50,9 @@ function RequestsHub() {
         <p className="text-sm text-sub">Exchanges, extra uniform items, subject changes and payment attempts — everything waiting on a decision, in one place.</p>
       </div>
 
-      {/* Scrolls sideways on a phone instead of wrapping into a mess. */}
-      <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
-        <div role="tablist" className="flex w-max min-w-full gap-1 rounded-xl border border-line/60 bg-muted/40 p-1 md:w-full">
+      {/* A tidy 2×2 grid on a phone, one row from sm up. */}
+      <div>
+        <div role="tablist" className="grid grid-cols-2 gap-1 rounded-xl border border-line/60 bg-muted/40 p-1 sm:flex sm:w-full">
           {tabs.map(({ key, label, icon: Icon, count }) => {
             const selected = key === active;
             return (
@@ -63,7 +63,7 @@ function RequestsHub() {
                 type="button"
                 onClick={() => router.replace(`/console/requests?tab=${key}`, { scroll: false })}
                 className={cn(
-                  "flex flex-1 items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium whitespace-nowrap transition-colors",
+                  "flex flex-1 items-center justify-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors sm:px-3.5 sm:whitespace-nowrap",
                   selected ? "bg-section-console text-white shadow-sm" : "text-sub hover:bg-card hover:text-ink",
                 )}
               >

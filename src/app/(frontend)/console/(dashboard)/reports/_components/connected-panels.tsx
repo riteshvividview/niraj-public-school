@@ -13,7 +13,7 @@ function AttentionTile({ href, icon: Icon, label, count }: { href: string; icon:
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-3 rounded-xl border p-3.5 transition-colors hover:bg-muted/50",
+        "flex items-center gap-2.5 rounded-xl border p-3 transition-colors hover:bg-muted/50 sm:gap-3 sm:p-3.5",
         hot ? "border-section-programs/40 bg-section-programs-bg/60" : "border-line/60",
       )}
     >
@@ -38,7 +38,7 @@ export function NeedsAttentionPanel() {
         <CardTitle>Needs attention</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-3 xl:grid-cols-6">
           <AttentionTile href="/console/requests?tab=exchange" icon={Repeat} label="Exchange requests" count={data?.requests.exchanges} />
           <AttentionTile href="/console/requests?tab=subject-changes" icon={BookOpenCheck} label="Subject changes" count={data?.requests.subjectChanges} />
           <AttentionTile href="/console/requests?tab=extra-items" icon={PackagePlus} label="Extra item requests" count={data?.requests.extraItems} />

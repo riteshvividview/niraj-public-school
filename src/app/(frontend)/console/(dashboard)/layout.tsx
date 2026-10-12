@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { SWRConfig } from "swr";
+import { StackedTables } from "@/components/shared/stacked-tables";
 import { RequireConsoleAuth } from "@/store/require-console-auth";
 import { ConsoleMobileNav, ConsoleSidebar } from "./_components/console-nav";
 
@@ -16,6 +17,7 @@ export default function ConsoleDashboardLayout({
           dedupingInterval: 15000,
         }}
       >
+        <StackedTables />
         <div className="flex h-dvh bg-background">
           <ConsoleSidebar />
           <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">

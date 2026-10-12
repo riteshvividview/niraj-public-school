@@ -1,5 +1,6 @@
 "use client";
 
+import { FilterRow } from "@/components/shared/filter-row";
 import { ArrowLeft, BookOpen, Download, IndianRupee, Shirt } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -355,7 +356,7 @@ export default function PaymentCoveragePage() {
           <CardTitle>Students</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-wrap items-end gap-3">
+          <FilterRow>
             <div className="min-w-48 flex-1 space-y-1.5">
               <Label className="text-xs text-sub">Search</Label>
               <Input placeholder="Name or register number" value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -428,7 +429,7 @@ export default function PaymentCoveragePage() {
                 Clear filters
               </Button>
             ) : null}
-          </div>
+          </FilterRow>
 
           {filteredStudents !== null ? (
             <p className="text-sm text-sub">{filteredStudents.length} students</p>

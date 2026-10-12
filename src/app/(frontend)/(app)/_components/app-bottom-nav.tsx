@@ -7,5 +7,5 @@ import { getAppNavItems } from "./nav-items";
 /** Mobile only — see AppSidebar for the md+ equivalent. */
 export function AppBottomNav() {
   const { t } = useTranslation();
-  return <BottomNav tabs={getAppNavItems(t)} />;
+  return <BottomNav tabs={getAppNavItems(t)} moreLabel={t.nav.more} />;
 }
