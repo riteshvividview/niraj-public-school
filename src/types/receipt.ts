@@ -33,4 +33,6 @@ export interface PaymentRecord extends ReceiptRecord {
   /** Optional delivery address — shown to staff wherever a payment is listed. */
   address?: Address;
   studentPhone?: string;
+  /** Staff override of the "new admission" rule — see src/lib/academic-year.ts. */
+  newAdmissionOverride?: "new" | "existing";
 }

@@ -35,6 +35,7 @@ interface PayloadUserRef {
   classLevel: string;
   section?: string | null;
   mobileNumber?: string | null;
+  newAdmissionOverride?: "new" | "existing" | null;
   address?: PayloadAddressGroup | null;
 }
 
@@ -186,6 +187,7 @@ export async function getPaymentsBySchool(schoolId: string): Promise<PaymentReco
       section: doc.user.section ?? undefined,
       address: toAddress(doc.user.address),
       studentPhone: doc.user.mobileNumber ?? undefined,
+      newAdmissionOverride: doc.user.newAdmissionOverride ?? undefined,
     });
   }
   return records.sort((a, b) => b.receipt.issuedAt.localeCompare(a.receipt.issuedAt));
@@ -273,6 +275,7 @@ export async function getPaymentsPageBySchool(
       section: doc.user.section ?? undefined,
       address: toAddress(doc.user.address),
       studentPhone: doc.user.mobileNumber ?? undefined,
+      newAdmissionOverride: doc.user.newAdmissionOverride ?? undefined,
     });
   }
   return { records, totalCount: result.totalDocs, totalPages: result.totalPages, page: result.page };
@@ -358,6 +361,7 @@ export async function getReceiptByCode(schoolId: string, code: string): Promise<
     section: doc.user.section ?? undefined,
     address: toAddress(doc.user.address),
     studentPhone: doc.user.mobileNumber ?? undefined,
+    newAdmissionOverride: doc.user.newAdmissionOverride ?? undefined,
   };
 }
 

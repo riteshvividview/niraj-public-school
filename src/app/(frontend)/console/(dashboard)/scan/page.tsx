@@ -21,7 +21,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { deriveReceiptTitle, groupItemsByKind } from "@/lib/cart-items";
 import { getReceiptByCode, markReceiptRedeemed, updateOrderItemsCollected } from "@/lib/data-source";
-import { useConsoleSchoolId } from "@/lib/hooks/console-data";
+import { useConsoleSchoolId, useNewAdmissionInfo } from "@/lib/hooks/console-data";
+import { NewAdmissionBadge } from "../students/_components/student-shared";
 import { CollectionControls } from "./_components/collection-controls";
 import type { PaymentRecord, ReceiptRecord } from "@/types";
 
@@ -224,12 +225,16 @@ const RECEIPT_TITLE_LABELS = {
 function ReceiptSummary({ record }: { record: ReceiptRecord }) {
   const title = deriveReceiptTitle(record.order.items, RECEIPT_TITLE_LABELS);
   const student = "studentName" in record ? (record as PaymentRecord) : null;
+  const newAdmissionInfo = useNewAdmissionInfo(record.receipt.schoolId);
   return (
     <div className="space-y-2 rounded-xl border border-line p-4 text-sm">
       {student ? (
         <div className="space-y-2 rounded-lg bg-muted/50 p-3">
-          <p className="font-medium text-ink">
-            {student.studentName} <span className="font-normal text-sub">· {student.registerNumber}</span>
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-medium text-ink">
+            <span>
+              {student.studentName} <span className="font-normal text-sub">· {student.registerNumber}</span>
+            </span>
+            <NewAdmissionBadge student={{ registerNumber: student.registerNumber, newAdmissionOverride: student.newAdmissionOverride }} info={newAdmissionInfo} />
           </p>
           <AddressBlock address={student.address} fallbackPhone={student.studentPhone} />
         </div>
