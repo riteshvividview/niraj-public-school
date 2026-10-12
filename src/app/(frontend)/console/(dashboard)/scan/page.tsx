@@ -1,8 +1,8 @@
 "use client";
 
 import { AddressBlock } from "@/components/console/address-display";
-import { AlertTriangle, CheckCircle2, Loader2, ScanLine, Search } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { AlertTriangle, Camera, CheckCircle2, Loader2, ScanLine, Search } from "lucide-react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -24,6 +24,7 @@ import { deriveReceiptTitle, groupItemsByKind } from "@/lib/cart-items";
 import { getReceiptByCode, markReceiptRedeemed, updateOrderItemsCollected } from "@/lib/data-source";
 import { useConsoleSchoolId, useNewAdmissionInfo } from "@/lib/hooks/console-data";
 import { NewAdmissionBadge } from "../students/_components/student-shared";
+import { CameraScanner } from "./_components/camera-scanner";
 import { CollectionControls } from "./_components/collection-controls";
 import type { PaymentRecord, ReceiptRecord } from "@/types";
 
@@ -37,6 +38,32 @@ function isTicketRecord(record: ReceiptRecord): boolean {
   return grouped.programs.length === record.order.items.length && grouped.programs.length > 0;
 }
 
+/** What a scan really contains → the receipt code. Accepts the plain code, or a code buried in other text/URL. */
+function extractCode(raw: string): string {
+  const upper = raw.toUpperCase();
+  const match = upper.match(/[A-HJ-NP-Z2-9]{8}/);
+  return match ? match[0] : upper.replace(/\s+/g, "");
+}
+
+/** A short beep so staff can hear a scan landed (success = high, not found = low). Silent if audio isn't allowed. */
+function beep(ok: boolean) {
+  try {
+    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.frequency.value = ok ? 1040 : 330;
+    gain.gain.value = 0.08;
+    osc.connect(gain).connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + (ok ? 0.12 : 0.28));
+    osc.onended = () => void ctx.close();
+  } catch {
+    /* no audio — fine */
+  }
+}
+
 export default function ScannerPage() {
   const schoolId = useConsoleSchoolId();
   const [code, setCode] = useState("");
@@ -45,25 +72,74 @@ export default function ScannerPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLookingUp, setIsLookingUp] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  async function refreshLookup() {
+  async function refreshLookup(forCode: string = code) {
     if (!schoolId) return;
-    const record = await getReceiptByCode(schoolId, code);
+    const record = await getReceiptByCode(schoolId, forCode);
     setLookup(record ? { kind: "found", record } : { kind: "invalid" });
+    return Boolean(record);
   }
 
-  async function handleLookup(event: FormEvent) {
-    event.preventDefault();
-    if (!code.trim() || !schoolId) return;
+  /** Looks up one code (typed, scanned by a USB scanner, or read by the camera) and gets ready for the next scan. */
+  async function lookupCode(raw: string) {
+    const value = extractCode(raw);
+    if (!value || !schoolId) return;
+    setCode(value);
     setIsLookingUp(true);
     try {
-      await refreshLookup();
+      beep(Boolean(await refreshLookup(value)));
     } catch {
       toast.error("Couldn't look that up. Please try again.");
     } finally {
       setIsLookingUp(false);
+      // Leave the code selected so the next scan simply replaces it.
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      });
     }
   }
+
+  async function handleLookup(event: FormEvent) {
+    event.preventDefault();
+    await lookupCode(code);
+  }
+
+  // A USB scanner "types" the code and presses Enter. Keep the code box ready so a scan is never lost:
+  // focus it on arrival, and if staff clicked somewhere else on the page, a scan still lands in it.
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+  const codeRef = useRef(code);
+  useEffect(() => {
+    codeRef.current = code;
+  }, [code]);
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      const el = event.target as HTMLElement | null;
+      const editable = el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT" || el.isContentEditable);
+      if (editable || document.querySelector('[role="dialog"], [role="alertdialog"]')) return;
+      if (event.key === "Enter") {
+        if (codeRef.current.trim()) {
+          event.preventDefault();
+          void lookupCode(codeRef.current);
+        }
+        return;
+      }
+      if (event.key.length === 1) {
+        event.preventDefault();
+        setCode((prev) => (prev + event.key).toUpperCase());
+        setLookup(null);
+        inputRef.current?.focus();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [schoolId]);
 
   /** Whole-receipt program check-in — unchanged from before per-item tracking existed. */
   async function handleCheckIn() {
@@ -100,9 +176,8 @@ export default function ScannerPage() {
       <div>
         <h1 className="font-heading text-2xl font-bold text-ink">Receipt / QR Scanner</h1>
         <p className="text-sm text-sub">
-          Verify a parent&apos;s receipt at the counter or event gate. Real camera
-          scanning isn&apos;t wired up yet — type or paste the receipt code shown
-          on the parent&apos;s ticket instead.
+          Verify a parent&apos;s receipt at the counter or event gate. Point a USB barcode scanner at the QR on the parent&apos;s phone
+          (it types the code and looks it up by itself), use the camera, or type the code.
         </p>
       </div>
 
@@ -112,6 +187,15 @@ export default function ScannerPage() {
             <CardTitle>Look Up Receipt</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {cameraOpen ? (
+              <CameraScanner
+                onClose={() => setCameraOpen(false)}
+                onResult={(text) => {
+                  setCameraOpen(false);
+                  void lookupCode(text);
+                }}
+              />
+            ) : (
             <div className="relative flex aspect-square w-full max-w-xs items-center justify-center overflow-hidden rounded-2xl bg-ink">
               <div className="absolute inset-6 rounded-xl border-2 border-white/30">
                 <span className="absolute -top-0.5 -left-0.5 size-6 rounded-tl-xl border-t-2 border-l-2 border-brand" />
@@ -122,6 +206,13 @@ export default function ScannerPage() {
               <div className="absolute inset-x-6 h-0.5 animate-[scan_2.2s_ease-in-out_infinite] bg-brand shadow-[0_0_12px_2px_var(--color-brand)]" />
               <ScanLine className="size-10 text-white/40" />
             </div>
+            )}
+            {!cameraOpen ? (
+              <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={() => setCameraOpen(true)}>
+                <Camera className="size-4" />
+                Scan with camera
+              </Button>
+            ) : null}
             <style>{`
               @keyframes scan {
                 0% { top: 1.5rem; }
@@ -135,6 +226,8 @@ export default function ScannerPage() {
               <div className="flex gap-2">
                 <Input
                   id="receipt-code"
+                  ref={inputRef}
+                  autoFocus
                   value={code}
                   onChange={(e) => {
                     setCode(e.target.value.toUpperCase());
