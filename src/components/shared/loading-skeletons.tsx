@@ -64,3 +64,50 @@ export function ReceiptCardSkeleton() {
     </div>
   );
 }
+
+/** A generic list row (receipt / request / payment) while its list is loading. */
+export function ListRowSkeleton() {
+  return (
+    <div className="flex items-center gap-3 rounded-lg border border-line/60 bg-card p-4">
+      <div className="flex-1 space-y-2">
+        <Skeleton className="h-4 w-1/2" />
+        <Skeleton className="h-3 w-1/3" />
+      </div>
+      <div className="space-y-2">
+        <Skeleton className="ml-auto h-4 w-16" />
+        <Skeleton className="ml-auto h-4 w-20 rounded-full" />
+      </div>
+    </div>
+  );
+}
+
+/** `count` list rows, with a screen-reader "Loading" announcement. */
+export function ListSkeleton({ count = 4 }: { count?: number }) {
+  return (
+    <div role="status" aria-label="Loading" className="space-y-2.5">
+      {Array.from({ length: count }).map((_, i) => (
+        <ListRowSkeleton key={i} />
+      ))}
+    </div>
+  );
+}
+
+/**
+ * A whole-page placeholder: a header bar + cards. Used by the route-level loading screen so that
+ * moving between tabs never shows a blank page while the next screen's code is still arriving.
+ */
+export function PageSkeleton() {
+  return (
+    <div role="status" aria-label="Loading">
+      <div className="flex items-center gap-3 border-b border-line bg-card/90 px-4 py-3">
+        <Skeleton className="h-6 w-40" />
+        <div className="flex-1" />
+        <Skeleton className="size-9 rounded-full" />
+      </div>
+      <div className="w-full space-y-3 p-4 sm:p-6 lg:p-8">
+        <Skeleton className="h-4 w-2/3 max-w-md" />
+        <ListSkeleton count={4} />
+      </div>
+    </div>
+  );
+}

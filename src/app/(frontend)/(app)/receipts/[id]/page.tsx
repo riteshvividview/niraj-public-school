@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import useSWR from "swr";
 import { AppHeader } from "@/components/shared/app-header";
+import { ReceiptCardSkeleton } from "@/components/shared/loading-skeletons";
 import { ReceiptCard } from "@/components/shared/receipt-card";
 import { toBadgeStatus } from "@/components/shared/status-badge";
 import { useTranslation } from "@/i18n/context";
@@ -36,7 +37,17 @@ export default function ReceiptDetailPage() {
     }
   }, [record, router]);
 
-  if (!record) return null;
+  // Loading (or redirecting away from a receipt that doesn't exist): a placeholder card, never a blank page.
+  if (!record) {
+    return (
+      <>
+        <AppHeader title={t.receiptsPage.title} backHref="/receipts" showAvatar />
+        <div className="w-full p-4 sm:p-6 lg:p-8">
+          <ReceiptCardSkeleton />
+        </div>
+      </>
+    );
+  }
 
   async function handleDownload() {
     if (!cardRef.current) return;

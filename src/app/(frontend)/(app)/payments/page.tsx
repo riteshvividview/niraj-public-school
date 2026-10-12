@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import { AppHeader } from "@/components/shared/app-header";
 import { EmptyState } from "@/components/shared/empty-state";
+import { ListSkeleton } from "@/components/shared/loading-skeletons";
 import { PaymentAttemptCard } from "@/components/shared/payment-attempt-card";
 import { useTranslation } from "@/i18n/context";
 import { getMyPayments } from "@/lib/data-source";
@@ -32,7 +33,9 @@ export default function MyPaymentsPage() {
       <AppHeader title={t.paymentsPage.title} backHref="/receipts" showAvatar />
       <div className="w-full space-y-4 p-4 pb-8 sm:p-6 lg:p-8">
         <p className="text-sm text-sub">{t.paymentsPage.subtitle}</p>
-        {data === undefined ? null : data.length === 0 ? (
+        {data === undefined ? (
+          <ListSkeleton count={3} />
+        ) : data.length === 0 ? (
           <EmptyState icon={Wallet} title={t.paymentsPage.emptyTitle} description={t.paymentsPage.emptyDescription} />
         ) : (
           <div className="space-y-3">

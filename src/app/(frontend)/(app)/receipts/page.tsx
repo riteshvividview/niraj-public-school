@@ -6,6 +6,7 @@ import { useState } from "react";
 import useSWR, { preload } from "swr";
 import { AppHeader } from "@/components/shared/app-header";
 import { EmptyState } from "@/components/shared/empty-state";
+import { ListSkeleton } from "@/components/shared/loading-skeletons";
 import { PendingPaymentBanner } from "@/components/shared/pending-payment-banner";
 import { StatusBadge, toBadgeStatus } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
@@ -79,7 +80,9 @@ export default function ReceiptsListPage() {
           <Wallet className="size-4" />
           {t.receiptsPage.paymentsLink}
         </Link>
-        {records === null ? null : records.length === 0 ? (
+        {records === null ? (
+          <ListSkeleton count={5} />
+        ) : records.length === 0 ? (
           <EmptyState
             icon={ReceiptIcon}
             title={t.receiptsPage.emptyTitle}

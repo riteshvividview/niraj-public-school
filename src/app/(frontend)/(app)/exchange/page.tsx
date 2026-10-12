@@ -5,6 +5,7 @@ import { useState } from "react";
 import useSWR from "swr";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/shared/app-header";
+import { ListSkeleton } from "@/components/shared/loading-skeletons";
 import { ConfirmDeleteDialog } from "@/components/shared/confirm-delete-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
@@ -102,7 +103,7 @@ function NewRequestTab({
   const [receiptId, setReceiptId] = useState<string | null>(null);
   const [target, setTarget] = useState<ExchangeTarget | null>(null);
 
-  if (!records) return null;
+  if (!records) return <ListSkeleton count={4} />;
 
   const withUniform = records.filter((record) => record.order.items.some((item) => item.kind === "uniform"));
   const selected = receiptId ? withUniform.find((record) => record.receipt.id === receiptId) : undefined;
@@ -242,7 +243,7 @@ function RequestsTab({ requests, onChanged }: { requests: ExchangeRequest[] | un
   const { help } = useExchangeStatusText();
   const [cancelling, setCancelling] = useState<ExchangeRequest | null>(null);
 
-  if (!requests) return null;
+  if (!requests) return <ListSkeleton count={3} />;
   if (requests.length === 0) {
     return <EmptyState icon={Repeat} title={p.noRequestsTitle} description={p.noRequestsDescription} />;
   }

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 import { AppHeader } from "@/components/shared/app-header";
+import { ListSkeleton } from "@/components/shared/loading-skeletons";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -169,7 +170,9 @@ export default function SupportPage() {
 
         <section className="space-y-3">
           <h2 className="font-heading text-base font-semibold text-ink">{p.myQueries}</h2>
-          {requests === undefined ? null : requests.length === 0 ? (
+          {requests === undefined ? (
+            <ListSkeleton count={2} />
+          ) : requests.length === 0 ? (
             <EmptyState icon={MessageSquareText} title={p.noQueriesTitle} description={p.noQueriesDescription} />
           ) : (
             <ul className="space-y-2.5">
