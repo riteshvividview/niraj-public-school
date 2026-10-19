@@ -1,8 +1,8 @@
 /**
  * Server-only. Shared shapes for the payment layer.
  *
- * The app talks to money only through a PaymentProvider (simulated today,
- * HDFC SmartGateway ready for the keys). Everything else — pricing, duplicate checks,
+ * The app talks to money only through a PaymentProvider (simulated until the
+ * Razorpay keys are added). Everything else — pricing, duplicate checks,
  * the pending/paid life cycle, creating the order + receipt — is provider-neutral
  * and lives in service.ts.
  */
@@ -56,12 +56,16 @@ export type ProviderOutcome =
 export type CheckoutInstructions =
   | { type: "simulated" }
   /** Send the parent to the bank's hosted payment page; they come back to the return URL. */
-  | { type: "redirect"; url: string };
+  | { type: "redirect"; url: string }
+  /** Submit a form (POST) to the provider's hosted payment page, with these fields; they come back to the return URL. */
+  | { type: "post"; url: string; fields: Record<string, string> };
 
 export interface CheckoutContext {
   payment: PaymentRow;
   student: { name: string; email?: string; mobileNumber?: string };
   schoolName: string;
+  /** The school office's contact, for providers that insist on an email / phone for the payer. */
+  schoolContact?: { email?: string; phone?: string };
   timeoutSeconds: number;
   /** Where the provider sends the parent back to after the payment page. */
   returnUrl: string;

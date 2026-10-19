@@ -28,7 +28,9 @@ export interface PaymentAttempt {
 export type CheckoutInstructions =
   | { type: "simulated" }
   /** Send the parent to the bank's hosted payment page; they come back to /checkout/return. */
-  | { type: "redirect"; url: string };
+  | { type: "redirect"; url: string }
+  /** Submit a form (POST) to the provider's hosted payment page; they come back to /checkout/return. */
+  | { type: "post"; url: string; fields: Record<string, string> };
 
 export interface PaymentConfig {
   provider: string;

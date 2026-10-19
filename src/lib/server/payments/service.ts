@@ -380,6 +380,7 @@ export async function startPayment(payload: Payload, studentId: string, requeste
     payment,
     student: { name: String(student.name), email: (student.email as string | undefined) || undefined, mobileNumber: (student.mobileNumber as string | undefined) || undefined },
     schoolName: String(school?.name ?? "School"),
+    schoolContact: { email: (school?.contactEmail as string | undefined) || undefined, phone: (school?.contactPhone as string | undefined) || undefined },
     timeoutSeconds: settings.pendingTimeoutMinutes * 60,
     returnUrl: `${appUrl.replace(/\/+$/, "")}/checkout/return?payment=${payment.id}`,
   });

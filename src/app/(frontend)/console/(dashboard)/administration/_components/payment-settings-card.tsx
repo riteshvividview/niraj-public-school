@@ -67,9 +67,8 @@ export function PaymentSettingsCard() {
           {provider?.testMode ? (
             <p className="text-sub">
               No real payment provider is connected, so checkout runs in <strong className="text-ink">test mode</strong> and no real money moves. To go
-              live, add the HDFC SmartGateway details to the server settings (<code>HDFC_API_KEY</code>, <code>HDFC_MERCHANT_ID</code>,{" "}
-              <code>HDFC_PAYMENT_PAGE_CLIENT_ID</code>, <code>HDFC_WEBHOOK_USERNAME</code>, <code>HDFC_WEBHOOK_PASSWORD</code>) and restart — nothing
-              else needs to change.
+              live, add the Razorpay details to the server settings (<code>RAZORPAY_KEY_ID</code>, <code>RAZORPAY_KEY_SECRET</code>,{" "}
+              <code>RAZORPAY_WEBHOOK_SECRET</code>) and restart — nothing else needs to change.
             </p>
           ) : null}
           {provider && !provider.available ? (
@@ -78,7 +77,7 @@ export function PaymentSettingsCard() {
             </p>
           ) : null}
           {provider && !provider.testMode && provider.sandbox ? (
-            <p className="text-section-programs">This is pointed at the bank&apos;s <strong>sandbox</strong> — payments are not real until <code>HDFC_BASE_URL</code> is removed.</p>
+            <p className="text-section-programs">This is using Razorpay <strong>test keys</strong> — payments are not real until the live keys (<code>rzp_live_…</code>) are set.</p>
           ) : null}
           {provider && !provider.testMode && provider.webhookMissing.length > 0 ? (
             <p className="text-section-programs">

@@ -137,7 +137,23 @@ export default function PaymentPage() {
     // /checkout/return, which asks the server (and so the bank) what happened — and if they never
     // come back, the bank's confirmation / My payments settles it.
     setRedirecting(true);
-    window.location.assign(checkout.url);
+    if (checkout.type === "post") {
+      // Razorpay's hosted checkout is opened by posting a form to it.
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = checkout.url;
+      Object.entries(checkout.fields).forEach(([name, value]) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = name;
+        input.value = value;
+        form.appendChild(input);
+      });
+      document.body.appendChild(form);
+      form.submit();
+    } else {
+      window.location.assign(checkout.url);
+    }
     await new Promise(() => undefined); // keep "processing" up while the browser navigates away
   }
 
