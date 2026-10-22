@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, KeyRound, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, GraduationCap, KeyRound, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -23,6 +23,7 @@ import { deriveReceiptTitle } from "@/lib/cart-items";
 import { AddressBlock } from "@/components/console/address-display";
 import { ReceiptLine } from "@/components/console/payment-card";
 import { StudentConnections } from "./_components/student-connections";
+import { ChangeClassDialog } from "../_components/change-class-dialog";
 import { RecordEventRow } from "@/components/console/record-event-list";
 import { deleteStudent, getReceiptsByUser, getRecordEventsByStudent, getUserProfileById } from "@/lib/data-source";
 import { formatDate, formatTime } from "@/lib/format";
@@ -110,9 +111,10 @@ export default function StudentDetailPage() {
     getReceiptsByUser(studentId),
   );
   const receipts = receiptsData ?? null;
-  const { data: history } = useSWR(["console:student-history", studentId], () => getRecordEventsByStudent(studentId, 50));
+  const { data: history, mutate: mutateHistory } = useSWR(["console:student-history", studentId], () => getRecordEventsByStudent(studentId, 50));
 
   const [editOpen, setEditOpen] = useState(false);
+  const [classOpen, setClassOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -180,6 +182,10 @@ export default function StudentDetailPage() {
               <Button variant="outline" className="gap-2" onClick={() => setEditOpen(true)}>
                 <Pencil className="size-4" />
                 Edit
+              </Button>
+              <Button variant="outline" className="gap-2" onClick={() => setClassOpen(true)}>
+                <GraduationCap className="size-4" />
+                Change Class
               </Button>
               <Button variant="outline" className="gap-2" onClick={() => setResetOpen(true)}>
                 <KeyRound className="size-4" />
@@ -317,6 +323,20 @@ export default function StudentDetailPage() {
               ) : null}
             </DialogContent>
           </Dialog>
+
+          {classOpen ? (
+            <ChangeClassDialog
+              open
+              onOpenChange={setClassOpen}
+              student={student}
+              classLevels={classLevels}
+              history={history ?? []}
+              onChanged={() => {
+                void mutateStudent();
+                void mutateHistory();
+              }}
+            />
+          ) : null}
 
           <Dialog open={resetOpen} onOpenChange={setResetOpen}>
             <DialogContent>

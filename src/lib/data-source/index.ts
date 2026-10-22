@@ -18,3 +18,4 @@ export * from "./payments";
 export * from "./payment-attempts";
 export * from "./new-admission";
 export * from "./console-overview";
+export * from "./student-class";

@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
+  GraduationCap,
   Loader2,
   Plus,
   Upload,
@@ -85,6 +86,7 @@ import {
   STREAM_OPTIONS,
 } from "./_components/student-shared";
 import { EMPTY_ADDRESS_DRAFT, resolveAddressDraft, StaffAddressSection } from "./_components/staff-address-section";
+import { PromoteClassDialog } from "./_components/promote-class-dialog";
 import type { AcademicLanguage, ClassLevel, Elective, Stream, UserProfile } from "@/types";
 
 // --- Add student ------------------------------------------------------------
@@ -847,6 +849,8 @@ export default function StudentsManagerPage() {
 
   const [addOpen, setAddOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [promoteOpen, setPromoteOpen] = useState(false);
+  const { mutate: refreshAll } = useSWRConfig();
 
   const onClassLevelsChange = classLevelsCacheUpdater(mutateClassLevels);
 
@@ -873,6 +877,15 @@ export default function StudentsManagerPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="gap-2"
+            disabled={!schoolId}
+            onClick={() => setPromoteOpen(true)}
+          >
+            <GraduationCap className="size-4" />
+            Promote Class
+          </Button>
           <Button
             variant="outline"
             className="gap-2"
@@ -980,6 +993,20 @@ export default function StudentsManagerPage() {
           ) : null}
         </DialogContent>
       </Dialog>
+
+      {promoteOpen ? (
+        <PromoteClassDialog
+          open
+          onOpenChange={setPromoteOpen}
+          schoolId={schoolId}
+          classLevels={classLevels}
+          initialClassId={filters.classLevelId !== ALL_VALUE ? filters.classLevelId : undefined}
+          onChanged={() => {
+            // every cached list of students (and the section picker) is now out of date
+            void refreshAll((key) => Array.isArray(key) && (key[0] === "console:students" || key[0] === "console:student-sections" || key[0] === "console:promote-students" || key[0] === "console:student"));
+          }}
+        />
+      ) : null}
 
       <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">

@@ -13,6 +13,7 @@ const CATEGORY_STYLES: Record<RecordEventCategory, string> = {
   subject: "bg-section-console-bg text-section-console",
   support: "bg-section-pay-bg text-section-pay",
   profile: "bg-muted text-sub",
+  class: "bg-section-essentials-bg text-section-essentials",
 };
 
 /** One line of the permanent activity log: exact date + time, what happened, who did it. */

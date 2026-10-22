@@ -2,7 +2,7 @@
  * Shared vocabulary for the activity log: which categories exist (the
  * console's filter), and a readable label for each event type.
  */
-export type RecordEventCategory = "orders" | "collection" | "exchange" | "subject" | "support" | "profile";
+export type RecordEventCategory = "orders" | "collection" | "exchange" | "subject" | "support" | "profile" | "class";
 
 export const RECORD_EVENT_CATEGORIES: Array<{ value: RecordEventCategory; label: string }> = [
   { value: "orders", label: "Orders & receipts" },
@@ -11,6 +11,7 @@ export const RECORD_EVENT_CATEGORIES: Array<{ value: RecordEventCategory; label:
   { value: "subject", label: "Subject changes" },
   { value: "support", label: "Parent support" },
   { value: "profile", label: "Profile / address" },
+  { value: "class", label: "Class changes" },
 ];
 
 export function categoryOfEvent(eventType: string): RecordEventCategory {
@@ -19,6 +20,7 @@ export function categoryOfEvent(eventType: string): RecordEventCategory {
   if (eventType.startsWith("bookchange.")) return "subject";
   if (eventType.startsWith("support.")) return "support";
   if (eventType.startsWith("profile.")) return "profile";
+  if (eventType.startsWith("class.")) return "class";
   return "orders";
 }
 
@@ -30,6 +32,7 @@ export const CATEGORY_PREFIXES: Record<RecordEventCategory, string[]> = {
   subject: ["bookchange."],
   support: ["support."],
   profile: ["profile."],
+  class: ["class."],
 };
 
 const LABELS: Record<string, string> = {
@@ -61,6 +64,9 @@ const LABELS: Record<string, string> = {
   "support.started": "Support query picked up",
   "support.resolved": "Support query resolved",
   "support.reopened": "Support query reopened",
+  "class.promoted": "Promoted to the next class",
+  "class.demoted": "Moved back a class",
+  "class.changed": "Class changed",
   "profile.address_updated": "Address saved",
   "profile.address_removed": "Address removed",
 };
