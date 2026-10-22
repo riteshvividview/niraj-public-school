@@ -55,3 +55,6 @@ AGENTS.md
 .vercel
 .env*
 /backups/
+
+# real student data - never commit (and keep it out of public/, which the website serves)
+/public/Student Data*
