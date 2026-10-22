@@ -54,3 +54,4 @@ AGENTS.md
 
 .vercel
 .env*
+/backups/
