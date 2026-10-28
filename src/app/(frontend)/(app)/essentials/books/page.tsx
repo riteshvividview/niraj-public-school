@@ -6,21 +6,21 @@ import { AppHeader } from "@/components/shared/app-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ItemCard } from "@/components/shared/item-card";
 import { ItemCardSkeleton } from "@/components/shared/loading-skeletons";
-import { Atom, BookOpen, Bot, Check, GraduationCap, Home, Languages, LineChart, Lock, type LucideIcon } from "lucide-react";
+import { Atom, BookOpen, Bot, Check, GraduationCap, Home, Languages, LineChart, Loader2, Lock, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { toast } from "sonner";
 import { useTranslation } from "@/i18n/context";
 import { secondLanguageOf } from "@/lib/academic-language";
 import { assignedBookSetOf, bookMatchesAssignedSet } from "@/lib/book-set";
 import { bookToCartItem } from "@/lib/cart-items";
-import { getBookChangeRequestsByUser, getBooksByClass } from "@/lib/data-source";
+import { getBookSelectionState, getBooksByClass, saveBookSelection } from "@/lib/data-source";
 import { formatCurrencyINR } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/store/auth-store";
 import { lineId, useCart } from "@/store/cart-store";
 import type { AcademicLanguage, Book, Elective, Stream } from "@/types";
 import { EssentialsReviewBar } from "../_components/review-bar";
-import { BookChangeDialog, type ChangeableFields } from "./_components/book-change-dialog";
-import { BookChangeStatus, isRequestVisible } from "./_components/book-change-status";
 
 function streamIcon(value: Stream): LucideIcon {
   return value === "science" ? Atom : LineChart;
@@ -135,14 +135,16 @@ export default function BooksPage() {
   const [selectedStream, setSelectedStream] = useState<Stream | "">("");
   const [selectedElective, setSelectedElective] = useState<Elective | "">("");
   const [defaultsAppliedFor, setDefaultsAppliedFor] = useState<Book[] | null>(null);
-  const [changeOpen, setChangeOpen] = useState(false);
-  const { data: changeRequests, mutate: mutateChangeRequests } = useSWR(
-    profile ? ["books:change-requests", profile.id] : null,
-    () => getBookChangeRequestsByUser(profile!.id),
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  // Can the student still change their choice? Not once books of this class are bought / being paid for.
+  const { data: selectionState, error: selectionError, mutate: mutateSelectionState } = useSWR(
+    profile ? ["books:selection-state", profile.id, profile.classLevelId] : null,
+    () => getBookSelectionState(),
   );
 
-  // The school may have approved a change (or edited the roster) since this
-  // session's profile was loaded — re-read it so the locked selection is current.
+  // The school may have changed the student's choice (or class) since this
+  // session's profile was loaded — re-read it so the selection is current.
   useEffect(() => {
     void globalMutate("auth:me");
   }, []);
@@ -214,13 +216,13 @@ export default function BooksPage() {
   const streamOptions = ([...new Set(catalogue.map((b) => b.stream).filter(Boolean))] as Stream[]);
   const electiveOptions = ([...new Set(catalogue.map((b) => b.elective).filter(Boolean))] as Elective[]);
 
-  // A choice the school has assigned is locked: shown selected, every other option disabled.
-  // Unassigned choices (nothing recorded for this student yet) stay selectable.
+  // The student chooses freely (their saved choice — first the school's roster value — is pre-selected),
+  // until they have bought this class's books: then the saved choice is locked and only the school can change it.
   const assigned = assignedBookSetOf(profile);
-  const languageLocked = Boolean(assigned.secondLanguage && languageOptions.includes(assigned.secondLanguage));
-  const streamLocked = Boolean(assigned.stream && streamOptions.includes(assigned.stream));
-  const electiveLocked = Boolean(assigned.elective && electiveOptions.includes(assigned.elective));
-  const anyLocked = languageLocked || streamLocked || electiveLocked;
+  const bought = selectionState?.locked === true;
+  const languageLocked = bought && Boolean(assigned.secondLanguage && languageOptions.includes(assigned.secondLanguage));
+  const streamLocked = bought && Boolean(assigned.stream && streamOptions.includes(assigned.stream));
+  const electiveLocked = bought && Boolean(assigned.elective && electiveOptions.includes(assigned.elective));
   const effLanguage = languageLocked ? assigned.secondLanguage! : selectedLanguage;
   const effStream = streamLocked ? assigned.stream! : selectedStream;
   const effElective = electiveLocked ? assigned.elective! : selectedElective;
@@ -236,27 +238,8 @@ export default function BooksPage() {
         ? t.essentials.electiveHomeScience
         : t.essentials.electiveRoboticsAI;
 
-  const describeSelection = (selection: { secondLanguage?: AcademicLanguage; stream?: Stream; elective?: Elective }) =>
-    [
-      selection.secondLanguage ? languageLabel(selection.secondLanguage) : null,
-      selection.stream ? streamLabel(selection.stream) : null,
-      selection.elective ? electiveLabel(selection.elective) : null,
-    ]
-      .filter(Boolean)
-      .join(" · ");
-
-  const pendingRequest = changeRequests?.find((request) => request.status === "pending");
-  const shownRequest = pendingRequest ?? changeRequests?.find((request) => isRequestVisible(request));
-
-  const changeFields: ChangeableFields = {
-    secondLanguage: languageLocked
-      ? { current: assigned.secondLanguage!, options: languageOptions, label: languageLabel }
-      : undefined,
-    stream: streamLocked ? { current: assigned.stream!, options: streamOptions, label: streamLabel } : undefined,
-    elective: electiveLocked ? { current: assigned.elective!, options: electiveOptions, label: electiveLabel } : undefined,
-  };
-
   const canProceed =
+    (selectionState !== undefined || selectionError !== undefined) &&
     (languageOptions.length === 0 || effLanguage !== "") &&
     (streamOptions.length === 0 || effStream !== "") &&
     (electiveOptions.length === 0 || effElective !== "");
@@ -284,6 +267,32 @@ export default function BooksPage() {
     // control, so this step's Next button never silently disappears.
     matchedBooks.forEach((book) => cart.setIncluded(bookToCartItem(book, chosenLabels), true));
     setStep("review");
+  }
+
+  // Pressing Next: a student who can still change their choice confirms it first; the confirmed choice is
+  // saved to their profile (and logged for the school) before the books are added.
+  function handleNext() {
+    if (bought) goToReview();
+    else setConfirmOpen(true);
+  }
+
+  async function confirmChoice() {
+    setSaving(true);
+    try {
+      const result = await saveBookSelection({
+        secondLanguage: effLanguage || undefined,
+        stream: effStream || undefined,
+        elective: effElective || undefined,
+      });
+      if (result.changed) await globalMutate("auth:me");
+      setConfirmOpen(false);
+      goToReview();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t.bookLock.saveFailed);
+      void mutateSelectionState();
+    } finally {
+      setSaving(false);
+    }
   }
 
   const subtotal = matchedBooks.reduce((sum, book) => sum + book.price, 0);
@@ -324,23 +333,13 @@ export default function BooksPage() {
         {step === "select" ? (
           <div className="lg:grid lg:grid-cols-[1fr_300px] lg:items-start lg:gap-6">
             <div className="space-y-5">
-              {shownRequest ? (
-                <BookChangeStatus request={shownRequest} describe={describeSelection} onChanged={() => void mutateChangeRequests()} />
-              ) : null}
-              {anyLocked ? (
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line/60 bg-muted/40 p-4">
-                  <div className="flex min-w-0 flex-1 items-start gap-3">
-                    <Lock className="mt-0.5 size-4 shrink-0 text-sub" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-ink">{t.bookLock.assignedTitle}</p>
-                      <p className="text-sm text-sub">{t.bookLock.assignedNote}</p>
-                    </div>
+              {bought ? (
+                <div className="flex items-start gap-3 rounded-xl border border-line/60 bg-muted/40 p-4">
+                  <Lock className="mt-0.5 size-4 shrink-0 text-sub" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-ink">{t.bookLock.boughtTitle}</p>
+                    <p className="text-sm text-sub">{t.bookLock.boughtNote}</p>
                   </div>
-                  {pendingRequest ? null : (
-                    <Button variant="outline" size="sm" onClick={() => setChangeOpen(true)}>
-                      {t.bookLock.requestChange}
-                    </Button>
-                  )}
                 </div>
               ) : null}
               {languageOptions.length > 0 ? (
@@ -385,7 +384,7 @@ export default function BooksPage() {
                   ))}
                 </OptionGroup>
               ) : null}
-              <Button className="w-full lg:hidden" disabled={!canProceed} onClick={goToReview}>
+              <Button className="w-full lg:hidden" disabled={!canProceed} onClick={handleNext}>
                 {t.common.next}
               </Button>
             </div>
@@ -393,7 +392,7 @@ export default function BooksPage() {
             <aside className="sticky top-6 hidden rounded-xl border border-line/60 bg-card p-5 lg:block">
               <p className="font-heading text-base font-semibold text-ink">{t.essentials.yourSelectionTitle}</p>
               <div className="mt-1 divide-y divide-line/60">{selectionRows}</div>
-              <Button className="mt-4 w-full" disabled={!canProceed} onClick={goToReview}>
+              <Button className="mt-4 w-full" disabled={!canProceed} onClick={handleNext}>
                 {t.common.next}
               </Button>
             </aside>
@@ -436,22 +435,27 @@ export default function BooksPage() {
           </div>
         )}
       </div>
-      {anyLocked ? (
-        <BookChangeDialog
-          open={changeOpen}
-          onOpenChange={setChangeOpen}
-          fields={changeFields}
-          titles={{
-            secondLanguage: t.essentials.secondLanguageLabel,
-            stream: t.essentials.specializationLabel,
-            elective: t.essentials.specialization2Label,
-          }}
-          onSent={() => {
-            setChangeOpen(false);
-            void mutateChangeRequests();
-          }}
-        />
-      ) : null}
+      <Dialog open={confirmOpen} onOpenChange={(open) => (!saving ? setConfirmOpen(open) : undefined)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t.bookLock.confirmTitle}</DialogTitle>
+            <DialogDescription>{t.bookLock.confirmIntro}</DialogDescription>
+          </DialogHeader>
+          <div className="divide-y divide-line/60 rounded-lg border border-line/60 px-3">{selectionRows}</div>
+          <p className="rounded-lg border border-section-programs/30 bg-section-programs-bg p-3 text-sm text-section-programs">
+            {t.bookLock.confirmWarning}
+          </p>
+          <DialogFooter>
+            <Button variant="outline" disabled={saving} onClick={() => setConfirmOpen(false)}>
+              {t.bookLock.goBack}
+            </Button>
+            <Button disabled={saving} onClick={() => void confirmChoice()}>
+              {saving ? <Loader2 className="size-4 animate-spin" /> : null}
+              {t.bookLock.confirmButton}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {step === "review" && matchedBooks.length > 0 ? (
         <EssentialsReviewBar
           kind="book"

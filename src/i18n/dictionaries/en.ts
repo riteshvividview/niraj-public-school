@@ -358,6 +358,14 @@ const en: Dictionary = {
     requestedLabel: "You asked for",
     dismiss: "Dismiss",
     cartUpdatedNote: "Books in your cart that no longer match your selection were removed.",
+    boughtTitle: "Books already bought",
+    boughtNote: "You have bought your books for this class, so these choices can no longer be changed here. To change them, please contact the school.",
+    confirmTitle: "Please confirm your choice",
+    confirmIntro: "You have chosen:",
+    confirmWarning: "Your books are decided by this choice. Please check carefully — once you buy the books, it can only be changed by the school.",
+    confirmButton: "Yes, I'm sure",
+    goBack: "Go back",
+    saveFailed: "We couldn't save your choice. Please try again.",
   },
 
   supportPage: {

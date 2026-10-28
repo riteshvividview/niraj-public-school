@@ -16,11 +16,10 @@ const ELECTIVES = [
 ];
 
 /**
- * Mirrors src/types/book-change.ts BookChangeRequest. Same access model as
- * ExchangeRequests (see access/request-access.ts): REST-readable by the
- * owning student and by staff, never writable over REST — creation and every
- * status change go through src/app/(payload)/api/book-change/*. Table +
- * constraints + the approval function: supabase/migrations/*_book_change_requests.sql.
+ * Mirrors src/types/book-change.ts. Originally a request/approval flow; since 2026-10-28 it is the LOG of
+ * subject changes (status "applied") — students change their own selection on Essentials -> Books before
+ * buying (/api/books/selection), staff change it on the student's profile (Users afterChange hook). Never
+ * writable over REST. Older pending/approved/rejected rows are kept as history.
  */
 export const BookChangeRequests: CollectionConfig = {
   slug: "book-change-requests",
@@ -53,12 +52,18 @@ export const BookChangeRequests: CollectionConfig = {
       type: "select",
       required: true,
       defaultValue: "pending",
-      options: ["pending", "approved", "rejected", "cancelled"],
+      // "applied" = a change that was made directly (by the student before buying, or by staff) — the log.
+      options: ["pending", "approved", "rejected", "cancelled", "applied"],
     },
     { name: "staffNote", type: "text" },
     { name: "contactNote", type: "text", access: { read: ({ req: { user } }) => user?.collection === "payload-admins" } },
     { name: "decidedBy", type: "relationship", relationTo: "payload-admins" },
     { name: "decidedByName", type: "text" },
     { name: "decidedAt", type: "date" },
+    // Snapshot of the class the student was in when the change was made.
+    { name: "classLevel", type: "relationship", relationTo: "class-levels" },
+    { name: "classLabel", type: "text" },
+    { name: "changedByType", type: "select", options: ["student", "staff"] },
+    { name: "changedByName", type: "text" },
   ],
 };

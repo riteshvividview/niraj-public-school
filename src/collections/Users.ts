@@ -3,6 +3,7 @@ import { staffOnly, staffOnlyField, staffOrOwnerField, staffOrSelf } from "../ac
 import { isPlausiblePhone } from "@/lib/contact-links";
 import { PINCODE_PATTERN } from "@/lib/address";
 import { actorFromUser, recordEvent } from "@/lib/server/record-events";
+import { secondLanguageOf } from "@/lib/academic-language";
 
 /**
  * Mirrors src/types/user-profile.ts UserProfile — student/parent portal
@@ -139,6 +140,55 @@ const logAddressChange: CollectionAfterChangeHook = async ({ doc, previousDoc, o
   return doc;
 };
 
+/**
+ * Staff changing a student's second language / main group / secondary specialization on the profile is
+ * written to the subject-change log (book_change_requests, status "applied") with the class the student
+ * is in — the same log the student's own changes on Essentials -> Books go to. Never blocks the save.
+ */
+const logBookSetChange: CollectionAfterChangeHook = async ({ doc, previousDoc, operation, req }) => {
+  if (operation !== "update" || req.user?.collection !== "payload-admins" || !previousDoc) return doc;
+  try {
+    const before = { secondLanguage: secondLanguageOf(previousDoc), stream: previousDoc.stream ?? undefined, elective: previousDoc.elective ?? undefined };
+    const after = { secondLanguage: secondLanguageOf(doc), stream: doc.stream ?? undefined, elective: doc.elective ?? undefined };
+    const requested = {
+      secondLanguage: after.secondLanguage !== before.secondLanguage ? after.secondLanguage : undefined,
+      stream: after.stream !== before.stream ? after.stream : undefined,
+      elective: after.elective !== before.elective ? after.elective : undefined,
+    };
+    // A value being cleared isn't a choice of books — only log a change TO something.
+    if (!requested.secondLanguage && !requested.stream && !requested.elective) return doc;
+    const schoolId = typeof doc.school === "string" ? doc.school : doc.school?.id;
+    const classLevelId = typeof doc.classLevel === "string" ? doc.classLevel : doc.classLevel?.id;
+    if (!schoolId) return doc;
+    const classLevel = classLevelId
+      ? await req.payload.findByID({ collection: "class-levels", id: classLevelId, depth: 0 }).catch(() => null)
+      : null;
+    const staffName = (req.user as { name?: string; email?: string }).name ?? (req.user as { email?: string }).email ?? "Staff";
+    await req.payload.create({
+      collection: "book-change-requests",
+      data: {
+        school: schoolId,
+        user: doc.id,
+        requested,
+        current: before,
+        reason: "Changed by school staff on the student's profile",
+        status: "applied",
+        decidedAt: new Date().toISOString(),
+        decidedByName: staffName,
+        classLevel: classLevelId,
+        classLabel: classLevel ? String(classLevel.label) : undefined,
+        changedByType: "staff",
+        changedByName: staffName,
+      },
+      depth: 0,
+      // Deliberately NOT in the profile save's transaction: if logging ever failed it must not undo the save.
+    });
+  } catch (error) {
+    console.error("[users] could not log the subject change:", error);
+  }
+  return doc;
+};
+
 /** A student editing their own account can never change their register number (the login). */
 const lockIdentity: CollectionBeforeChangeHook = ({ data, originalDoc, req, operation }) => {
   if (operation === "update" && req.user?.collection === "users" && originalDoc) {
@@ -158,7 +208,7 @@ export const Users: CollectionConfig = {
     tokenExpiration: 60 * 60 * 24 * 7, // 7 days — a student shouldn't need to re-login often
   },
   admin: { useAsTitle: "name" },
-  hooks: { beforeChange: [lockIdentity, normalizeAddress], afterChange: [logAddressChange], beforeDelete: [keepStudentsWithHistory] },
+  hooks: { beforeChange: [lockIdentity, normalizeAddress], afterChange: [logAddressChange, logBookSetChange], beforeDelete: [keepStudentsWithHistory] },
   // Staff manage every account; a student can read and edit only their own, and cannot change who they are
   // (register number, role, school, class — see staffOnlyField below and lockIdentity).
   access: { read: staffOrSelf, create: staffOnly, update: staffOrSelf, delete: staffOnly },

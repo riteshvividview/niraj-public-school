@@ -377,6 +377,14 @@ export interface Dictionary {
     requestedLabel: string;
     dismiss: string;
     cartUpdatedNote: string;
+    boughtTitle: string;
+    boughtNote: string;
+    confirmTitle: string;
+    confirmIntro: string;
+    confirmWarning: string;
+    confirmButton: string;
+    goBack: string;
+    saveFailed: string;
   };
 
   supportPage: {

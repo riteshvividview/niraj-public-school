@@ -40,6 +40,10 @@ interface PayloadBookChangeDoc {
   contactNote?: string | null;
   decidedByName?: string | null;
   decidedAt?: string | null;
+  classLevel?: string | { id: string } | null;
+  classLabel?: string | null;
+  changedByType?: "student" | "staff" | null;
+  changedByName?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -65,6 +69,10 @@ function toRequest(doc: PayloadBookChangeDoc): BookChangeRequest {
     contactNote: doc.contactNote ?? undefined,
     decidedByName: doc.decidedByName ?? undefined,
     decidedAt: doc.decidedAt ?? undefined,
+    classLevelId: doc.classLevel ? (typeof doc.classLevel === "string" ? doc.classLevel : doc.classLevel.id) : undefined,
+    classLabel: doc.classLabel ?? undefined,
+    changedByType: doc.changedByType ?? undefined,
+    changedByName: doc.changedByName ?? undefined,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };
@@ -99,38 +107,22 @@ async function postAction<T = unknown>(path: string, body: unknown): Promise<T> 
 
 /* ------------------------------ student side ------------------------------ */
 
-/** Student — Books page: their change requests, newest first (the first one is the "current" one to show). */
-export async function getBookChangeRequestsByUser(userId: string): Promise<BookChangeRequest[]> {
-  const docs = await payloadFind<PayloadBookChangeDoc>("book-change-requests", { user: userId }, { sort: "-createdAt", limit: 20 });
-  return docs.map(toRequest);
-}
-
-export interface CreateBookChangeInput extends BookSelection {
-  reason: string;
-}
-
-export async function createBookChangeRequest(input: CreateBookChangeInput): Promise<void> {
-  await postAction("/api/book-change/create", input);
-}
-
-export async function cancelBookChangeRequest(id: string): Promise<void> {
-  await postAction("/api/book-change/transition", { id, action: "cancel" });
-}
-
 /* ------------------------------ console side ------------------------------ */
 
 export interface BookChangePageFilters {
-  status?: BookChangeStatus;
   search?: string;
+  /** The class the student was in WHEN they made the change. */
   classLevelId?: string;
+  changedBy?: "student" | "staff";
 }
 
+/** The subject-change log: every change that actually happened (made directly, or approved under the old flow). */
 function buildWhere(schoolId: string, filters: BookChangePageFilters): Record<string, unknown> {
-  const and: Record<string, unknown>[] = [{ school: { equals: schoolId } }];
-  if (filters.status) and.push({ status: { equals: filters.status } });
+  const and: Record<string, unknown>[] = [{ school: { equals: schoolId } }, { status: { in: ["applied", "approved"] } }];
   const search = filters.search?.trim();
   if (search) and.push({ or: [{ "user.name": { contains: search } }, { "user.username": { contains: search } }] });
-  if (filters.classLevelId) and.push({ "user.classLevel": { equals: filters.classLevelId } });
+  if (filters.classLevelId) and.push({ classLevel: { equals: filters.classLevelId } });
+  if (filters.changedBy) and.push({ changedByType: { equals: filters.changedBy } });
   return { and };
 }
 
@@ -166,16 +158,18 @@ export async function getPendingBookChangeCount(schoolId: string): Promise<numbe
   return result.totalDocs;
 }
 
-export type BookChangeAction = "approve" | "reject";
 
-export async function transitionBookChangeRequest(
-  id: string,
-  action: BookChangeAction,
-  options: { staffNote?: string } = {},
-): Promise<void> {
-  await postAction("/api/book-change/transition", { id, action, ...options });
+/* ------------------------- student's own choice ------------------------- */
+
+/** Student — can they still change their book choice (not once this class's books are bought / being paid for)? */
+export async function getBookSelectionState(): Promise<{ locked: boolean; current: BookSelection }> {
+  const res = await fetch("/api/books/selection", { credentials: "same-origin", cache: "no-store" });
+  const data = (await res.json().catch(() => null)) as ({ error?: string; locked: boolean; current: BookSelection }) | null;
+  if (!res.ok || !data) throw new Error(data?.error ?? "Something went wrong. Please try again.");
+  return { locked: data.locked, current: data.current };
 }
 
-export async function saveBookChangeContactNote(id: string, contactNote: string): Promise<void> {
-  await postAction("/api/book-change/transition", { id, action: "note", contactNote });
+/** Student — save their confirmed choice (only what differs is changed, and it is logged for the school). */
+export async function saveBookSelection(selection: BookSelection): Promise<{ changed: boolean }> {
+  return postAction<{ changed: boolean }>("/api/books/selection", selection);
 }

@@ -1,7 +1,8 @@
 import type { Address } from "./address";
 import type { AcademicLanguage, Elective, Stream } from "./user-profile";
 
-export type BookChangeStatus = "pending" | "approved" | "rejected" | "cancelled";
+/** "applied" = a change made directly (by the student before buying, or by staff) — the subject-change log. The others are from the old request/approval flow. */
+export type BookChangeStatus = "pending" | "approved" | "rejected" | "cancelled" | "applied";
 
 /** The three student attributes that decide which book set a student gets. Unset = unchanged / not recorded. */
 export interface BookSelection {
@@ -30,6 +31,11 @@ export interface BookChangeRequest {
   contactNote?: string;
   decidedByName?: string;
   decidedAt?: string;
+  /** The class the student was in when the change was made (snapshot). */
+  classLevelId?: string;
+  classLabel?: string;
+  changedByType?: "student" | "staff";
+  changedByName?: string;
   createdAt: string;
   updatedAt: string;
 }
