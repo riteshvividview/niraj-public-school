@@ -217,6 +217,8 @@ export interface Dictionary {
 
   newAdmission: {
     setTitle: string;
+    firstSetTitle: string;
+    firstSetDescription: string;
     setDescription: string;
     required: string;
     optional: string;

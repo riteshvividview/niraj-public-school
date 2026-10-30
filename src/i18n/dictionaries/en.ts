@@ -201,6 +201,8 @@ const en: Dictionary = {
 
   newAdmission: {
     setTitle: "Your new admission uniform set",
+    firstSetTitle: "Your uniform set for this class",
+    firstSetDescription: "Your first uniform order for this class includes the full uniform list. From your next order you can pick single items.",
     setDescription: "As a new student you buy the full uniform set together, once — everything for your class in one payment.",
     required: "Required",
     optional: "Optional",

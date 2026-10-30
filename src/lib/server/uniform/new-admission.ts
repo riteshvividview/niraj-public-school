@@ -25,6 +25,11 @@ export interface NewAdmissionStatus {
   startMonth: number;
   /** "2026-27" */
   academicYear: string;
+  /**
+   * Existing students only: they have already bought (paid for) uniform of their CURRENT class. Until then
+   * their first uniform order must be the class's full uniform list; after that they buy items freely.
+   */
+  firstUniformDone: boolean;
 }
 
 export interface SetItem {
@@ -54,7 +59,23 @@ export async function getNewAdmissionStatus(payload: Payload, studentId: string,
     const bought = await payload.count({ collection: "orders", where: { and: [{ user: { equals: studentId } }, { newAdmissionSet: { equals: true } }] } });
     setBought = bought.totalDocs > 0;
   }
-  return { isNew, setBought, startMonth, academicYear: academicYearLabel(academicYearStart(now, startMonth)) };
+  let firstUniformDone = true;
+  if (!isNew) {
+    const pool = (payload.db as unknown as { pool: { query: (text: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> } }).pool;
+    const row = (
+      await pool.query(
+        `SELECT EXISTS (
+            SELECT 1 FROM orders o
+              JOIN orders_items oi ON oi._parent_id = o.id
+              JOIN uniform_items ui ON ui.id::text = oi.ref_id
+             WHERE o.user_id = $1 AND o.status = 'paid' AND oi.kind = 'uniform' AND ui.class_level_id = $2
+          ) AS done`,
+        [studentId, relId(student.classLevel)],
+      )
+    ).rows[0];
+    firstUniformDone = Boolean(row?.done);
+  }
+  return { isNew, setBought, firstUniformDone, startMonth, academicYear: academicYearLabel(academicYearStart(now, startMonth)) };
 }
 
 const toSetItem = (doc: Doc): SetItem => ({

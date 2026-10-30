@@ -15,7 +15,7 @@ import type { UniformItem } from "@/types";
  * the new-admission items) is bought together, once. Every item is required — only the size is
  * chosen. (The payment step enforces the same rule on the server.)
  */
-export function NewAdmissionSet({ items }: { items: UniformItem[] }) {
+export function NewAdmissionSet({ items, title, description, note }: { items: UniformItem[]; title?: string; description?: string; note?: string }) {
   const { t, language } = useTranslation();
   const cart = useCart();
   const [sizes, setSizes] = useState<Record<string, string>>({});
@@ -46,9 +46,9 @@ export function NewAdmissionSet({ items }: { items: UniformItem[] }) {
   return (
     <div className="space-y-4">
       <div className="rounded-lg border border-section-essentials/30 bg-section-essentials-bg p-4">
-        <p className="font-heading text-base font-semibold text-section-essentials">{t.newAdmission.setTitle}</p>
-        <p className="mt-1 text-sm text-section-essentials">{t.newAdmission.setDescription}</p>
-        <p className="mt-1 text-xs text-section-essentials">{t.newAdmission.setNote}</p>
+        <p className="font-heading text-base font-semibold text-section-essentials">{title ?? t.newAdmission.setTitle}</p>
+        <p className="mt-1 text-sm text-section-essentials">{description ?? t.newAdmission.setDescription}</p>
+        <p className="mt-1 text-xs text-section-essentials">{note ?? t.newAdmission.setNote}</p>
       </div>
 
       <div className="space-y-2">

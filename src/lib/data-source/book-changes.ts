@@ -8,7 +8,7 @@ import type {
   Stream,
 } from "@/types";
 import { toAddress, type PayloadAddressGroup } from "./address-mapper";
-import { payloadFind, payloadFindPage } from "./payload-rest";
+import { payloadFindPage } from "./payload-rest";
 
 interface PayloadSelectionGroup {
   secondLanguage?: AcademicLanguage | null;

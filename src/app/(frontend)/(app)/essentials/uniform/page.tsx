@@ -132,6 +132,8 @@ export default function UniformPage() {
           <EmptyState icon={Shirt} title={t.common.noItemsYet} />
         ) : mode === "set" ? (
           <NewAdmissionSet items={items} />
+        ) : mode === "first-set" ? (
+          <NewAdmissionSet items={items} title={t.newAdmission.firstSetTitle} description={t.newAdmission.firstSetDescription} />
         ) : mode === "requests" ? (
           <ExtraItemRequests items={items} userId={profile.id} />
         ) : (

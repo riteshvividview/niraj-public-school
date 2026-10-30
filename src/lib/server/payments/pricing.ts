@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import type { Payload } from "payload";
 import { newAdmissionItemApplies } from "@/lib/academic-year";
 import { assignedBookSetOf, bookMatchesAssignedSet } from "@/lib/book-set";
-import { getNewAdmissionStatus, getRequiredSet } from "@/lib/server/uniform/new-admission";
+import { getNewAdmissionStatus, getRequiredSet, getStudentUniformCatalogue } from "@/lib/server/uniform/new-admission";
 import { relId } from "@/lib/server/request-actor";
 import type { PaymentItem, PaymentKind } from "./types";
 
@@ -159,7 +159,29 @@ async function enforceUniformRules(
 ): Promise<{ newAdmissionSet: boolean; extraRequestIds: string[] }> {
   const uniform = items.filter((item) => item.kind === "uniform");
   if (uniform.length === 0) return { newAdmissionSet: false, extraRequestIds: [] };
-  if (!status.isNew) return { newAdmissionSet: false, extraRequestIds: [] };
+  if (!status.isNew) {
+    // An existing student's FIRST uniform order for their current class is the class's full uniform list
+    // (one of each item, sizes are their choice). After that they buy items freely.
+    if (!status.firstUniformDone) {
+      const { regular } = await getStudentUniformCatalogue(payload, studentId);
+      if (regular.length > 0) {
+        const requiredIds = new Set(regular.map((item) => item.id));
+        const chosen = uniform.map((item) => item.refId);
+        const missing = regular.filter((item) => !chosen.includes(item.id));
+        const extra = uniform.filter((item) => !requiredIds.has(item.refId));
+        const doubled = chosen.length !== new Set(chosen).size;
+        if (missing.length > 0 || extra.length > 0 || doubled) {
+          throw new CartError(
+            "Your first uniform order for this class must include the full uniform list" +
+              (missing.length > 0 ? ` (still missing: ${missing.map((m) => m.name).join(", ")})` : "") +
+              ". After that you can buy single items.",
+            409,
+          );
+        }
+      }
+    }
+    return { newAdmissionSet: false, extraRequestIds: [] };
+  }
 
   if (!status.setBought) {
     const required = await getRequiredSet(payload, studentId);

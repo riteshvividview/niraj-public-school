@@ -30,6 +30,8 @@ export interface NewAdmissionStatus {
   startMonth: number;
   /** "2026-27" */
   academicYear: string;
+  /** Existing students: they already bought uniform of their current class (their first order must be the full list). */
+  firstUniformDone?: boolean;
   /** The items a new student must buy together (empty once bought, and for existing students). */
   requiredIds: string[];
 }

@@ -5,7 +5,8 @@ import { getClassLevelsBySchool, getMyNewAdmissionStatus, getNewAdmissionItemsFo
 import { useAuth } from "@/store/auth-store";
 import type { NewAdmissionStatus, UniformItem } from "@/types";
 
-export type UniformMode = "set" | "requests" | "normal";
+/** set = new admission's full set · first-set = existing student's first order for this class (full list) · requests = extras need approval · normal = free choice */
+export type UniformMode = "set" | "first-set" | "requests" | "normal";
 
 /**
  * The uniform items THIS student is shown — one definition shared by the Essentials hub, the Uniform
@@ -30,9 +31,9 @@ export function useUniformCatalogue(): { items: UniformItem[] | null; mode: Unif
     return [...regular, ...extra];
   });
 
-  const mode: UniformMode = status?.isNew ? (status.setBought ? "requests" : "set") : "normal";
+  const mode: UniformMode = status?.isNew ? (status.setBought ? "requests" : "set") : status?.firstUniformDone === false ? "first-set" : "normal";
   const ready = Boolean(status || statusError);
   // New-admission items are for NEW admissions only — an existing student never sees them.
-  const items = ready && all ? (mode === "normal" ? all.filter((item) => !item.newAdmission) : all) : null;
+  const items = ready && all ? (mode === "normal" || mode === "first-set" ? all.filter((item) => !item.newAdmission) : all) : null;
   return { items, mode, status };
 }
