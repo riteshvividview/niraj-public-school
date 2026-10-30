@@ -384,6 +384,7 @@ export interface Dictionary {
     confirmTitle: string;
     confirmIntro: string;
     confirmWarning: string;
+    confirmGuidance: string;
     confirmButton: string;
     goBack: string;
     saveFailed: string;

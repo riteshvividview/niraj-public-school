@@ -441,6 +441,7 @@ export default function BooksPage() {
             <DialogTitle>{t.bookLock.confirmTitle}</DialogTitle>
             <DialogDescription>{t.bookLock.confirmIntro}</DialogDescription>
           </DialogHeader>
+          <p className="rounded-lg border border-brand/30 bg-brand/5 p-3 text-sm font-medium text-ink">{t.bookLock.confirmGuidance}</p>
           <div className="divide-y divide-line/60 rounded-lg border border-line/60 px-3">{selectionRows}</div>
           <p className="rounded-lg border border-section-programs/30 bg-section-programs-bg p-3 text-sm text-section-programs">
             {t.bookLock.confirmWarning}

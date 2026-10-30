@@ -365,6 +365,7 @@ const en: Dictionary = {
     confirmTitle: "Please confirm your choice",
     confirmIntro: "You have chosen:",
     confirmWarning: "Your books are decided by this choice. Please check carefully — once you buy the books, it can only be changed by the school.",
+    confirmGuidance: "Please select the books as per the group decided in consultation with the parent and the class teacher.",
     confirmButton: "Yes, I'm sure",
     goBack: "Go back",
     saveFailed: "We couldn't save your choice. Please try again.",
