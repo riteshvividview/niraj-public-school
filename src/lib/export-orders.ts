@@ -1,96 +1,104 @@
 import { formatAddress } from "@/lib/address";
 import { isNewAdmission } from "@/lib/academic-year";
-import { deriveReceiptTitle } from "@/lib/cart-items";
 import { collectionStatusText } from "@/lib/export-collection";
-import { formatDate, formatTime } from "@/lib/format";
-import { isLineCollected } from "@/lib/order-items";
+import type { WorkbookSheet } from "@/lib/export-utils";
+import { formatDate } from "@/lib/format";
+import { isLineCollected, isLinePartlyCollected } from "@/lib/order-items";
 import type { OrderItem, PaymentRecord } from "@/types";
 
-const RECEIPT_TITLE_LABELS = { books: "Books", uniform: "Uniform", receiptWord: "Receipt", programmeReceiptWord: "Programme Receipt" };
-
 const lineTotal = (item: OrderItem) => item.unitPrice * item.quantity;
-const describe = (item: OrderItem) => `${item.label}${item.meta ? ` (${item.meta})` : ""} — ₹${lineTotal(item)} — ${collectionStatusText(item)}`;
+const KIND_ORDER: Record<OrderItem["kind"], number> = { book: 0, uniform: 1, program: 2 };
+const KIND_NAME: Record<OrderItem["kind"], string> = { book: "Books", uniform: "Uniform", program: "Program" };
 
 /**
- * Spreadsheet export of orders — ONE row per order (receipt), not one per item. Books, uniform and
- * programs each get a column listing their items (with size, price and collection status) and a
- * column with their amount, so the order total is never repeated and adds up across the sheet.
+ * Spreadsheet export of orders — ONE row per order (one per student per purchase), and ONE column per
+ * item, so every amount is its own number cell and Excel can sum any column (an item across all students,
+ * all books, all uniform, the grand total) without anyone untangling text.
+ *
+ *  • "Orders" sheet: student details, one AMOUNT column per item (blank when not bought), Books / Uniform /
+ *    Programs totals and the Order Total.
+ *  • "Collection" sheet: the same rows and item columns, but each cell says whether that item was handed
+ *    over (and the size, for uniform).
  */
-export function orderExportRows(
+export function orderExportSheets(
   records: PaymentRecord[],
   options: { classLabelOf: (classLevelId: string) => string; startMonth: number },
-): (string | number)[][] {
-  const header = [
-    "Receipt Code",
-    "Receipt Title",
-    "Student Name",
-    "Register Number",
-    "Class",
-    "Section",
-    "New Admission",
-    "Books",
-    "Books Amount",
-    "Uniform",
-    "Uniform Amount",
-    "Programs",
-    "Programs Amount",
-    "Number of Items",
-    "Order Total",
-    "Payment Method",
-    "Order Status",
-    "Collection Status",
-    "Items Collected",
-    "Still To Hand Over",
-    "Issued Date",
-    "Issued Time",
-    "Collected Date",
-    "Collected Time",
-    "Delivery Address",
-    "Delivery Phone",
-    "Order ID",
-    "Receipt ID",
+): WorkbookSheet[] {
+  // Every item that appears in any of these orders becomes a column (books first, then uniform, then programs).
+  const columns = new Map<string, { kind: OrderItem["kind"]; label: string }>();
+  for (const record of records) {
+    for (const item of record.order.items) {
+      const key = `${item.kind}:${item.label}`;
+      if (!columns.has(key)) columns.set(key, { kind: item.kind, label: item.label });
+    }
+  }
+  const itemColumns = [...columns.entries()].sort(([, a], [, b]) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind] || a.label.localeCompare(b.label));
+  const itemHeaders = itemColumns.map(([, column]) => `${KIND_NAME[column.kind]}: ${column.label}`);
+
+  const base = (record: PaymentRecord) => [
+    record.receipt.qrPayload,
+    record.studentName,
+    record.registerNumber,
+    options.classLabelOf(record.classLevelId),
+    record.section ?? "",
+    isNewAdmission({ registerNumber: record.registerNumber, override: record.newAdmissionOverride ?? null }, new Date(), options.startMonth) ? "Yes" : "No",
   ];
-  const rows: (string | number)[][] = [header];
+  const baseHeader = ["Receipt Code", "Student Name", "Register Number", "Class", "Section", "New Admission"];
+
+  const amountRows: (string | number)[][] = [
+    [...baseHeader, ...itemHeaders, "Books Total", "Uniform Total", "Programs Total", "Order Total", "Payment Method", "Order Status", "Collection Status", "Items Collected", "Items Not Collected", "Paid On", "Delivery Address", "Delivery Phone"],
+  ];
+  const collectionRows: (string | number)[][] = [[...baseHeader, ...itemHeaders, "Collection Status"]];
+
   for (const record of records) {
     const items = record.order.items;
-    const of = (kind: OrderItem["kind"]) => items.filter((item) => item.kind === kind);
-    const books = of("book");
-    const uniform = of("uniform");
-    const programs = of("program");
-    const sum = (list: OrderItem[]) => list.reduce((total, item) => total + lineTotal(item), 0);
+    const byKey = new Map(items.map((item) => [`${item.kind}:${item.label}`, item]));
+    const sum = (kind: OrderItem["kind"]) => items.filter((item) => item.kind === kind).reduce((total, item) => total + lineTotal(item), 0);
     const collectable = items.filter((item) => item.kind !== "program");
-    const collected = collectable.filter((item) => isLineCollected(item));
-    const pending = collectable.filter((item) => !isLineCollected(item));
-    rows.push([
-      record.receipt.qrPayload,
-      deriveReceiptTitle(items, RECEIPT_TITLE_LABELS),
-      record.studentName,
-      record.registerNumber,
-      options.classLabelOf(record.classLevelId),
-      record.section ?? "",
-      isNewAdmission({ registerNumber: record.registerNumber, override: record.newAdmissionOverride ?? null }, new Date(), options.startMonth) ? "Yes" : "No",
-      books.map(describe).join(" | "),
-      sum(books),
-      uniform.map(describe).join(" | "),
-      sum(uniform),
-      programs.map(describe).join(" | "),
-      sum(programs),
-      items.length,
+    const collected = collectable.filter((item) => isLineCollected(item)).length;
+
+    amountRows.push([
+      ...base(record),
+      ...itemColumns.map(([key]) => {
+        const item = byKey.get(key);
+        return item ? lineTotal(item) : "";
+      }),
+      sum("book"),
+      sum("uniform"),
+      sum("program"),
       record.order.totalAmount,
       record.order.paymentMethod,
       record.order.status,
       record.receipt.redemptionStatus,
-      collectable.length ? `${collected.length} of ${collectable.length}` : "",
-      pending.map((item) => (item.parts?.length ? `${item.label}: ${collectionStatusText(item)}` : item.label)).join(" | "),
+      collected,
+      collectable.length - collected,
       formatDate(record.receipt.issuedAt),
-      formatTime(record.receipt.issuedAt),
-      record.receipt.redeemedAt ? formatDate(record.receipt.redeemedAt) : "",
-      record.receipt.redeemedAt ? formatTime(record.receipt.redeemedAt) : "",
       formatAddress(record.address),
       record.address?.phone ?? record.studentPhone ?? "",
-      record.order.id,
-      record.receipt.id,
+    ]);
+
+    collectionRows.push([
+      ...base(record),
+      ...itemColumns.map(([key]) => {
+        const item = byKey.get(key);
+        if (!item) return "";
+        if (item.kind === "program") return "Registered";
+        const size = item.kind === "uniform" && item.meta ? `Size ${item.meta} — ` : "";
+        const state = item.parts?.length
+          ? collectionStatusText(item)
+          : isLineCollected(item)
+            ? "Collected"
+            : isLinePartlyCollected(item)
+              ? "Partly collected"
+              : "Not collected";
+        return size + state;
+      }),
+      record.receipt.redemptionStatus,
     ]);
   }
-  return rows;
+
+  return [
+    { name: "Orders", rows: amountRows },
+    { name: "Collection", rows: collectionRows },
+  ];
 }

@@ -18,8 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getPaymentsPageBySchool, getStudentSectionsBySchool, type PaymentPageFilters } from "@/lib/data-source";
-import { downloadCsv } from "@/lib/export-utils";
-import { orderExportRows } from "@/lib/export-orders";
+import { downloadWorkbook } from "@/lib/export-utils";
+import { orderExportSheets } from "@/lib/export-orders";
 import { useClassLevels, useConsoleSchoolId, useNewAdmissionInfo } from "@/lib/hooks/console-data";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import type { Order, RedemptionStatus } from "@/types";
@@ -121,11 +121,11 @@ export default function PaymentsPage() {
     setIsExporting(true);
     try {
       const { records: allRecords } = await getPaymentsPageBySchool(schoolId, queryFilters, 1, 5000);
-      // One row per order — every item, amount and collection status in that one row.
-      const rows = orderExportRows(allRecords, { classLabelOf: (id) => classLabelById.get(id) ?? "", startMonth });
+      // One row per order, one column per item — every amount is its own cell, so Excel can sum anything.
+      const sheets = orderExportSheets(allRecords, { classLabelOf: (id) => classLabelById.get(id) ?? "", startMonth });
       const suffix =
         filters.fromDate || filters.toDate ? `-${filters.fromDate || "start"}-to-${filters.toDate || "now"}` : "";
-      downloadCsv(`payments${suffix}-${new Date().toISOString().slice(0, 10)}.csv`, rows);
+      downloadWorkbook(`payments${suffix}-${new Date().toISOString().slice(0, 10)}.xlsx`, sheets);
     } finally {
       setIsExporting(false);
     }
@@ -143,7 +143,7 @@ export default function PaymentsPage() {
         </div>
         <Button variant="outline" className="gap-2" disabled={!totalCount || isExporting} onClick={handleExport}>
           {isExporting ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
-          Export CSV
+          Export Excel
         </Button>
       </div>
 
