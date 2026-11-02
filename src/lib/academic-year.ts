@@ -3,10 +3,10 @@
  * (which decides what a student may buy) and the console (which shows the counts).
  *
  * A student is NEW when the two digits at the start of their register number
- * (26NPS0123 → 26) are the current academic year's or later. The academic year
- * starts in `startMonth` (April by default, editable in the console), and is named
- * after the year it starts in: with an April start, 1 Apr 2026 – 31 Mar 2027 is
- * "2026-27" and its new students are the 26… register numbers. A staff override on
+ * (27NPS0123 → 27) are the year the CURRENT academic year ends in, or later. The academic
+ * year starts in `startMonth` (April by default, editable in the console): with an April
+ * start, 1 Apr 2026 – 31 Mar 2027 is "2026-27" and its new students are the 27… register
+ * numbers (the school numbers new admissions by the academic year's second year). A staff override on
  * the student beats the register number (transfers, mid-year joiners, odd numbers).
  */
 export type NewAdmissionOverride = "new" | "existing";
@@ -26,7 +26,7 @@ export function academicYearLabel(startYear: number): string {
   return `${startYear}-${String((startYear + 1) % 100).padStart(2, "0")}`;
 }
 
-/** The year a register number was issued in (26NPS0123 → 2026), or null if it doesn't start with two digits. */
+/** The year in a register number (27NPS0123 → 2027), or null if it doesn't start with two digits. */
 export function registerYearOf(registerNumber: string | null | undefined): number | null {
   const match = /^(\d{2})/.exec((registerNumber ?? "").trim());
   return match ? 2000 + Number(match[1]) : null;
@@ -40,7 +40,7 @@ export function isNewAdmission(
   if (student.override === "new") return true;
   if (student.override === "existing") return false;
   const registered = registerYearOf(student.registerNumber);
-  return registered !== null && registered >= academicYearStart(now, startMonth);
+  return registered !== null && registered >= academicYearStart(now, startMonth) + 1;
 }
 
 /** A new-admission item with an optional class range ("classes 1 to 5"), compared on the class sort order. */

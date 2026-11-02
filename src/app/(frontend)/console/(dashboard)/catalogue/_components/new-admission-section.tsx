@@ -90,9 +90,9 @@ export function NewAdmissionSection({ schoolId }: { schoolId: string }) {
             New Admission Uniform
           </CardTitle>
           <p className="mt-1 max-w-2xl text-sm text-sub">
-            Items common to every class. A student whose register number starts with the current academic year (like{" "}
-            <strong className="text-ink">{summary ? String(Number(summary.academicYear.slice(0, 4)) % 100).padStart(2, "0") : "26"}NPS…</strong>) is a{" "}
-            <strong className="text-ink">new admission</strong> and must buy these with the rest of their class uniform, once. Existing students can still buy them as optional items.
+            Items common to every class. A student whose register number starts with the second year of the current academic year (for 2026-27:{" "}
+            <strong className="text-ink">{summary ? String((Number(summary.academicYear.slice(0, 4)) + 1) % 100).padStart(2, "0") : "27"}NPS…</strong>) is a{" "}
+            <strong className="text-ink">new admission</strong> and must buy these with the rest of their class uniform, once. Existing students don't see them.
           </p>
         </div>
         <Button size="sm" onClick={() => setDialog({ editing: null })}>
