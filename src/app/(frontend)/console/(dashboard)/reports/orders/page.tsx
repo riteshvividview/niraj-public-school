@@ -14,13 +14,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getPaymentsPageBySchool, getStudentSectionsBySchool, type PaymentPageFilters } from "@/lib/data-source";
-import { formatAddress } from "@/lib/address";
 import { downloadCsv } from "@/lib/export-utils";
+import { orderExportRows } from "@/lib/export-orders";
 import { collectionStatusOf, overviewOf } from "@/lib/reports-aggregate";
-import { deriveReceiptTitle } from "@/lib/cart-items";
 import { formatCurrencyINR } from "@/lib/format";
-import { isNewAdmission } from "@/lib/academic-year";
-import { collectionStatusText } from "@/lib/export-collection";
 import { useClassLevels, useConsoleSchoolId, useNewAdmissionInfo } from "@/lib/hooks/console-data";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 
@@ -28,12 +25,6 @@ const ALL_VALUE = "__all__";
 const PAGE_SIZE = 20;
 const CATEGORY_LABELS = { books: "Books", uniform: "Uniform & Kit", programs: "Programs & Events" } as const;
 
-const RECEIPT_TITLE_LABELS = {
-  books: "Books",
-  uniform: "Uniform",
-  receiptWord: "Receipt",
-  programmeReceiptWord: "Programme Receipt",
-};
 
 interface OrdersFilters {
   search: string;
@@ -129,56 +120,8 @@ function OrdersDrillDown() {
     setIsExporting(true);
     try {
       const { records: allRecords } = await getPaymentsPageBySchool(schoolId, queryFilters, 1, 5000, sort);
-      const rows: (string | number)[][] = [
-        [
-          "Receipt Code",
-          "Receipt Title",
-          "Student Name",
-          "Register Number",
-          "Class",
-          "Section",
-          "Item Name",
-          "Item Kind",
-          "Quantity",
-          "Unit Price",
-          "Line Total",
-          "Order Total",
-          "Payment Method",
-          "Redemption Status",
-          "Issued Date",
-          "Delivery Address",
-          "Delivery Phone",
-          "Item Collection",
-          "New Admission",
-        ],
-      ];
-      allRecords.forEach((record) => {
-        const title = deriveReceiptTitle(record.order.items, RECEIPT_TITLE_LABELS);
-        const classLabel = classLabelById.get(record.classLevelId) ?? "";
-        record.order.items.forEach((item) => {
-          rows.push([
-            record.receipt.qrPayload,
-            title,
-            record.studentName,
-            record.registerNumber,
-            classLabel,
-            record.section ?? "",
-            item.label,
-            item.kind,
-            item.quantity,
-            item.unitPrice,
-            item.unitPrice * item.quantity,
-            record.order.totalAmount,
-            record.order.paymentMethod,
-            record.receipt.redemptionStatus,
-            record.receipt.issuedAt.slice(0, 10),
-            formatAddress(record.address),
-            record.address?.phone ?? record.studentPhone ?? "",
-            collectionStatusText(item),
-            isNewAdmission({ registerNumber: record.registerNumber, override: record.newAdmissionOverride ?? null }, new Date(), startMonth) ? "Yes" : "No",
-          ]);
-        });
-      });
+      // One row per order — every item, amount and collection status in that one row.
+      const rows = orderExportRows(allRecords, { classLabelOf: (id) => classLabelById.get(id) ?? "", startMonth });
       downloadCsv(`orders-${new Date().toISOString().slice(0, 10)}.csv`, rows);
     } finally {
       setIsExporting(false);

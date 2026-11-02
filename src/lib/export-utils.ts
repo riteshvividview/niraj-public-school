@@ -34,7 +34,8 @@ function downloadBlob(filename: string, blob: Blob) {
 }
 
 export function downloadCsv(filename: string, rows: (string | number)[][]) {
-  downloadBlob(filename, new Blob([toCsv(rows)], { type: "text/csv;charset=utf-8;" }));
+  // The BOM tells Excel the file is UTF-8 (without it "·" shows as "Â·" and "₹" is garbled).
+  downloadBlob(filename, new Blob(["\uFEFF" + toCsv(rows)], { type: "text/csv;charset=utf-8;" }));
 }
 
 export interface WorkbookSheet {
