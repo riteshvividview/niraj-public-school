@@ -24,6 +24,7 @@ import { useTranslation } from "@/i18n/context";
 import useSWR from "swr";
 import { buildPriceSummaryLines, groupItemsByKind } from "@/lib/cart-items";
 import { getMyNewAdmissionStatus } from "@/lib/data-source";
+import { missingForFirstOrder } from "@/lib/first-order";
 import { useAuth } from "@/store/auth-store";
 import { formatCurrencyINR } from "@/lib/format";
 import { useCart } from "@/store/cart-store";
@@ -80,7 +81,10 @@ export default function CartPage() {
   const { data: naStatus } = useSWR(profile ? ["na-status", profile.id] : null, () => getMyNewAdmissionStatus());
 
   const grouped = groupItemsByKind(cart.items);
-  const uniformIsASet = Boolean(naStatus?.isNew && !naStatus.setBought);
+  // The uniform is bought as one set by a new admission (their set) and by anyone's first order for their class.
+  const uniformIsASet = Boolean((naStatus?.isNew && !naStatus.setBought) || (naStatus && !naStatus.isNew && naStatus.firstUniformDone === false));
+  const missing = missingForFirstOrder(naStatus, cart.items);
+  const blocked = missing.books || missing.uniform;
   const categoryLabels = {
     books: t.essentials.books,
     uniform: t.essentials.uniform,
@@ -157,7 +161,18 @@ export default function CartPage() {
               <PriceSummary lines={lines} total={cart.total} note={t.cart.noFeeNote} />
             </div>
 
-            <Button className="w-full" onClick={() => router.push("/checkout/payment")}>
+            {blocked ? (
+              <div className="space-y-3 rounded-lg border border-section-programs/30 bg-section-programs-bg p-4">
+                <p className="text-sm font-medium text-section-programs">{t.cart.firstOrderBothTitle}</p>
+                <p className="text-sm text-section-programs">{t.cart.firstOrderBothDescription}</p>
+                <Button asChild className="w-full sm:w-auto">
+                  <Link href={missing.books ? "/essentials/books" : "/essentials/uniform"}>
+                    {missing.books ? t.cart.addBooks : t.cart.addUniform}
+                  </Link>
+                </Button>
+              </div>
+            ) : null}
+            <Button className="w-full" disabled={blocked} onClick={() => router.push("/checkout/payment")}>
               {t.cart.proceedToPayment}
             </Button>
             <Button variant="ghost" className="w-full gap-2 text-sub hover:text-destructive" onClick={() => setClearOpen(true)}>

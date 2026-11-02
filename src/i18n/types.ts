@@ -148,6 +148,10 @@ export interface Dictionary {
   };
 
   cart: {
+    firstOrderBothTitle: string;
+    firstOrderBothDescription: string;
+    addBooks: string;
+    addUniform: string;
     title: string;
     orderSummary: string;
     noFeeNote: string;

@@ -133,6 +133,10 @@ const en: Dictionary = {
   },
 
   cart: {
+    firstOrderBothTitle: "Books and uniform must be bought together",
+    firstOrderBothDescription: "Your first order for this class must include both the books and the full uniform. Please add the missing part to continue.",
+    addBooks: "Add books",
+    addUniform: "Add uniform",
     title: "Cart & Checkout",
     orderSummary: "Order Summary",
     noFeeNote: "No admission fee or delivery charge — you pay only for the items and programs listed above.",

@@ -136,6 +136,22 @@ export async function priceCart(payload: Payload, studentId: string, requested: 
     }
   }
 
+  // The FIRST order for a class must include BOTH the books and the uniform (programs can always be paid on their own).
+  const hasBooks = items.some((item) => item.kind === "book");
+  const hasUniform = items.some((item) => item.kind === "uniform");
+  if (hasBooks || hasUniform) {
+    const needBooks = naStatus.classHasBooks && !naStatus.booksDone;
+    const needUniform = naStatus.classHasUniform && !naStatus.uniformDone;
+    if ((needBooks && !hasBooks) || (needUniform && !hasUniform)) {
+      throw new CartError(
+        "Your first order for this class must include both the books and the uniform. Please add " +
+          (needBooks && !hasBooks ? "your books (Essentials → Books)" : "the uniform (Essentials → Uniform & Kit)") +
+          " and then pay.",
+        409,
+      );
+    }
+  }
+
   const total = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   if (!(total > 0)) throw new CartError("There is nothing to pay for in this cart.");
   const rules = await enforceUniformRules(payload, studentId, items, naStatus);

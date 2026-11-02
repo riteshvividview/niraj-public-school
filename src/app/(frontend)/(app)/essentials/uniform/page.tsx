@@ -24,6 +24,7 @@ import {
 import { useTranslation } from "@/i18n/context";
 import { uniformToCartItem } from "@/lib/cart-items";
 import { useUniformCatalogue } from "@/lib/hooks/use-uniform-catalogue";
+import { missingForFirstOrder } from "@/lib/first-order";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/store/auth-store";
 import { lineId, useCart } from "@/store/cart-store";
@@ -95,7 +96,8 @@ export default function UniformPage() {
   const { t } = useTranslation();
   const { profile } = useAuth();
   const cart = useCart();
-  const { items, mode } = useUniformCatalogue();
+  const { items, mode, status } = useUniformCatalogue();
+  const booksMissing = missingForFirstOrder(status, cart.items).books;
 
   useEffect(() => {
     if (!items) return;
@@ -215,7 +217,7 @@ export default function UniformPage() {
           </div>
         )}
       </div>
-      <EssentialsReviewBar kind="uniform" />
+      <EssentialsReviewBar kind="uniform" {...(booksMissing ? { ctaLabel: t.cart.addBooks, ctaHref: "/essentials/books" } : {})} />
     </>
   );
 }

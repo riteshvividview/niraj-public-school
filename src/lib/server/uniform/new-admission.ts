@@ -30,6 +30,13 @@ export interface NewAdmissionStatus {
    * their first uniform order must be the class's full uniform list; after that they buy items freely.
    */
   firstUniformDone: boolean;
+  /** Books of the student's CURRENT class have been bought (paid). */
+  booksDone: boolean;
+  /** Uniform of the current class has been bought (new admission: the set; others: the first full list). */
+  uniformDone: boolean;
+  /** Does the current class have books / uniform to buy at all? (Nothing to require when it doesn't.) */
+  classHasBooks: boolean;
+  classHasUniform: boolean;
 }
 
 export interface SetItem {
@@ -59,9 +66,20 @@ export async function getNewAdmissionStatus(payload: Payload, studentId: string,
     const bought = await payload.count({ collection: "orders", where: { and: [{ user: { equals: studentId } }, { newAdmissionSet: { equals: true } }] } });
     setBought = bought.totalDocs > 0;
   }
+  const pool = (payload.db as unknown as { pool: { query: (text: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> } }).pool;
+  const classLevelId = relId(student.classLevel);
+  const facts = (
+    await pool.query(
+      `SELECT
+          EXISTS (SELECT 1 FROM orders o JOIN orders_items oi ON oi._parent_id = o.id JOIN books b ON b.id::text = oi.ref_id
+                   WHERE o.user_id = $1 AND o.status = 'paid' AND oi.kind = 'book' AND b.class_level_id = $2) AS books_done,
+          EXISTS (SELECT 1 FROM books b WHERE b.class_level_id = $2) AS class_has_books,
+          EXISTS (SELECT 1 FROM uniform_items ui WHERE ui.class_level_id = $2 AND coalesce(ui.retired, false) = false) AS class_has_uniform`,
+      [studentId, classLevelId],
+    )
+  ).rows[0];
   let firstUniformDone = true;
   if (!isNew) {
-    const pool = (payload.db as unknown as { pool: { query: (text: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> } }).pool;
     const row = (
       await pool.query(
         `SELECT EXISTS (
@@ -75,7 +93,17 @@ export async function getNewAdmissionStatus(payload: Payload, studentId: string,
     ).rows[0];
     firstUniformDone = Boolean(row?.done);
   }
-  return { isNew, setBought, firstUniformDone, startMonth, academicYear: academicYearLabel(academicYearStart(now, startMonth)) };
+  return {
+    isNew,
+    setBought,
+    firstUniformDone,
+    booksDone: Boolean(facts?.books_done),
+    uniformDone: isNew ? setBought : firstUniformDone,
+    classHasBooks: Boolean(facts?.class_has_books),
+    classHasUniform: Boolean(facts?.class_has_uniform) || isNew,
+    startMonth,
+    academicYear: academicYearLabel(academicYearStart(now, startMonth)),
+  };
 }
 
 const toSetItem = (doc: Doc): SetItem => ({

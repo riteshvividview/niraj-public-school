@@ -32,6 +32,11 @@ export interface NewAdmissionStatus {
   academicYear: string;
   /** Existing students: they already bought uniform of their current class (their first order must be the full list). */
   firstUniformDone?: boolean;
+  /** Books / uniform of the current class already bought, and whether the class has any to buy. */
+  booksDone?: boolean;
+  uniformDone?: boolean;
+  classHasBooks?: boolean;
+  classHasUniform?: boolean;
   /** The items a new student must buy together (empty once bought, and for existing students). */
   requiredIds: string[];
 }
